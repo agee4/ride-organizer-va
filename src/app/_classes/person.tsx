@@ -21,4 +21,20 @@ export class Person {
     this.college = college
     this.notes = notes
   }
+  
+  getName(): string {
+    return this.name
+  }
+  
+  getAddress(): string {
+    return this.address
+  }
+  
+  getCollege(): string {
+    return this.college
+  }
+  
+  getNotes(): string {
+    return this.notes ? this.notes : ""
+  }
 }

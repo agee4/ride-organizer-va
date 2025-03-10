@@ -1,19 +1,49 @@
 "use client"
 
-import { ChangeEvent, useEffect, useState } from "react"
+import { ChangeEvent, FormEvent, useState } from "react"
 import { RideTimes } from "../_classes/person"
 import { Passenger, PassengerSort, sortPassengers, Year } from "../_classes/passenger"
 import { Driver, DriverSort, sortDrivers } from "../_classes/driver"
-import { Ride, RideSort, sortRides } from "../_classes/ride"
+import { RideManager } from "../_components/ride_manager"
+
+interface NewPassengerData {
+  name: string,
+  address: string,
+  service?: RideTimes,
+  friday?: RideTimes,
+  notes?: string
+}
+
+interface NewDriverData {
+  name: string,
+  address: string,
+  seats: number,
+  service?: RideTimes,
+  friday?: RideTimes,
+  notes?: string
+}
 
 export default function Page() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
   const [passengerList, setPassengerList] = useState<Passenger[]>([])
   const [driverList, setDriverList] = useState<Driver[]>([])
-  const [rideList, setRideList] = useState<Ride[]>([])
-  const [passengerSort, setPassengerSort] = useState<PassengerSort>()
-  const [driverSort, setDriverSort] = useState<DriverSort>()
-  const [rideSort, setRideSort] = useState<RideSort>()
+
+  const [passengerSort, setPassengerSort] = useState<PassengerSort>(PassengerSort.NAME)
+  const [driverSort, setDriverSort] = useState<DriverSort>(DriverSort.NAME)
+
+  const [newPassengerData, setNewPassengerData] = useState<NewPassengerData>({
+    name: "",
+    address: "",
+    notes: ""
+  })
+  const [newDriverData, setNewDriverData] = useState<NewDriverData>({
+    name: "",
+    address: "",
+    seats: 0,
+    notes: ""
+  })
+  
   const debug = true
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +61,6 @@ export default function Page() {
     sortPassengers(sortedlist, event.target.value as PassengerSort)
     setPassengerList(sortedlist)
   }
-
   const updateDriverSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setDriverSort(event.target.value as DriverSort)
     if (debug) console.log("Set Driver sort to: " + event.target.value)
@@ -40,16 +69,8 @@ export default function Page() {
     setDriverList(sortedlist)
   }
 
-  const updateRideSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRideSort(event.target.value as RideSort)
-    if (debug) console.log("Set Ride sort to: " + event.target.value)
-      const sortedlist = [...rideList]
-    sortRides(sortedlist, event.target.value as RideSort)
-    setRideList(sortedlist)
-  }
-
   const loadTest = () => {
-    setPassengerList([
+    const testpassengers = [
       new Passenger({
         name:"Passenger 1",
         rides:[RideTimes.FRIDAY,RideTimes.FIRST],
@@ -90,9 +111,12 @@ export default function Page() {
         backup:[RideTimes.FIRST, RideTimes.THIRD],
         year:Year.FRESHMAN
       })
-    ])
+    ]
+    sortPassengers(testpassengers, passengerSort)
+    setPassengerList(testpassengers)
+    
 
-    setDriverList([
+    const testdrivers = [
       new Driver({
         name:"Driver 1",
         rides:[RideTimes.FRIDAY,RideTimes.FIRST],
@@ -100,14 +124,13 @@ export default function Page() {
         college:"UCI",
         seats:4,
         notes:"note"
-      }),
+      }),/* 
       new Driver({
         name:"Driver 2",
         rides:[RideTimes.FRIDAY],
         address:"292 Tustin Field Dr",
         college:"UCI",
         seats:3,
-        notes:"note"
       }),
       new Driver({
         name:"Driver 3",
@@ -115,41 +138,55 @@ export default function Page() {
         address:"1",
         college:"UCI",
         seats:6,
-        notes:"note"
-      })
-    ])
+        notes:"funne"
+      }) */
+    ]
+    sortDrivers(testdrivers, driverSort)
+    setDriverList(testdrivers)
   }
-
   const clearTest = () => {
     setPassengerList([])
     setDriverList([])
-    setRideList([])
   }
-  
-  useEffect(() => {
-    if (driverList[0]) {
-      const newList = [...rideList]
-      for (let driver of driverList) {
-        let exists = false
-        for (let ride of rideList) {
-          if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
-            exists = true
-            break
-          }
-        }
-        if (!exists) {
-          if (debug) console.log("nothing found")
-          newList.push(new Ride({driver:driver,passengers:[]}))
-        }
-      }
-      setRideList(/* [
-        new Ride({
-          driver:driverList[0],
-          passengers:[passengerList[0],passengerList[1],passengerList[2],passengerList[3]]
-        })
-      ] */newList)
-    }
-  }, [passengerList, driverList])
+
+  const updateNewPassenger = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    /* if (debug) console.log(name + " " + value) */
+    setNewPassengerData({...newPassengerData, [name]: value})
+  }
+  const addNewPassenger = (event: FormEvent) => {
+    event.preventDefault()
+    const newPassengerRides = []
+    if (newPassengerData.friday) newPassengerRides.push(newPassengerData.friday)
+    if (newPassengerData.service) newPassengerRides.push(newPassengerData.service)
+    setPassengerList([...passengerList, new Passenger({
+      name:newPassengerData.name,
+      rides:newPassengerRides,
+      address:newPassengerData.address,
+      college:"UCI",
+      year:Year.OTHER,
+      notes:newPassengerData.notes
+    })])
+  }
+  const updateNewDriver = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    /* if (debug) console.log(name + " " + value) */
+    setNewDriverData({...newDriverData, [name]: value})
+  }
+  const addNewDriver = (event: FormEvent) => {
+    event.preventDefault()
+    const newDriverRides = []
+    if (newDriverData.friday) newDriverRides.push(newDriverData.friday)
+    if (newDriverData.service) newDriverRides.push(newDriverData.service)
+    setDriverList([...driverList, new Driver({
+      name:newDriverData.name,
+      address:newDriverData.address,
+      seats:newDriverData.seats,
+      rides:newDriverRides,
+      college:"UCI",
+      notes:newDriverData.notes
+    })])
+  }
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -160,30 +197,37 @@ export default function Page() {
           process sheet into passengers/drivers/rides
         </p>
 
-        <label className="block">
-          <span className="text-neutral-500">Choose a sheet to upload:</span>
-          <br />
-          <input
-            type="file"
-            onChange={handleFileChange}
-            accept=".xlsx,.xls,.csv,.ods,.gsheet"
-          />
-        </label>
-        <button
-          className="rounded-full border px-2 disabled:text-neutral-500"
-          disabled={!selectedFile}
-          /* onClick={} */
-        >
-          Upload
-        </button>
+        <form>
+          <label className="block">
+            <span className="text-neutral-500">Choose a sheet to upload:</span>
+            <br />
+            <input
+              type="file"
+              onChange={handleFileChange}
+              accept=".xlsx,.xls,.csv,.ods,.gsheet"
+            />
+          </label>
+          <button
+            className="rounded-full border px-2 disabled:text-neutral-500"
+            disabled={!selectedFile}
+            /* onClick={} */
+          >
+            Upload
+          </button>
+        </form>
+
+        <RideManager
+          passengerList={passengerList}
+          driverList={driverList}
+        />
 
         {debug && <div className="flex flex-col">
-          <button onClick={loadTest}>Load</button>
+          <button onClick={loadTest}>Load Defaults</button>
           <button onClick={clearTest}>Clear</button>
         </div>}
 
         <div className="flex flex-row w-full justify-evenly">
-          <ul className="p-2 rounded-md border border-cyan-500">
+          <ul className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950 max-h-1/2 overflow-auto">
             <h2>Passengers</h2>
             <label>
               <span className="text-neutral-500">Sort by: </span>
@@ -202,9 +246,74 @@ export default function Page() {
             {passengerList.map((item, index) => (
               <li key={index}>{item.display()}</li>
             ))}
+            <form className="p-2 flex flex-col rounded-md border border-cyan-500 bg-cyan-200 dark:bg-cyan-800">
+              <label>Create new Passenger</label>
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="name"
+                value={newPassengerData.name}
+                placeholder="Name"
+                required
+                onChange={updateNewPassenger}
+              />
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="address"
+                value={newPassengerData.address}
+                placeholder="Address"
+                required
+                onChange={updateNewPassenger}
+              />
+              <div className="block">
+                <input
+                  type="radio"
+                  name="service"
+                  id="first"
+                  value={RideTimes.FIRST}
+                  onChange={updateNewPassenger}
+                />
+                <label htmlFor="first">First</label>
+                <input
+                  type="radio"
+                  name="service"
+                  id="second"
+                  value={RideTimes.SECOND}
+                  onChange={updateNewPassenger}
+                />
+                <label htmlFor="second">Second</label>
+                <input
+                  type="radio"
+                  name="service"
+                  id="third"
+                  value={RideTimes.THIRD}
+                  onChange={updateNewPassenger}
+                />
+                <label htmlFor="third">Third</label>
+                <input
+                  type="checkbox"
+                  name="friday"
+                  id="friday"
+                  value={RideTimes.FRIDAY}
+                  onChange={updateNewPassenger}
+                />
+                <label htmlFor="friday">Friday</label>
+              </div>
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="notes"
+                value={newPassengerData.notes}
+                placeholder="Notes"
+                onChange={updateNewPassenger}
+              />
+              <br />
+              <button onClick={addNewPassenger}>Submit</button>
+            </form>
           </ul>
 
-          <ul className="p-2 rounded-md border border-orange-500">
+          <ul className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
             <h2>Drivers</h2>
             <label>
               <span className="text-neutral-500">Sort by: </span>
@@ -223,27 +332,81 @@ export default function Page() {
             {driverList.map((item, index) => (
               <li key={index}>{item.display()}</li>
             ))}
-          </ul>
-
-          <ul className="p-2 rounded-md border border-neutral-500">
-            <h2>Rides</h2>
-            <label>
-              <span className="text-neutral-500">Sort by: </span>
-              <select
+            <form className="p-2 flex flex-col rounded-md border border-orange-500 bg-orange-200 dark:bg-orange-800">
+              <label>Create new Driver</label>
+              <input
                 className="rounded-sm border"
-                defaultValue={rideSort}
-                onChange={updateRideSort}
-              >
-                {Object.values(RideSort).map((option) => (
-                  <option className="dark:text-black" key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {rideList.map((item, index) => (
-              <li key={index}>{item.display()}</li>
-            ))}
+                type="text"
+                name="name"
+                value={newDriverData.name}
+                placeholder="Name"
+                required
+                onChange={updateNewDriver}
+              />
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="address"
+                value={newDriverData.address}
+                placeholder="Address"
+                required
+                onChange={updateNewDriver}
+              />
+              <input
+                className="rounded-sm border"
+                type="number"
+                name="seats"
+                value={newDriverData.seats}
+                min="0"
+                placeholder="Seats"
+                required
+                onChange={updateNewDriver}
+              />
+              <div className="block">
+                <input
+                  type="radio"
+                  name="service"
+                  id="first"
+                  value={RideTimes.FIRST}
+                  onChange={updateNewDriver}
+                />
+                <label htmlFor="first">First</label>
+                <input
+                  type="radio"
+                  name="service"
+                  id="second"
+                  value={RideTimes.SECOND}
+                  onChange={updateNewDriver}
+                />
+                <label htmlFor="second">Second</label>
+                <input
+                  type="radio"
+                  name="service"
+                  id="third"
+                  value={RideTimes.THIRD}
+                  onChange={updateNewDriver}
+                />
+                <label htmlFor="third">Third</label>
+                <input
+                  type="checkbox"
+                  name="friday"
+                  id="friday"
+                  value={RideTimes.FRIDAY}
+                  onChange={updateNewDriver}
+                />
+                <label htmlFor="friday">Friday</label>
+              </div>
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="notes"
+                value={newDriverData.notes}
+                placeholder="Notes"
+                onChange={updateNewDriver}
+              />
+              <br />
+              <button onClick={addNewDriver}>Submit</button>
+            </form>
           </ul>
         </div>
       </main>

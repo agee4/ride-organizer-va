@@ -19,15 +19,14 @@ export class Driver extends Person {
     super(name, rides, address, college, notes)
     this.seats = seats
   }
+  
+  getSeats(): number {
+    return this.seats
+  }
 
   display(show?: DriverDisplay[]): ReactElement {
     return <DriverComponent
-    name={this.name}
-    rides={this.rides}
-    address={this.address}
-    college={this.college}
-    seats={this.seats}
-    notes={this.notes}
+    data={this}
     display={show}
   />
   }
@@ -42,27 +41,22 @@ export enum DriverDisplay {
 }
 
 interface DriverProps {
-  name: string,
-  rides: RideTimes[],
-  address: string,
-  college: string,
-  seats: number,
-  notes?: string,
+  data: Driver,
   display?: DriverDisplay[]
 }
 
-const DriverComponent = ({name, rides, address, college, seats, notes, display}: DriverProps) => {
+const DriverComponent = ({data, display}: DriverProps) => {
   return (
     <div className="p-2 my-1 rounded-md bg-orange-300 dark:bg-orange-700">
       {(!display || display.includes(DriverDisplay.NAME)) &&
-        <h3 className="m-1 font-bold text-lg">{name}</h3>
+        <h3 className="m-1 font-bold text-lg">{data.name}</h3>
       }
       <ul className="m-1">
-        {(!display || display.includes(DriverDisplay.ADDRESS)) && <li>Addr: {address}</li>}
-        {(!display || display.includes(DriverDisplay.COLLEGE)) && <li>Coll: {college}</li>}
-        {(!display || display.includes(DriverDisplay.SEATS)) && <li>Seats: {seats}</li>}
+        {(!display || display.includes(DriverDisplay.ADDRESS)) && <li>Addr: {data.address}</li>}
+        {(!display || display.includes(DriverDisplay.COLLEGE)) && <li>Coll: {data.college}</li>}
+        {(!display || display.includes(DriverDisplay.SEATS)) && <li>Seats: {data.seats}</li>}
         <ul className="flex flex-row flex-wrap">
-          {rides.map((item, index) => (
+          {data.rides.map((item, index) => (
             <li
               className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
               key={index}
@@ -71,8 +65,8 @@ const DriverComponent = ({name, rides, address, college, seats, notes, display}:
             </li>
           ))}
         </ul>
-        {(!display || display.includes(DriverDisplay.NOTES)) && notes && <ul className="mt-1">
-          <li><span className="p-1 rounded-md bg-orange-400 :dark:bg-orange-600">{notes}</span></li>
+        {(!display || display.includes(DriverDisplay.NOTES)) && data.notes && <ul className="mt-1">
+          <li><span className="p-1 rounded-md bg-orange-400 :dark:bg-orange-600">{data.notes}</span></li>
         </ul>}
       </ul>
     </div>
@@ -91,7 +85,7 @@ export enum DriverSort {
 export const sortDrivers = (list: Driver[], sort?: DriverSort) => {
   switch (sort) {
     case DriverSort.ADDRESS:
-      list.sort((a,b) => a.address.localeCompare(b.address, undefined, {numeric: true}))
+      list.sort((a,b) => a.address.localeCompare(b.address))
       break
     case DriverSort.FIRST:
       list.sort(
