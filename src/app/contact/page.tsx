@@ -8,6 +8,5 @@ export default function Page() {
         <Link href="mailto:aarongeenius@gmail.com">aarongeenius@gmail.com</Link>
       </main>
     </div>
-    
-  )
+  );
 }

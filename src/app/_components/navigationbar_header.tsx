@@ -15,5 +15,5 @@ export default function NavBar() {
         <Link href="/contact">Contact</Link>
       </menu>
     </header>
-  )
+  );
 }

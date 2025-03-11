@@ -15,5 +15,5 @@ export default function SiteRef() {
         Copypaste 2025. idk what rights are reserved
       </p>
     </footer>
-  )
+  );
 }
