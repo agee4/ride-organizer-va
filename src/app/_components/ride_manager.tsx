@@ -41,11 +41,11 @@ const RM_PassengerComponent = ({
 
   return (
     <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800">
-      <div className="flex flex-row content-evenly">
+      <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
           <h3 className="m-1 font-bold text-lg">{data.name}</h3>
         )}
-        <button className="content-end" onClick={removePassenger}>
+        <button className="m-1 font-bold text-lg" onClick={removePassenger}>
           &times;
         </button>
       </div>
@@ -190,6 +190,59 @@ export const RideManager = ({
   );
   const [rideSort, setRideSort] = useState<RideSort>(RideSort.NAME);
 
+  useEffect(() => {
+    if (passengerList[0]) {
+      const newRPList = [...ridePassengerList];
+      let exists;
+      for (let passenger of passengerList) {
+        exists = false;
+        for (let ride of ridePassengerList) {
+          if (JSON.stringify(ride) == JSON.stringify(passenger)) {
+            exists = true;
+            break;
+          }
+        }
+        if (!exists) {
+          for (let ride of rideList) {
+            for (let ridepassenger of ride.passengers.values())
+              if (JSON.stringify(ridepassenger) == JSON.stringify(passenger)) {
+                exists = true;
+                break;
+              }
+          }
+        }
+        if (!exists) {
+          newRPList.push(passenger);
+        }
+      }
+      sortPassengers(newRPList, ridePassengerSort);
+      setRidePassengerList(newRPList);
+    }
+    if (driverList[0]) {
+      const newRideList = [...rideList];
+      let exists;
+      for (let driver of driverList) {
+        exists = false;
+        for (let ride of rideList) {
+          if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
+            exists = true;
+            break;
+          }
+        }
+        if (!exists) {
+          newRideList.push(
+            new Ride({
+              driver: driver,
+              passengers: new Map<string, Passenger>(),
+            })
+          );
+        }
+      }
+      sortRides(newRideList, rideSort);
+      setRideList(newRideList);
+    }
+  }, [passengerList, driverList]);
+
   const refreshRides = () => {
     if (passengerList[0]) {
       const newRPList = [...ridePassengerList];
@@ -264,11 +317,6 @@ export const RideManager = ({
     setRidePassengerList(data);
   };
 
-  useEffect(() => {
-    console.log(ridePassengerList);
-    console.log(rideList);
-  }, [ridePassengerList, rideList]);
-
   return (
     <RideManagerContext.Provider
       value={{
@@ -278,8 +326,8 @@ export const RideManager = ({
       }}
     >
       <div className="flex flex-row w-full justify-evenly">
-        <div className="p-2 max-h-1/2 rounded-md border border-neutral-500">
-          <h2>Rides</h2>
+        <div className="p-2 rounded-md border border-neutral-500">
+          <h2>Ride Manager</h2>
           <button className="m-1 p-1 rounded-sm border" onClick={refreshRides}>
             Refresh
           </button>
@@ -306,7 +354,7 @@ export const RideManager = ({
                   ))}
                 </select>
               </label>
-              <ul className="m-1 max-h-[75dvh] overflow-auto">
+              <ul className="m-1 max-h-[70dvh] overflow-auto">
                 {ridePassengerList.map((item, index) => (
                   <li key={index}>{item.display()}</li>
                 ))}
@@ -331,7 +379,7 @@ export const RideManager = ({
                   ))}
                 </select>
               </label>
-              <ul className="m-1 max-h-[75dvh] overflow-auto">
+              <ul className="m-1 max-h-[70dvh] overflow-auto">
                 {rideList.map((item, index) => (
                   <li key={index}>
                     <RM_RideComponent data={item} />

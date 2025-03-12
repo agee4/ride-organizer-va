@@ -1,6 +1,7 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { read, utils, writeFile } from "xlsx";
 import { RideTimes } from "../_classes/person";
 import {
   Passenger,
@@ -268,6 +269,30 @@ const AddDriverForm = ({ driverCallback }: AddDriverFormProps) => {
   );
 };
 
+interface PassengerParse {
+  Timestamp: number;
+  "Email Address": string;
+  Name: string;
+  "Phone Number": string;
+  Rides: string;
+  Address: string;
+  College: string;
+  Year: string;
+  "Backup Rides": string;
+  Notes: string;
+}
+
+interface DriverParse {
+  Timestamp: number;
+  Name: string;
+  "Phone Number": string;
+  Seats: number;
+  Rides: string;
+  Address: string;
+  Notes: string;
+  "Email Address": string;
+}
+
 export default function Page() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -279,12 +304,7 @@ export default function Page() {
   );
   const [driverSort, setDriverSort] = useState<DriverSort>(DriverSort.NAME);
 
-  const [newDriverData, setNewDriverData] = useState<NewDriverData>({
-    name: "",
-    address: "",
-    seats: 0,
-    notes: "",
-  });
+  const [rmDisplay, setRMdisplay] = useState(false);
 
   const debug = true;
 
@@ -310,91 +330,115 @@ export default function Page() {
     sortDrivers(sortedlist, event.target.value as DriverSort);
     setDriverList(sortedlist);
   };
+  const toggleDisplay = () => {
+    setRMdisplay(!rmDisplay);
+  };
 
   const loadTest = () => {
-    const testpassengers = [
-      new Passenger({
-        name: "Passenger 1",
-        rides: [RideTimes.FRIDAY, RideTimes.FIRST],
-        address: "292 Tustin Field Dr",
-        college: "UCI",
-        year: Year.OTHER,
-        backup: [RideTimes.SECOND],
-      }),
-      new Passenger({
-        name: "Passenger 2",
-        rides: [RideTimes.SECOND],
-        address: "53 Dartmouth",
-        college: "UCI",
-        year: Year.SENIOR,
-        backup: [RideTimes.THIRD],
-        notes: "test",
-      }),
-      new Passenger({
-        name: "Passenger 3",
-        rides: [RideTimes.THIRD],
-        address: "287 Berkeley Ave",
-        college: "UCI",
-        year: Year.JUNIOR,
-        notes: "idk",
-      }),
-      new Passenger({
-        name: "Passenger 4",
-        rides: [RideTimes.FRIDAY],
-        address: "112 Stanford Ct",
-        college: "UCI",
-        year: Year.SOPHOMORE,
-      }),
-      new Passenger({
-        name: "Passenger 5",
-        rides: [RideTimes.FRIDAY, RideTimes.SECOND],
-        address: "135 Cornell",
-        college: "UCI",
-        backup: [RideTimes.FIRST, RideTimes.THIRD],
-        year: Year.FRESHMAN,
-      }),
-    ];
-    sortPassengers(testpassengers, passengerSort);
-    setPassengerList(testpassengers);
+    {
+      (async () => {
+        const f = await fetch("/placeholdersheet.xlsx");
+        const ab = await f.arrayBuffer();
 
-    const testdrivers = [
-      new Driver({
-        name: "Driver 1",
-        rides: [RideTimes.FRIDAY, RideTimes.FIRST],
-        address: "ABC Street",
-        college: "UCI",
-        seats: 4,
-        notes: "note",
-      }),
-      new Driver({
-        name: "Driver 2",
-        rides: [RideTimes.FRIDAY],
-        address: "292 Tustin Field Dr",
-        college: "UCI",
-        seats: 3,
-      }),
-      new Driver({
-        name: "Driver 3",
-        rides: [RideTimes.THIRD],
-        address: "1",
-        college: "UCI",
-        seats: 6,
-        notes: "funne",
-      }),
-    ];
-    sortDrivers(testdrivers, driverSort);
-    setDriverList(testdrivers);
+        const wb = read(ab);
+
+        const passengersws = wb.Sheets[wb.SheetNames[0]];
+        const passengerdata: PassengerParse[] =
+          utils.sheet_to_json<PassengerParse>(passengersws);
+        let filepassengers: Passenger[] = [];
+        let mainrideneeds = [];
+        let backuprideneeds = [];
+        for (let x of passengerdata) {
+          mainrideneeds = [];
+          backuprideneeds = [];
+          for (let ride of x.Rides.split(", "))
+            switch (ride) {
+              case "Friday Bible Study 7:00pm":
+                mainrideneeds.push(RideTimes.FRIDAY);
+                break;
+              case "Sunday First Service 8:00am":
+                mainrideneeds.push(RideTimes.FIRST);
+                break;
+              case "Sunday Second Service 9:30am":
+                mainrideneeds.push(RideTimes.SECOND);
+                break;
+              case "Sunday Third Service 11:30am":
+                mainrideneeds.push(RideTimes.THIRD);
+                break;
+            }
+          if (x["Backup Rides"])
+            for (let ride of x["Backup Rides"].split(", "))
+              switch (ride) {
+                case "Sunday First Service 8:00am":
+                  backuprideneeds.push(RideTimes.FIRST);
+                  break;
+                case "Sunday Second Service 9:30am":
+                  backuprideneeds.push(RideTimes.SECOND);
+                  break;
+                case "Sunday Third Service 11:30am":
+                  backuprideneeds.push(RideTimes.THIRD);
+                  break;
+              }
+          filepassengers.push(
+            new Passenger({
+              name: x.Name,
+              rides: mainrideneeds,
+              address: x.Address,
+              college: x.College,
+              year: x.Year as Year,
+              backup: backuprideneeds,
+              notes: x.Notes,
+            })
+          );
+        }
+
+        sortPassengers(filepassengers, passengerSort);
+        setPassengerList(filepassengers);
+
+        const driverws = wb.Sheets[wb.SheetNames[1]];
+        const driverdata: DriverParse[] =
+          utils.sheet_to_json<DriverParse>(driverws);
+        let filedrivers: Driver[] = [];
+        let rides = [];
+        for (let x of driverdata) {
+          rides = [];
+          for (let ride of x.Rides.split(", "))
+            switch (ride) {
+              case "Friday Bible Study 7:00pm":
+                rides.push(RideTimes.FRIDAY);
+                break;
+              case "Sunday First Service 8:00am":
+                rides.push(RideTimes.FIRST);
+                break;
+              case "Sunday Second Service 9:30am":
+                rides.push(RideTimes.SECOND);
+                break;
+              case "Sunday Third Service 11:30am":
+                rides.push(RideTimes.THIRD);
+                break;
+            }
+          filedrivers.push(
+            new Driver({
+              name: x.Name,
+              rides: rides,
+              seats: x.Seats,
+              address: x.Address,
+              college: "UCI",
+              notes: x.Notes,
+            })
+          );
+        }
+
+        sortDrivers(filedrivers, driverSort);
+        setDriverList(filedrivers);
+      })();
+    }
   };
   const clearTest = () => {
     setPassengerList([]);
     setDriverList([]);
   };
 
-  const updateNewDriver = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    /* if (debug) console.log(name + " " + value) */
-    setNewDriverData({ ...newDriverData, [name]: value });
-  };
   const addNewPassenger = (newpassenger: Passenger) => {
     setPassengerList([...passengerList, newpassenger]);
   };
@@ -430,16 +474,29 @@ export default function Page() {
           </button>
         </form>
 
-        <RideManager passengerList={passengerList} driverList={driverList} />
+        <button className="rounded-full border px-2" onClick={toggleDisplay}>
+          {rmDisplay ? "Manage Passengers and Drivers" : "Manage Rides"}
+        </button>
 
-        {debug && (
-          <div className="flex flex-col">
-            <button onClick={loadTest}>Load Defaults</button>
-            <button onClick={clearTest}>Clear</button>
-          </div>
-        )}
+        <div className={rmDisplay ? "w-full" : "hidden"}>
+          <RideManager passengerList={passengerList} driverList={driverList} />
+        </div>
 
-        <div className="flex flex-row w-full justify-evenly">
+        <div
+          className={
+            rmDisplay ? "hidden" : "flex flex-row w-full justify-evenly"
+          }
+        >
+          {debug && (
+            <div className="flex flex-col">
+              <button className="rounded-full border px-2" onClick={loadTest}>
+                Load Defaults
+              </button>
+              <button className="rounded-full border px-2" onClick={clearTest}>
+                Clear
+              </button>
+            </div>
+          )}
           <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
             <h2>Passengers</h2>
             <label>
