@@ -49,7 +49,7 @@ interface DriverProps {
 
 const DriverComponent = ({ data, display }: DriverProps) => {
   return (
-    <div className="p-2 my-1 rounded-md bg-orange-300 dark:bg-orange-700">
+    <div className="p-2 my-1 rounded-md bg-orange-300 dark:bg-orange-700 max-w-[248px]">
       {(!display || display.includes(DriverDisplay.NAME)) && (
         <h3 className="m-1 font-bold text-lg">{data.name}</h3>
       )}
