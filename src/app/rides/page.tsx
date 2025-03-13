@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { read, utils, writeFile } from "xlsx";
 import { RideTimes } from "../_classes/person";
 import {
@@ -25,13 +25,21 @@ interface AddPassengerFormProps {
 }
 
 const AddPassengerForm = ({ passengerCallback }: AddPassengerFormProps) => {
+  const formRef = useRef<HTMLFormElement>(null);
   const [newPassengerData, setNewPassengerData] = useState<NewPassengerData>({
     name: "",
     address: "",
     notes: "",
   });
-  const updateForm = (event: ChangeEvent<HTMLInputElement>) => {
+  const [rideSelect, setRideSelect] = useState<RideTimes>();
+
+  const updateFormInput = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    setNewPassengerData({ ...newPassengerData, [name]: value });
+  };
+  const updateFormSelect = (event: ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setRideSelect(value as RideTimes)
     setNewPassengerData({ ...newPassengerData, [name]: value });
   };
   const addNewPassenger = (event: FormEvent) => {
@@ -39,35 +47,42 @@ const AddPassengerForm = ({ passengerCallback }: AddPassengerFormProps) => {
     if (
       !newPassengerData.name ||
       newPassengerData.name.localeCompare("") == 0
-    ) {
-      alert("Please add a valid name");
-      return;
-    }
+    ) return;
     if (
       !newPassengerData.address ||
       newPassengerData.address.localeCompare("") == 0
-    ) {
-      alert("Please add a valid address");
-      return;
-    }
-    const newPassengerRides = [];
-    if (newPassengerData.friday)
-      newPassengerRides.push(newPassengerData.friday);
-    if (newPassengerData.service)
-      newPassengerRides.push(newPassengerData.service);
-    passengerCallback(
-      new Passenger({
-        name: newPassengerData.name,
-        rides: newPassengerRides,
-        address: newPassengerData.address,
-        college: "UCI",
-        year: Year.OTHER,
-        notes: newPassengerData.notes,
+    ) return;
+    else {
+      const newPassengerRides = [];
+      if (newPassengerData.friday)
+        newPassengerRides.push(newPassengerData.friday);
+      if (newPassengerData.service)
+        newPassengerRides.push(newPassengerData.service);
+      passengerCallback(
+        new Passenger({
+          name: newPassengerData.name,
+          rides: newPassengerRides,
+          address: newPassengerData.address,
+          college: "UCI",
+          year: Year.OTHER,
+          notes: newPassengerData.notes,
+        })
+      );
+      setNewPassengerData({
+        name: "",
+        address: "",
+        notes: "",
       })
-    );
+      formRef.current?.reset();
+      setRideSelect(undefined);
+    }
   };
   return (
-    <form className="my-1 p-2 flex flex-col rounded-md border border-cyan-500 bg-cyan-200 dark:bg-cyan-800">
+    <form
+      className="my-1 p-2 flex flex-col rounded-md border border-cyan-500 bg-cyan-200 dark:bg-cyan-800"
+      onSubmit={addNewPassenger}
+      ref={formRef}
+    >
       <label>Create new Passenger</label>
       <input
         className="rounded-sm border"
@@ -76,7 +91,8 @@ const AddPassengerForm = ({ passengerCallback }: AddPassengerFormProps) => {
         value={newPassengerData.name}
         placeholder="Name"
         required
-        onChange={updateForm}
+        minLength={1}
+        onChange={updateFormInput}
       />
       <input
         className="rounded-sm border"
@@ -85,39 +101,45 @@ const AddPassengerForm = ({ passengerCallback }: AddPassengerFormProps) => {
         value={newPassengerData.address}
         placeholder="Address"
         required
-        onChange={updateForm}
+        minLength={1}
+        onChange={updateFormInput}
       />
       <div className="block">
-        <input
-          type="radio"
+        <select
           name="service"
-          id="first"
-          value={RideTimes.FIRST}
-          onChange={updateForm}
-        />
-        <label htmlFor="first">First</label>
-        <input
-          type="radio"
-          name="service"
-          id="second"
-          value={RideTimes.SECOND}
-          onChange={updateForm}
-        />
-        <label htmlFor="second">Second</label>
-        <input
-          type="radio"
-          name="service"
-          id="third"
-          value={RideTimes.THIRD}
-          onChange={updateForm}
-        />
-        <label htmlFor="third">Third</label>
+          value={rideSelect}
+          onChange={updateFormSelect}
+        >
+          <option
+            className="dark:text-black"
+          >
+            --choose a ride--
+          </option>
+          <option
+            className="dark:text-black"
+            value={RideTimes.FIRST}
+          >
+            First
+          </option>
+          <option
+            className="dark:text-black"
+            value={RideTimes.SECOND}
+          >
+            Second
+          </option>
+          <option
+            className="dark:text-black"
+            value={RideTimes.THIRD}
+          >
+            Third
+          </option>
+        </select>
         <input
           type="checkbox"
           name="friday"
           id="friday"
           value={RideTimes.FRIDAY}
-          onChange={updateForm}
+          onChange={updateFormInput}
         />
         <label htmlFor="friday">Friday</label>
       </div>
@@ -127,10 +149,10 @@ const AddPassengerForm = ({ passengerCallback }: AddPassengerFormProps) => {
         name="notes"
         value={newPassengerData.notes}
         placeholder="Notes"
-        onChange={updateForm}
+        onChange={updateFormInput}
       />
       <br />
-      <button onClick={addNewPassenger}>Submit</button>
+      <button type="submit">Submit</button>
     </form>
   );
 };
@@ -149,49 +171,63 @@ interface AddDriverFormProps {
 }
 
 const AddDriverForm = ({ driverCallback }: AddDriverFormProps) => {
+  const formRef = useRef<HTMLFormElement>(null);
   const [newDriverData, setNewDriverData] = useState<NewDriverData>({
     name: "",
     address: "",
     seats: 0,
     notes: "",
   });
-  const updateForm = (event: ChangeEvent<HTMLInputElement>) => {
+  const [rideSelect, setRideSelect] = useState<RideTimes>();
+
+  const updateFormInput = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    setNewDriverData({ ...newDriverData, [name]: value });
+  };
+  const updateFormSelect = (event: ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setRideSelect(value as RideTimes)
     setNewDriverData({ ...newDriverData, [name]: value });
   };
   const addNewDriver = (event: FormEvent) => {
     event.preventDefault();
-    if (!newDriverData.name || newDriverData.name.localeCompare("") == 0) {
-      alert("Please add a valid name");
-      return;
-    }
+    if (!newDriverData.name || newDriverData.name.localeCompare("") == 0) return;
     if (
       !newDriverData.address ||
       newDriverData.address.localeCompare("") == 0
-    ) {
-      alert("Please add a valid address");
-      return;
-    }
+    ) return;
     if (!newDriverData.seats || newDriverData.seats < 1) {
       alert("Please add at least one seat");
       return;
     }
-    const newPassengerRides = [];
-    if (newDriverData.friday) newPassengerRides.push(newDriverData.friday);
-    if (newDriverData.service) newPassengerRides.push(newDriverData.service);
+    const newDriverRides = [];
+    if (newDriverData.friday) newDriverRides.push(newDriverData.friday);
+    if (newDriverData.service) newDriverRides.push(newDriverData.service);
     driverCallback(
       new Driver({
         name: newDriverData.name,
-        rides: newPassengerRides,
+        rides: newDriverRides,
         seats: newDriverData.seats,
         address: newDriverData.address,
         college: "UCI",
         notes: newDriverData.notes,
       })
     );
+    setNewDriverData({
+      name: "",
+      address: "",
+      seats: 0,
+      notes: "",
+    })
+    formRef.current?.reset();
+    setRideSelect(undefined);
   };
   return (
-    <form className="my-1 p-2 flex flex-col rounded-md border border-orange-500 bg-orange-200 dark:bg-orange-800">
+    <form
+      className="my-1 p-2 flex flex-col rounded-md border border-orange-500 bg-orange-200 dark:bg-orange-800"
+      onSubmit={addNewDriver}
+      ref={formRef}
+    >
       <label>Create new Driver</label>
       <input
         className="rounded-sm border"
@@ -200,7 +236,8 @@ const AddDriverForm = ({ driverCallback }: AddDriverFormProps) => {
         value={newDriverData.name}
         placeholder="Name"
         required
-        onChange={updateForm}
+        minLength={1}
+        onChange={updateFormInput}
       />
       <input
         className="rounded-sm border"
@@ -209,49 +246,55 @@ const AddDriverForm = ({ driverCallback }: AddDriverFormProps) => {
         value={newDriverData.address}
         placeholder="Address"
         required
-        onChange={updateForm}
+        minLength={1}
+        onChange={updateFormInput}
       />
       <input
         className="rounded-sm border"
         type="number"
         name="seats"
         value={newDriverData.seats}
-        min="0"
+        min="1"
         placeholder="Seats"
         required
-        onChange={updateForm}
+        onChange={updateFormInput}
       />
       <div className="block">
-        <input
-          type="radio"
+        <select
           name="service"
-          id="first"
-          value={RideTimes.FIRST}
-          onChange={updateForm}
-        />
-        <label htmlFor="first">First</label>
-        <input
-          type="radio"
-          name="service"
-          id="second"
-          value={RideTimes.SECOND}
-          onChange={updateForm}
-        />
-        <label htmlFor="second">Second</label>
-        <input
-          type="radio"
-          name="service"
-          id="third"
-          value={RideTimes.THIRD}
-          onChange={updateForm}
-        />
-        <label htmlFor="third">Third</label>
+          value={rideSelect}
+          onChange={updateFormSelect}
+        >
+          <option
+            className="dark:text-black"
+          >
+            --choose a ride--
+          </option>
+          <option
+            className="dark:text-black"
+            value={RideTimes.FIRST}
+          >
+            First
+          </option>
+          <option
+            className="dark:text-black"
+            value={RideTimes.SECOND}
+          >
+            Second
+          </option>
+          <option
+            className="dark:text-black"
+            value={RideTimes.THIRD}
+          >
+            Third
+          </option>
+        </select>
         <input
           type="checkbox"
           name="friday"
           id="friday"
           value={RideTimes.FRIDAY}
-          onChange={updateForm}
+          onChange={updateFormInput}
         />
         <label htmlFor="friday">Friday</label>
       </div>
@@ -261,10 +304,10 @@ const AddDriverForm = ({ driverCallback }: AddDriverFormProps) => {
         name="notes"
         value={newDriverData.notes}
         placeholder="Notes"
-        onChange={updateForm}
+        onChange={updateFormInput}
       />
       <br />
-      <button onClick={addNewDriver}>Submit</button>
+      <button type="submit">Submit</button>
     </form>
   );
 };
@@ -294,6 +337,7 @@ interface DriverParse {
 }
 
 export default function Page() {
+  const fileSelectorRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [passengerList, setPassengerList] = useState<Passenger[]>([]);
@@ -316,6 +360,13 @@ export default function Page() {
     }
   };
 
+  const usePlaceholder = () => {
+    setSelectedFile(null)
+    if (fileSelectorRef.current) fileSelectorRef.current.value = "";
+    setPassengerList([]);
+    setDriverList([]);
+  }
+
   const updatePassengerSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setPassengerSort(event.target.value as PassengerSort);
     if (debug) console.log("Set Passenger sort to: " + event.target.value);
@@ -337,7 +388,7 @@ export default function Page() {
   const loadTest = () => {
     {
       (async () => {
-        const f = await fetch("/placeholdersheet.xlsx");
+        const f = selectedFile ? selectedFile : await fetch("/placeholdersheet.xlsx");
         const ab = await f.arrayBuffer();
 
         const wb = read(ab);
@@ -351,21 +402,22 @@ export default function Page() {
         for (let x of passengerdata) {
           mainrideneeds = [];
           backuprideneeds = [];
-          for (let ride of x.Rides.split(", "))
-            switch (ride) {
-              case "Friday Bible Study 7:00pm":
-                mainrideneeds.push(RideTimes.FRIDAY);
-                break;
-              case "Sunday First Service 8:00am":
-                mainrideneeds.push(RideTimes.FIRST);
-                break;
-              case "Sunday Second Service 9:30am":
-                mainrideneeds.push(RideTimes.SECOND);
-                break;
-              case "Sunday Third Service 11:30am":
-                mainrideneeds.push(RideTimes.THIRD);
-                break;
-            }
+          if (x["Rides"])
+            for (let ride of x.Rides.split(", "))
+              switch (ride) {
+                case "Friday Bible Study 7:00pm":
+                  mainrideneeds.push(RideTimes.FRIDAY);
+                  break;
+                case "Sunday First Service 8:00am":
+                  mainrideneeds.push(RideTimes.FIRST);
+                  break;
+                case "Sunday Second Service 9:30am":
+                  mainrideneeds.push(RideTimes.SECOND);
+                  break;
+                case "Sunday Third Service 11:30am":
+                  mainrideneeds.push(RideTimes.THIRD);
+                  break;
+              }
           if (x["Backup Rides"])
             for (let ride of x["Backup Rides"].split(", "))
               switch (ride) {
@@ -381,11 +433,11 @@ export default function Page() {
               }
           filepassengers.push(
             new Passenger({
-              name: x.Name,
+              name: (x.Name ? x.Name : ""),
               rides: mainrideneeds,
-              address: x.Address,
-              college: x.College,
-              year: x.Year as Year,
+              address: (x.Address ? x.Address : ""),
+              college: (x.College ? x.College : ""),
+              year: (x.Year ? (x.Year as Year) : Year.OTHER),
               backup: backuprideneeds,
               notes: x.Notes,
             })
@@ -434,10 +486,6 @@ export default function Page() {
       })();
     }
   };
-  const clearTest = () => {
-    setPassengerList([]);
-    setDriverList([]);
-  };
 
   const addNewPassenger = (newpassenger: Passenger) => {
     setPassengerList([...passengerList, newpassenger]);
@@ -447,7 +495,7 @@ export default function Page() {
   };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-[calc(100vh-132px)] p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <h1>rides</h1>
         <p>
@@ -455,24 +503,31 @@ export default function Page() {
           process sheet into passengers/drivers/rides
         </p>
 
-        <form>
+        <div>
           <label className="block">
             <span className="text-neutral-500">Choose a sheet to upload:</span>
             <br />
             <input
+              className="file:rounded-full file:border file:px-2"
               type="file"
               onChange={handleFileChange}
               accept=".xlsx,.xls,.csv,.ods,.gsheet"
+              ref={fileSelectorRef}
             />
           </label>
-          <button
-            className="rounded-full border px-2 disabled:text-neutral-500"
-            disabled={!selectedFile}
-            /* onClick={} */
-          >
-            Upload
-          </button>
-        </form>
+          <div className="flex flex-row">
+            <button
+              className="rounded-full border px-2 disabled:text-neutral-500"
+              onClick={loadTest}
+            >
+              Load
+            </button>
+              <button className="rounded-full border px-2" onClick={usePlaceholder}>
+                Clear
+              </button>
+            </div>
+          <p>Using {selectedFile ? selectedFile.name : "placeholder sheet"}</p>
+        </div>
 
         <button className="rounded-full border px-2" onClick={toggleDisplay}>
           {rmDisplay ? "Manage Passengers and Drivers" : "Manage Rides"}
@@ -487,16 +542,6 @@ export default function Page() {
             rmDisplay ? "hidden" : "flex flex-row w-full justify-evenly"
           }
         >
-          {debug && (
-            <div className="flex flex-col">
-              <button className="rounded-full border px-2" onClick={loadTest}>
-                Load Defaults
-              </button>
-              <button className="rounded-full border px-2" onClick={clearTest}>
-                Clear
-              </button>
-            </div>
-          )}
           <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
             <h2>Passengers</h2>
             <label>
@@ -531,7 +576,7 @@ export default function Page() {
               <span className="text-neutral-500">Sort by: </span>
               <select
                 className="rounded-sm border"
-                defaultValue={driverSort}
+                value={driverSort}
                 onChange={updateDriverSort}
               >
                 {Object.values(DriverSort).map((option) => (
