@@ -1,7 +1,7 @@
 // passenger.tsx
 
 import { ReactElement } from "react";
-import { Person, RideTimes } from "./person";
+import { College, Person, RideTimes } from "./person";
 
 export enum Year {
   FRESHMAN = "Freshman",
@@ -27,7 +27,7 @@ export class Passenger extends Person {
     name: string;
     rides: RideTimes[];
     address: string;
-    college: string;
+    college: College;
     year: Year;
     backup?: RideTimes[];
     notes?: string;
@@ -37,7 +37,7 @@ export class Passenger extends Person {
     this.backup = backup;
   }
 
-  getName(): Year {
+  getYear(): Year {
     return this.year;
   }
 

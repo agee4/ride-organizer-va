@@ -40,7 +40,7 @@ const RM_PassengerComponent = ({
   };
 
   return (
-    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800">
+    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[248px]">
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
           <h3 className="m-1 font-bold text-lg">{data.name}</h3>
@@ -132,7 +132,7 @@ const RM_RideComponent = ({ data }: RideProps) => {
     >
       <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
       <ul className="m-1">
-        {data.driver.display([DriverDisplay.ADDRESS, DriverDisplay.NOTES])}
+        {data.driver.display([DriverDisplay.ADDRESS, DriverDisplay.COLLEGE, DriverDisplay.NOTES])}
         <ul className="m-1">
           <li className="text-center">Seats Left: {seatsleft}</li>
           {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
@@ -145,6 +145,7 @@ const RM_RideComponent = ({ data }: RideProps) => {
                 display={[
                   PassengerDisplay.NAME,
                   PassengerDisplay.ADDRESS,
+                  PassengerDisplay.COLLEGE,
                   PassengerDisplay.NOTES,
                 ]}
               />
@@ -166,11 +167,6 @@ const RM_RideComponent = ({ data }: RideProps) => {
   );
 };
 
-interface RideManagerProps {
-  passengerList: Passenger[];
-  driverList: Driver[];
-}
-
 interface RideManagerContextProps {
   passengerList: Passenger[];
   rideList: Ride[];
@@ -178,6 +174,11 @@ interface RideManagerContextProps {
 }
 
 const RideManagerContext = createContext<RideManagerContextProps | null>(null);
+
+interface RideManagerProps {
+  passengerList: Passenger[];
+  driverList: Driver[];
+}
 
 export const RideManager = ({
   passengerList,

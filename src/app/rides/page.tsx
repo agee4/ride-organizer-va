@@ -1,316 +1,12 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { read, utils, writeFile } from "xlsx";
-import { RideTimes } from "../_classes/person";
-import {
-  Passenger,
-  PassengerSort,
-  sortPassengers,
-  Year,
-} from "../_classes/passenger";
-import { Driver, DriverSort, sortDrivers } from "../_classes/driver";
+import { College, CRUD, RideTimes } from "../_classes/person";
+import { Passenger, Year } from "../_classes/passenger";
+import { Driver } from "../_classes/driver";
 import { RideManager } from "../_components/ride_manager";
-
-interface NewPassengerData {
-  name: string;
-  address: string;
-  service?: RideTimes;
-  friday?: RideTimes;
-  notes?: string;
-}
-
-interface AddPassengerFormProps {
-  passengerCallback: (newpassenger: Passenger) => void;
-}
-
-const AddPassengerForm = ({ passengerCallback }: AddPassengerFormProps) => {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [newPassengerData, setNewPassengerData] = useState<NewPassengerData>({
-    name: "",
-    address: "",
-    notes: "",
-  });
-  const [rideSelect, setRideSelect] = useState<RideTimes>();
-
-  const updateFormInput = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setNewPassengerData({ ...newPassengerData, [name]: value });
-  };
-  const updateFormSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = event.target;
-    setRideSelect(value as RideTimes)
-    setNewPassengerData({ ...newPassengerData, [name]: value });
-  };
-  const addNewPassenger = (event: FormEvent) => {
-    event.preventDefault();
-    if (
-      !newPassengerData.name ||
-      newPassengerData.name.localeCompare("") == 0
-    ) return;
-    if (
-      !newPassengerData.address ||
-      newPassengerData.address.localeCompare("") == 0
-    ) return;
-    else {
-      const newPassengerRides = [];
-      if (newPassengerData.friday)
-        newPassengerRides.push(newPassengerData.friday);
-      if (newPassengerData.service)
-        newPassengerRides.push(newPassengerData.service);
-      passengerCallback(
-        new Passenger({
-          name: newPassengerData.name,
-          rides: newPassengerRides,
-          address: newPassengerData.address,
-          college: "UCI",
-          year: Year.OTHER,
-          notes: newPassengerData.notes,
-        })
-      );
-      setNewPassengerData({
-        name: "",
-        address: "",
-        notes: "",
-      })
-      formRef.current?.reset();
-      setRideSelect(undefined);
-    }
-  };
-  return (
-    <form
-      className="my-1 p-2 flex flex-col rounded-md border border-cyan-500 bg-cyan-200 dark:bg-cyan-800"
-      onSubmit={addNewPassenger}
-      ref={formRef}
-    >
-      <label>Create new Passenger</label>
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="name"
-        value={newPassengerData.name}
-        placeholder="Name"
-        required
-        minLength={1}
-        onChange={updateFormInput}
-      />
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="address"
-        value={newPassengerData.address}
-        placeholder="Address"
-        required
-        minLength={1}
-        onChange={updateFormInput}
-      />
-      <div className="block">
-        <select
-          name="service"
-          value={rideSelect}
-          onChange={updateFormSelect}
-        >
-          <option
-            className="dark:text-black"
-          >
-            --choose a ride--
-          </option>
-          <option
-            className="dark:text-black"
-            value={RideTimes.FIRST}
-          >
-            First
-          </option>
-          <option
-            className="dark:text-black"
-            value={RideTimes.SECOND}
-          >
-            Second
-          </option>
-          <option
-            className="dark:text-black"
-            value={RideTimes.THIRD}
-          >
-            Third
-          </option>
-        </select>
-        <input
-          type="checkbox"
-          name="friday"
-          id="friday"
-          value={RideTimes.FRIDAY}
-          onChange={updateFormInput}
-        />
-        <label htmlFor="friday">Friday</label>
-      </div>
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="notes"
-        value={newPassengerData.notes}
-        placeholder="Notes"
-        onChange={updateFormInput}
-      />
-      <br />
-      <button type="submit">Submit</button>
-    </form>
-  );
-};
-
-interface NewDriverData {
-  name: string;
-  address: string;
-  seats: number;
-  service?: RideTimes;
-  friday?: RideTimes;
-  notes?: string;
-}
-
-interface AddDriverFormProps {
-  driverCallback: (newdriver: Driver) => void;
-}
-
-const AddDriverForm = ({ driverCallback }: AddDriverFormProps) => {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [newDriverData, setNewDriverData] = useState<NewDriverData>({
-    name: "",
-    address: "",
-    seats: 0,
-    notes: "",
-  });
-  const [rideSelect, setRideSelect] = useState<RideTimes>();
-
-  const updateFormInput = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setNewDriverData({ ...newDriverData, [name]: value });
-  };
-  const updateFormSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = event.target;
-    setRideSelect(value as RideTimes)
-    setNewDriverData({ ...newDriverData, [name]: value });
-  };
-  const addNewDriver = (event: FormEvent) => {
-    event.preventDefault();
-    if (!newDriverData.name || newDriverData.name.localeCompare("") == 0) return;
-    if (
-      !newDriverData.address ||
-      newDriverData.address.localeCompare("") == 0
-    ) return;
-    if (!newDriverData.seats || newDriverData.seats < 1) {
-      alert("Please add at least one seat");
-      return;
-    }
-    const newDriverRides = [];
-    if (newDriverData.friday) newDriverRides.push(newDriverData.friday);
-    if (newDriverData.service) newDriverRides.push(newDriverData.service);
-    driverCallback(
-      new Driver({
-        name: newDriverData.name,
-        rides: newDriverRides,
-        seats: newDriverData.seats,
-        address: newDriverData.address,
-        college: "UCI",
-        notes: newDriverData.notes,
-      })
-    );
-    setNewDriverData({
-      name: "",
-      address: "",
-      seats: 0,
-      notes: "",
-    })
-    formRef.current?.reset();
-    setRideSelect(undefined);
-  };
-  return (
-    <form
-      className="my-1 p-2 flex flex-col rounded-md border border-orange-500 bg-orange-200 dark:bg-orange-800"
-      onSubmit={addNewDriver}
-      ref={formRef}
-    >
-      <label>Create new Driver</label>
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="name"
-        value={newDriverData.name}
-        placeholder="Name"
-        required
-        minLength={1}
-        onChange={updateFormInput}
-      />
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="address"
-        value={newDriverData.address}
-        placeholder="Address"
-        required
-        minLength={1}
-        onChange={updateFormInput}
-      />
-      <input
-        className="rounded-sm border"
-        type="number"
-        name="seats"
-        value={newDriverData.seats}
-        min="1"
-        placeholder="Seats"
-        required
-        onChange={updateFormInput}
-      />
-      <div className="block">
-        <select
-          name="service"
-          value={rideSelect}
-          onChange={updateFormSelect}
-        >
-          <option
-            className="dark:text-black"
-          >
-            --choose a ride--
-          </option>
-          <option
-            className="dark:text-black"
-            value={RideTimes.FIRST}
-          >
-            First
-          </option>
-          <option
-            className="dark:text-black"
-            value={RideTimes.SECOND}
-          >
-            Second
-          </option>
-          <option
-            className="dark:text-black"
-            value={RideTimes.THIRD}
-          >
-            Third
-          </option>
-        </select>
-        <input
-          type="checkbox"
-          name="friday"
-          id="friday"
-          value={RideTimes.FRIDAY}
-          onChange={updateFormInput}
-        />
-        <label htmlFor="friday">Friday</label>
-      </div>
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="notes"
-        value={newDriverData.notes}
-        placeholder="Notes"
-        onChange={updateFormInput}
-      />
-      <br />
-      <button type="submit">Submit</button>
-    </form>
-  );
-};
+import { PeopleManager } from "../_components/people_manager";
 
 interface PassengerParse {
   Timestamp: number;
@@ -332,6 +28,7 @@ interface DriverParse {
   Seats: number;
   Rides: string;
   Address: string;
+  College: string;
   Notes: string;
   "Email Address": string;
 }
@@ -342,11 +39,6 @@ export default function Page() {
 
   const [passengerList, setPassengerList] = useState<Passenger[]>([]);
   const [driverList, setDriverList] = useState<Driver[]>([]);
-
-  const [passengerSort, setPassengerSort] = useState<PassengerSort>(
-    PassengerSort.NAME
-  );
-  const [driverSort, setDriverSort] = useState<DriverSort>(DriverSort.NAME);
 
   const [rmDisplay, setRMdisplay] = useState(false);
 
@@ -361,34 +53,41 @@ export default function Page() {
   };
 
   const usePlaceholder = () => {
-    setSelectedFile(null)
+    setSelectedFile(null);
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
     setPassengerList([]);
     setDriverList([]);
-  }
+  };
 
-  const updatePassengerSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setPassengerSort(event.target.value as PassengerSort);
-    if (debug) console.log("Set Passenger sort to: " + event.target.value);
-    const sortedlist = [...passengerList];
-    sortPassengers(sortedlist, event.target.value as PassengerSort);
-    setPassengerList(sortedlist);
+  const crudPassenger = (passenger: Passenger, operation: CRUD) => {
+    switch (operation) {
+      case CRUD.CREATE:
+        setPassengerList([...passengerList, passenger]);
+        break;
+      case CRUD.DELETE:
+        setPassengerList([...passengerList].filter((x) => x !== passenger));
+        break;
+      default:
+    }
   };
-  const updateDriverSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setDriverSort(event.target.value as DriverSort);
-    if (debug) console.log("Set Driver sort to: " + event.target.value);
-    const sortedlist = [...driverList];
-    sortDrivers(sortedlist, event.target.value as DriverSort);
-    setDriverList(sortedlist);
-  };
-  const toggleDisplay = () => {
-    setRMdisplay(!rmDisplay);
+  const crudDriver = (driver: Driver, operation: CRUD) => {
+    switch (operation) {
+      case CRUD.CREATE:
+        setDriverList([...driverList, driver]);
+        break;
+      case CRUD.DELETE:
+        setDriverList([...driverList].filter((x) => x !== driver));
+        break;
+      default:
+    }
   };
 
   const loadTest = () => {
     {
       (async () => {
-        const f = selectedFile ? selectedFile : await fetch("/placeholdersheet.xlsx");
+        const f = selectedFile
+          ? selectedFile
+          : await fetch("/placeholdersheet.xlsx");
         const ab = await f.arrayBuffer();
 
         const wb = read(ab);
@@ -433,18 +132,16 @@ export default function Page() {
               }
           filepassengers.push(
             new Passenger({
-              name: (x.Name ? x.Name : ""),
+              name: x.Name ? x.Name : "",
               rides: mainrideneeds,
-              address: (x.Address ? x.Address : ""),
-              college: (x.College ? x.College : ""),
-              year: (x.Year ? (x.Year as Year) : Year.OTHER),
+              address: x.Address ? x.Address : "",
+              college: x.College ? (x.College as College) : College.OTHER,
+              year: x.Year ? (x.Year as Year) : Year.OTHER,
               backup: backuprideneeds,
               notes: x.Notes,
             })
           );
         }
-
-        sortPassengers(filepassengers, passengerSort);
         setPassengerList(filepassengers);
 
         const driverws = wb.Sheets[wb.SheetNames[1]];
@@ -471,27 +168,21 @@ export default function Page() {
             }
           filedrivers.push(
             new Driver({
-              name: x.Name,
+              name: x.Name ? x.Name : "",
               rides: rides,
-              seats: x.Seats,
-              address: x.Address,
-              college: "UCI",
+              seats: x.Seats ? x.Seats : 0,
+              address: x.Address ? x.Address : "",
+              college: x.College ? (x.College as College) : College.OTHER,
               notes: x.Notes,
             })
           );
         }
-
-        sortDrivers(filedrivers, driverSort);
         setDriverList(filedrivers);
       })();
     }
   };
-
-  const addNewPassenger = (newpassenger: Passenger) => {
-    setPassengerList([...passengerList, newpassenger]);
-  };
-  const addNewDriver = (newdriver: Driver) => {
-    setDriverList([...driverList, newdriver]);
+  const toggleDisplay = () => {
+    setRMdisplay(!rmDisplay);
   };
 
   return (
@@ -522,10 +213,13 @@ export default function Page() {
             >
               Load
             </button>
-              <button className="rounded-full border px-2" onClick={usePlaceholder}>
-                Clear
-              </button>
-            </div>
+            <button
+              className="rounded-full border px-2"
+              onClick={usePlaceholder}
+            >
+              Clear
+            </button>
+          </div>
           <p>Using {selectedFile ? selectedFile.name : "placeholder sheet"}</p>
         </div>
 
@@ -536,67 +230,13 @@ export default function Page() {
         <div className={rmDisplay ? "w-full" : "hidden"}>
           <RideManager passengerList={passengerList} driverList={driverList} />
         </div>
-
-        <div
-          className={
-            rmDisplay ? "hidden" : "flex flex-row w-full justify-evenly"
-          }
-        >
-          <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
-            <h2>Passengers</h2>
-            <label>
-              <span className="text-neutral-500">Sort by: </span>
-              <select
-                className="rounded-sm border"
-                value={passengerSort}
-                onChange={updatePassengerSort}
-              >
-                {Object.values(PassengerSort).map((option) => (
-                  <option
-                    className="dark:text-black"
-                    key={option}
-                    value={option}
-                  >
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <ul className="max-h-[50dvh] overflow-auto">
-              {passengerList.map((item, index) => (
-                <li key={index}>{item.display()}</li>
-              ))}
-            </ul>
-            <AddPassengerForm passengerCallback={addNewPassenger} />
-          </div>
-
-          <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
-            <h2>Drivers</h2>
-            <label>
-              <span className="text-neutral-500">Sort by: </span>
-              <select
-                className="rounded-sm border"
-                value={driverSort}
-                onChange={updateDriverSort}
-              >
-                {Object.values(DriverSort).map((option) => (
-                  <option
-                    className="dark:text-black"
-                    key={option}
-                    value={option}
-                  >
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <ul className="max-h-[50dvh] overflow-auto">
-              {driverList.map((item, index) => (
-                <li key={index}>{item.display()}</li>
-              ))}
-            </ul>
-            <AddDriverForm driverCallback={addNewDriver} />
-          </div>
+        <div className={rmDisplay ? "hidden" : "w-full"}>
+          <PeopleManager
+            passengerList={passengerList}
+            driverList={driverList}
+            passengerCallback={crudPassenger}
+            driverCallback={crudDriver}
+          />
         </div>
       </main>
     </div>

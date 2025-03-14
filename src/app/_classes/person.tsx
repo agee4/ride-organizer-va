@@ -1,10 +1,25 @@
 // person.tsx
 
+export enum CRUD {
+  CREATE,
+  READ,
+  UPDATE,
+  DELETE,
+}
+
 export enum RideTimes {
   FRIDAY = "Friday",
   FIRST = "First",
   SECOND = "Second",
   THIRD = "Third",
+}
+
+export enum College {
+  UCI = "UCI",
+  CSULB = "CSULB",
+  BIOLA = "Biola",
+  CHAPMAN = "Chapman",
+  OTHER = "Other"
 }
 
 export class Person {

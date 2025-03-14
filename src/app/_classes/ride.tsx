@@ -58,7 +58,7 @@ const RideComponent = ({ data }: RideProps) => {
     >
       <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
       <ul className="m-1">
-        {data.driver.display([DriverDisplay.ADDRESS, DriverDisplay.NOTES])}
+        {data.driver.display([DriverDisplay.ADDRESS, DriverDisplay.COLLEGE, DriverDisplay.NOTES])}
         <ul className="m-1">
           <li className="text-center">Seats Left: {seatsleft}</li>
           {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
@@ -67,6 +67,7 @@ const RideComponent = ({ data }: RideProps) => {
               {value.display([
                 PassengerDisplay.NAME,
                 PassengerDisplay.ADDRESS,
+                PassengerDisplay.COLLEGE,
                 PassengerDisplay.NOTES,
               ])}
             </li>
