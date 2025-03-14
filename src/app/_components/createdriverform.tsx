@@ -1,10 +1,11 @@
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
-import { CRUD, RideTimes } from "../_classes/person";
+import { College, CRUD, RideTimes } from "../_classes/person";
 import { Driver } from "../_classes/driver";
 
 interface NewDriverData {
   name: string;
   address: string;
+  college: College.OTHER;
   seats: number;
   service?: RideTimes;
   friday?: RideTimes;
@@ -20,10 +21,13 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
   const [newDriverData, setNewDriverData] = useState<NewDriverData>({
     name: "",
     address: "",
+    college: College.OTHER,
     seats: 0,
     notes: "",
   });
   const [rideSelect, setRideSelect] = useState<RideTimes>();
+  const [collegeSelect, setCollegeSelect] = useState<College>();
+
   const updateForm = (
     event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
   ) => {
@@ -51,14 +55,15 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
         rides: newDriverRides,
         seats: newDriverData.seats,
         address: newDriverData.address,
-        college: "UCI",
+        college: newDriverData.college ? newDriverData.college : College.OTHER,
         notes: newDriverData.notes,
       }),
-      CRUD.CREATE,
+      CRUD.CREATE
     );
     setNewDriverData({
       name: "",
       address: "",
+      college: College.OTHER,
       seats: 0,
       notes: "",
     });
@@ -82,16 +87,36 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
         minLength={1}
         onChange={updateForm}
       />
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="address"
-        value={newDriverData.address}
-        placeholder="Address"
-        required
-        minLength={1}
-        onChange={updateForm}
-      />
+      <div className="block">
+        <input
+          className="rounded-sm border w-[143px]"
+          type="text"
+          name="address"
+          value={newDriverData.address}
+          placeholder="Address"
+          required
+          minLength={1}
+          onChange={updateForm}
+        />
+        <select name="college" value={collegeSelect} onChange={updateForm}>
+          <option className="dark:text-black">--</option>
+          <option className="dark:text-black" value={College.UCI}>
+            UCI
+          </option>
+          <option className="dark:text-black" value={College.CSULB}>
+            CSULB
+          </option>
+          <option className="dark:text-black" value={College.BIOLA}>
+            Biola
+          </option>
+          <option className="dark:text-black" value={College.CHAPMAN}>
+            Chapman
+          </option>
+          <option className="dark:text-black" value={College.OTHER}>
+            Other
+          </option>
+        </select>
+      </div>
       <input
         className="rounded-sm border"
         type="number"

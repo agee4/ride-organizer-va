@@ -15,6 +15,7 @@ import {
   sortPassengers,
 } from "../_classes/passenger";
 import { Ride, RideSort, sortRides } from "../_classes/ride";
+import { College, CollegeTag } from "../_classes/person";
 
 interface RM_PassengerProps {
   data: Passenger;
@@ -50,11 +51,17 @@ const RM_PassengerComponent = ({
         </button>
       </div>
       <ul className="m-1">
-        {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-          <li>Addr: {data.address}</li>
-        )}
-        {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-          <li>Coll: {data.college}</li>
+        {(!display ||
+          display.includes(PassengerDisplay.ADDRESS) ||
+          display.includes(PassengerDisplay.COLLEGE)) && (
+          <li>
+            {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
+              <CollegeTag data={data.college as College} />
+            )}
+            {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
+              <span>{data.address}</span>
+            )}
+          </li>
         )}
         {(!display || display.includes(PassengerDisplay.YEAR)) && (
           <li>Year: {data.year}</li>
@@ -132,7 +139,11 @@ const RM_RideComponent = ({ data }: RideProps) => {
     >
       <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
       <ul className="m-1">
-        {data.driver.display([DriverDisplay.ADDRESS, DriverDisplay.COLLEGE, DriverDisplay.NOTES])}
+        {data.driver.display([
+          DriverDisplay.ADDRESS,
+          DriverDisplay.COLLEGE,
+          DriverDisplay.NOTES,
+        ])}
         <ul className="m-1">
           <li className="text-center">Seats Left: {seatsleft}</li>
           {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}

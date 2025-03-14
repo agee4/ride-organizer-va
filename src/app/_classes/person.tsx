@@ -19,7 +19,7 @@ export enum College {
   CSULB = "CSULB",
   BIOLA = "Biola",
   CHAPMAN = "Chapman",
-  OTHER = "Other"
+  OTHER = "Other",
 }
 
 export class Person {
@@ -59,3 +59,27 @@ export class Person {
     return this.notes ? this.notes : "";
   }
 }
+
+export const CollegeTag = ({ data }: { data: College }) => {
+  let color;
+  switch (data) {
+    case College.UCI:
+      color = " text-amber-300 bg-blue-700";
+      break;
+    case College.CSULB:
+      color = " text-black bg-amber-500";
+      break;
+    case College.BIOLA:
+      color = " text-black bg-red-500";
+      break;
+    case College.CHAPMAN:
+      color = " text-red-500 bg-black";
+      break;
+    default:
+      color = "bg-neutral-200 dark:bg-neutral-800";
+  }
+
+  return (
+    <span className={"rounded-md p-1 mr-1 font-bold" + color}>{data}</span>
+  );
+};

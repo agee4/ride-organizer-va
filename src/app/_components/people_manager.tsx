@@ -1,8 +1,13 @@
 // people_manager.tsx
 
 import { ChangeEvent, useEffect, useState } from "react";
-import { CRUD } from "../_classes/person";
-import { Driver, DriverDisplay, DriverSort, sortDrivers } from "../_classes/driver";
+import { College, CollegeTag, CRUD } from "../_classes/person";
+import {
+  Driver,
+  DriverDisplay,
+  DriverSort,
+  sortDrivers,
+} from "../_classes/driver";
 import {
   Passenger,
   PassengerDisplay,
@@ -38,11 +43,17 @@ const PM_PassengerComponent = ({
         </button>
       </div>
       <ul className="m-1">
-        {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-          <li>Addr: {data.address}</li>
-        )}
-        {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-          <li>Coll: {data.college}</li>
+        {(!display ||
+          display.includes(PassengerDisplay.ADDRESS) ||
+          display.includes(PassengerDisplay.COLLEGE)) && (
+          <li>
+            {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
+              <CollegeTag data={data.college as College} />
+            )}
+            {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
+              <span>{data.address}</span>
+            )}
+          </li>
         )}
         {(!display || display.includes(PassengerDisplay.YEAR)) && (
           <li>Year: {data.year}</li>
@@ -107,11 +118,17 @@ const PM_DriverComponent = ({
         </button>
       </div>
       <ul className="m-1">
-        {(!display || display.includes(DriverDisplay.ADDRESS)) && (
-          <li>Addr: {data.address}</li>
-        )}
-        {(!display || display.includes(DriverDisplay.COLLEGE)) && (
-          <li>Coll: {data.college}</li>
+        {(!display ||
+          display.includes(DriverDisplay.ADDRESS) ||
+          display.includes(DriverDisplay.COLLEGE)) && (
+          <li>
+            {(!display || display.includes(DriverDisplay.COLLEGE)) && (
+              <CollegeTag data={data.college as College} />
+            )}
+            {(!display || display.includes(DriverDisplay.ADDRESS)) && (
+              <span>{data.address}</span>
+            )}
+          </li>
         )}
         {(!display || display.includes(DriverDisplay.SEATS)) && (
           <li>Seats: {data.seats}</li>
@@ -236,11 +253,8 @@ export const PeopleManager = ({
         <ul className="max-h-[50dvh] overflow-auto">
           {pmDriverList.map((item, index) => (
             <li key={index}>
-            <PM_DriverComponent
-              data={item}
-              driverCallback={driverCallback}
-            />
-          </li>
+              <PM_DriverComponent data={item} driverCallback={driverCallback} />
+            </li>
           ))}
         </ul>
         <CreateDriverForm driverCallback={driverCallback} />

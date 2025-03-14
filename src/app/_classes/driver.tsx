@@ -1,7 +1,7 @@
 // driver.tsx
 
 import { ReactElement } from "react";
-import { Person, RideTimes } from "./person";
+import { College, CollegeTag, Person, RideTimes } from "./person";
 
 export class Driver extends Person {
   public seats: number;
@@ -17,7 +17,7 @@ export class Driver extends Person {
     name: string;
     rides: RideTimes[];
     address: string;
-    college: string;
+    college: College;
     seats: number;
     notes?: string;
   }) {
@@ -54,11 +54,17 @@ const DriverComponent = ({ data, display }: DriverProps) => {
         <h3 className="m-1 font-bold text-lg">{data.name}</h3>
       )}
       <ul className="m-1">
-        {(!display || display.includes(DriverDisplay.ADDRESS)) && (
-          <li>Addr: {data.address}</li>
-        )}
-        {(!display || display.includes(DriverDisplay.COLLEGE)) && (
-          <li>Coll: {data.college}</li>
+        {(!display ||
+          display.includes(DriverDisplay.ADDRESS) ||
+          display.includes(DriverDisplay.COLLEGE)) && (
+          <li>
+            {(!display || display.includes(DriverDisplay.COLLEGE)) && (
+              <CollegeTag data={data.college as College} />
+            )}
+            {(!display || display.includes(DriverDisplay.ADDRESS)) && (
+              <span>{data.address}</span>
+            )}
+          </li>
         )}
         {(!display || display.includes(DriverDisplay.SEATS)) && (
           <li>Seats: {data.seats}</li>

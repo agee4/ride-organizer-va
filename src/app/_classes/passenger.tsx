@@ -1,7 +1,7 @@
 // passenger.tsx
 
 import { ReactElement } from "react";
-import { College, Person, RideTimes } from "./person";
+import { College, CollegeTag, Person, RideTimes } from "./person";
 
 export enum Year {
   FRESHMAN = "Freshman",
@@ -66,11 +66,17 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
         <h3 className="m-1 font-bold text-lg">{data.name}</h3>
       )}
       <ul className="m-1">
-        {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-          <li>Addr: {data.address}</li>
-        )}
-        {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-          <li>Coll: {data.college}</li>
+        {(!display ||
+          display.includes(PassengerDisplay.ADDRESS) ||
+          display.includes(PassengerDisplay.COLLEGE)) && (
+          <li>
+            {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
+              <CollegeTag data={data.college as College} />
+            )}
+            {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
+              <span>{data.address}</span>
+            )}
+          </li>
         )}
         {(!display || display.includes(PassengerDisplay.YEAR)) && (
           <li>Year: {data.year}</li>

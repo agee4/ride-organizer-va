@@ -1,20 +1,18 @@
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { Passenger, Year } from "../_classes/passenger";
-import { CRUD, RideTimes } from "../_classes/person";
+import { College, CRUD, RideTimes } from "../_classes/person";
 
 interface NewPassengerData {
   name: string;
   address: string;
+  college: College;
   service?: RideTimes;
   friday?: RideTimes;
   notes?: string;
 }
 
 interface CreatePassengerFormProps {
-  passengerCallback: (
-    newpassenger: Passenger,
-    operation: CRUD
-  ) => void;
+  passengerCallback: (newpassenger: Passenger, operation: CRUD) => void;
 }
 
 export const CreatePassengerForm = ({
@@ -24,9 +22,11 @@ export const CreatePassengerForm = ({
   const [newPassengerData, setNewPassengerData] = useState<NewPassengerData>({
     name: "",
     address: "",
+    college: College.OTHER,
     notes: "",
   });
   const [rideSelect, setRideSelect] = useState<RideTimes>();
+  const [collegeSelect, setCollegeSelect] = useState<College>();
 
   const updateFormInput = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -57,7 +57,9 @@ export const CreatePassengerForm = ({
           name: newPassengerData.name,
           rides: newPassengerRides,
           address: newPassengerData.address,
-          college: "UCI",
+          college: newPassengerData.college
+            ? newPassengerData.college
+            : College.OTHER,
           year: Year.OTHER,
           notes: newPassengerData.notes,
         }),
@@ -66,6 +68,7 @@ export const CreatePassengerForm = ({
       setNewPassengerData({
         name: "",
         address: "",
+        college: College.OTHER,
         notes: "",
       });
       formRef.current?.reset();
@@ -89,16 +92,40 @@ export const CreatePassengerForm = ({
         minLength={1}
         onChange={updateFormInput}
       />
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="address"
-        value={newPassengerData.address}
-        placeholder="Address"
-        required
-        minLength={1}
-        onChange={updateFormInput}
-      />
+      <div className="block">
+        <input
+          className="rounded-sm border w-[143px]"
+          type="text"
+          name="address"
+          value={newPassengerData.address}
+          placeholder="Address"
+          required
+          minLength={1}
+          onChange={updateFormInput}
+        />
+        <select
+          name="college"
+          value={collegeSelect}
+          onChange={updateFormSelect}
+        >
+          <option className="dark:text-black">--</option>
+          <option className="dark:text-black" value={College.UCI}>
+            UCI
+          </option>
+          <option className="dark:text-black" value={College.CSULB}>
+            CSULB
+          </option>
+          <option className="dark:text-black" value={College.BIOLA}>
+            Biola
+          </option>
+          <option className="dark:text-black" value={College.CHAPMAN}>
+            Chapman
+          </option>
+          <option className="dark:text-black" value={College.OTHER}>
+            Other
+          </option>
+        </select>
+      </div>
       <div className="block">
         <select name="service" value={rideSelect} onChange={updateFormSelect}>
           <option className="dark:text-black">--choose a ride--</option>
