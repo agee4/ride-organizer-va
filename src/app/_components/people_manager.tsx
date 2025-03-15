@@ -1,16 +1,18 @@
 // people_manager.tsx
 
-import { ChangeEvent, useEffect, useState } from "react";
-import { College, CollegeTag, CRUD } from "../_classes/person";
+import { ActionDispatch, ChangeEvent, useEffect, useState } from "react";
+import { College, CollegeTag } from "../_classes/person";
 import {
   Driver,
   DriverDisplay,
+  DriverReducerAction,
   DriverSort,
   sortDrivers,
 } from "../_classes/driver";
 import {
   Passenger,
   PassengerDisplay,
+  PassengerReducerAction,
   PassengerSort,
   sortPassengers,
 } from "../_classes/passenger";
@@ -20,7 +22,7 @@ import { CreateDriverForm } from "./createdriverform";
 interface PM_PassengerProps {
   data: Passenger;
   display?: PassengerDisplay[];
-  passengerCallback: (data: Passenger, operation: CRUD) => void;
+  passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
 }
 
 const PM_PassengerComponent = ({
@@ -29,7 +31,10 @@ const PM_PassengerComponent = ({
   passengerCallback,
 }: PM_PassengerProps) => {
   const deletePassenger = () => {
-    passengerCallback(data, CRUD.DELETE);
+    passengerCallback({
+      type: "delete",
+      passenger: data,
+    });
   };
 
   return (
@@ -95,7 +100,7 @@ const PM_PassengerComponent = ({
 interface PM_DriverProps {
   data: Driver;
   display?: DriverDisplay[];
-  driverCallback: (data: Driver, operation: CRUD) => void;
+  driverCallback: ActionDispatch<[action: DriverReducerAction]>;
 }
 
 const PM_DriverComponent = ({
@@ -104,7 +109,10 @@ const PM_DriverComponent = ({
   driverCallback,
 }: PM_DriverProps) => {
   const deleteDriver = () => {
-    driverCallback(data, CRUD.DELETE);
+    driverCallback({
+      type: "delete",
+      driver: data,
+    });
   };
 
   return (
@@ -160,8 +168,8 @@ const PM_DriverComponent = ({
 interface PeopleManagerProps {
   passengerList: Passenger[];
   driverList: Driver[];
-  passengerCallback: (data: Passenger, operation: CRUD) => void;
-  driverCallback: (data: Driver, operation: CRUD) => void;
+  passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
+  driverCallback: ActionDispatch<[action: DriverReducerAction]>;
 }
 
 export const PeopleManager = ({

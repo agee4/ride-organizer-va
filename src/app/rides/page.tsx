@@ -1,10 +1,10 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useReducer, useRef, useState } from "react";
 import { read, utils, writeFile } from "xlsx";
-import { College, CRUD, RideTimes } from "../_classes/person";
-import { Passenger, Year } from "../_classes/passenger";
-import { Driver } from "../_classes/driver";
+import { College, RideTimes } from "../_classes/person";
+import { Passenger, passengerReducer, Year } from "../_classes/passenger";
+import { Driver, driverReducer } from "../_classes/driver";
 import { RideManager } from "../_components/ride_manager";
 import { PeopleManager } from "../_components/people_manager";
 
@@ -37,8 +37,8 @@ export default function Page() {
   const fileSelectorRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [passengerList, setPassengerList] = useState<Passenger[]>([]);
-  const [driverList, setDriverList] = useState<Driver[]>([]);
+  const [passengerList, passengerDispatch] = useReducer(passengerReducer, []);
+  const [driverList, driverDispatch] = useReducer(driverReducer, []);
 
   const [rmDisplay, setRMdisplay] = useState(false);
 
@@ -55,31 +55,8 @@ export default function Page() {
   const usePlaceholder = () => {
     setSelectedFile(null);
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
-    setPassengerList([]);
-    setDriverList([]);
-  };
-
-  const crudPassenger = (passenger: Passenger, operation: CRUD) => {
-    switch (operation) {
-      case CRUD.CREATE:
-        setPassengerList([...passengerList, passenger]);
-        break;
-      case CRUD.DELETE:
-        setPassengerList([...passengerList].filter((x) => x !== passenger));
-        break;
-      default:
-    }
-  };
-  const crudDriver = (driver: Driver, operation: CRUD) => {
-    switch (operation) {
-      case CRUD.CREATE:
-        setDriverList([...driverList, driver]);
-        break;
-      case CRUD.DELETE:
-        setDriverList([...driverList].filter((x) => x !== driver));
-        break;
-      default:
-    }
+    passengerDispatch({type:"clear"});
+    driverDispatch({type:"clear"});
   };
 
   const loadTest = () => {
@@ -95,7 +72,6 @@ export default function Page() {
         const passengersws = wb.Sheets[wb.SheetNames[0]];
         const passengerdata: PassengerParse[] =
           utils.sheet_to_json<PassengerParse>(passengersws);
-        let filepassengers: Passenger[] = [];
         let mainrideneeds = [];
         let backuprideneeds = [];
         for (let x of passengerdata) {
@@ -130,8 +106,9 @@ export default function Page() {
                   backuprideneeds.push(RideTimes.THIRD);
                   break;
               }
-          filepassengers.push(
-            new Passenger({
+          passengerDispatch({
+            type: "create",
+            passenger: new Passenger({
               name: x.Name ? x.Name : "",
               rides: mainrideneeds,
               address: x.Address ? x.Address : "",
@@ -140,14 +117,12 @@ export default function Page() {
               backup: backuprideneeds,
               notes: x.Notes,
             })
-          );
+          })
         }
-        setPassengerList(filepassengers);
 
         const driverws = wb.Sheets[wb.SheetNames[1]];
         const driverdata: DriverParse[] =
           utils.sheet_to_json<DriverParse>(driverws);
-        let filedrivers: Driver[] = [];
         let rides = [];
         for (let x of driverdata) {
           rides = [];
@@ -166,8 +141,9 @@ export default function Page() {
                 rides.push(RideTimes.THIRD);
                 break;
             }
-          filedrivers.push(
-            new Driver({
+          driverDispatch({
+            type: "create",
+            driver: new Driver({
               name: x.Name ? x.Name : "",
               rides: rides,
               seats: x.Seats ? x.Seats : 0,
@@ -175,9 +151,8 @@ export default function Page() {
               college: x.College ? (x.College as College) : College.OTHER,
               notes: x.Notes,
             })
-          );
+          })
         }
-        setDriverList(filedrivers);
       })();
     }
   };
@@ -234,8 +209,8 @@ export default function Page() {
           <PeopleManager
             passengerList={passengerList}
             driverList={driverList}
-            passengerCallback={crudPassenger}
-            driverCallback={crudDriver}
+            passengerCallback={passengerDispatch}
+            driverCallback={driverDispatch}
           />
         </div>
       </main>

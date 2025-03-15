@@ -1,6 +1,6 @@
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
-import { College, CRUD, RideTimes } from "../_classes/person";
-import { Driver } from "../_classes/driver";
+import { ActionDispatch, ChangeEvent, FormEvent, useRef, useState } from "react";
+import { College, RideTimes } from "../_classes/person";
+import { Driver, DriverReducerAction } from "../_classes/driver";
 
 interface NewDriverData {
   name: string;
@@ -13,7 +13,7 @@ interface NewDriverData {
 }
 
 interface CreateDriverFormProps {
-  driverCallback: (newdriver: Driver, operation: CRUD) => void;
+  driverCallback: ActionDispatch<[action: DriverReducerAction]>;
 }
 
 export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
@@ -49,8 +49,9 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
     const newDriverRides = [];
     if (newDriverData.friday) newDriverRides.push(newDriverData.friday);
     if (newDriverData.service) newDriverRides.push(newDriverData.service);
-    driverCallback(
-      new Driver({
+    driverCallback({
+      type: "create",
+      driver: new Driver({
         name: newDriverData.name,
         rides: newDriverRides,
         seats: newDriverData.seats,
@@ -58,8 +59,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
         college: newDriverData.college ? newDriverData.college : College.OTHER,
         notes: newDriverData.notes,
       }),
-      CRUD.CREATE
-    );
+    });
     setNewDriverData({
       name: "",
       address: "",
@@ -89,7 +89,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
       />
       <div className="block">
         <input
-          className="rounded-sm border w-[143px]"
+          className="rounded-sm border w-[142px]"
           type="text"
           name="address"
           value={newDriverData.address}

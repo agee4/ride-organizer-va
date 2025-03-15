@@ -140,3 +140,25 @@ export const sortDrivers = (list: Driver[], sort?: DriverSort) => {
       list.sort((a, b) => a.name.localeCompare(b.name));
   }
 };
+
+export type DriverReducerAction =
+  | { type: "create"; driver: Driver }
+  | { type: "delete"; driver: Driver }
+  | { type: "clear"; };
+
+export const driverReducer = (
+  driverList: Driver[],
+  action: DriverReducerAction
+) => {
+  switch (action.type) {
+    case "create": {
+      console.log([...driverList, action.driver]);
+      return [...driverList, action.driver];
+    }
+    case "delete": {
+      return [...driverList].filter((x) => x !== action.driver);
+    }
+    default:
+      throw Error("Unknown action");
+  }
+};

@@ -1,6 +1,12 @@
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
-import { Passenger, Year } from "../_classes/passenger";
-import { College, CRUD, RideTimes } from "../_classes/person";
+import {
+  ActionDispatch,
+  ChangeEvent,
+  FormEvent,
+  useRef,
+  useState,
+} from "react";
+import { Passenger, PassengerReducerAction, Year } from "../_classes/passenger";
+import { College, RideTimes } from "../_classes/person";
 
 interface NewPassengerData {
   name: string;
@@ -12,7 +18,7 @@ interface NewPassengerData {
 }
 
 interface CreatePassengerFormProps {
-  passengerCallback: (newpassenger: Passenger, operation: CRUD) => void;
+  passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
 }
 
 export const CreatePassengerForm = ({
@@ -52,8 +58,9 @@ export const CreatePassengerForm = ({
         newPassengerRides.push(newPassengerData.friday);
       if (newPassengerData.service)
         newPassengerRides.push(newPassengerData.service);
-      passengerCallback(
-        new Passenger({
+      passengerCallback({
+        type: "create",
+        passenger: new Passenger({
           name: newPassengerData.name,
           rides: newPassengerRides,
           address: newPassengerData.address,
@@ -63,8 +70,7 @@ export const CreatePassengerForm = ({
           year: Year.OTHER,
           notes: newPassengerData.notes,
         }),
-        CRUD.CREATE
-      );
+      });
       setNewPassengerData({
         name: "",
         address: "",
@@ -94,7 +100,7 @@ export const CreatePassengerForm = ({
       />
       <div className="block">
         <input
-          className="rounded-sm border w-[143px]"
+          className="rounded-sm border w-[142px]"
           type="text"
           name="address"
           value={newPassengerData.address}

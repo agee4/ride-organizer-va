@@ -1,12 +1,5 @@
 // person.tsx
 
-export enum CRUD {
-  CREATE,
-  READ,
-  UPDATE,
-  DELETE,
-}
-
 export enum RideTimes {
   FRIDAY = "Friday",
   FIRST = "First",

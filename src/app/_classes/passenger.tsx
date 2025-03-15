@@ -168,3 +168,25 @@ export const sortPassengers = (list: Passenger[], sort: PassengerSort) => {
       list.sort((a, b) => a.name.localeCompare(b.name));
   }
 };
+
+export type PassengerReducerAction =
+  | { type: "create"; passenger: Passenger }
+  | { type: "delete"; passenger: Passenger }
+  | { type: "clear"; };
+
+export const passengerReducer = (
+  passengerList: Passenger[],
+  action: PassengerReducerAction
+) => {
+  switch (action.type) {
+    case "create": {
+      console.log([...passengerList, action.passenger]);
+      return [...passengerList, action.passenger];
+    }
+    case "delete": {
+      return [...passengerList].filter((x) => x !== action.passenger);
+    }
+    default:
+      throw Error("Unknown action");
+  }
+};

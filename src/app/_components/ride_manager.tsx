@@ -230,6 +230,8 @@ export const RideManager = ({
       sortPassengers(newRPList, ridePassengerSort);
       setRidePassengerList(newRPList);
     }
+  }, [passengerList]);
+  useEffect(() => {
     if (driverList[0]) {
       const newRideList = [...rideList];
       let exists;
@@ -253,7 +255,7 @@ export const RideManager = ({
       sortRides(newRideList, rideSort);
       setRideList(newRideList);
     }
-  }, [passengerList, driverList]);
+  }, [driverList]);
 
   const refreshRides = () => {
     if (passengerList[0]) {
