@@ -55,8 +55,8 @@ export default function Page() {
   const usePlaceholder = () => {
     setSelectedFile(null);
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
-    passengerDispatch({type:"clear"});
-    driverDispatch({type:"clear"});
+    passengerDispatch({type:"set", passengerlist:[]});
+    driverDispatch({type:"set", driverlist:[]});
   };
 
   const loadTest = () => {

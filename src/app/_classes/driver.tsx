@@ -144,7 +144,7 @@ export const sortDrivers = (list: Driver[], sort?: DriverSort) => {
 export type DriverReducerAction =
   | { type: "create"; driver: Driver }
   | { type: "delete"; driver: Driver }
-  | { type: "clear"; };
+  | { type: "set"; driverlist: Driver[] };
 
 export const driverReducer = (
   driverList: Driver[],
@@ -157,6 +157,9 @@ export const driverReducer = (
     }
     case "delete": {
       return [...driverList].filter((x) => x !== action.driver);
+    }
+    case "set": {
+      return action.driverlist;
     }
     default:
       throw Error("Unknown action");

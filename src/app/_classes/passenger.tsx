@@ -172,7 +172,7 @@ export const sortPassengers = (list: Passenger[], sort: PassengerSort) => {
 export type PassengerReducerAction =
   | { type: "create"; passenger: Passenger }
   | { type: "delete"; passenger: Passenger }
-  | { type: "clear"; };
+  | { type: "set"; passengerlist: Passenger[] };
 
 export const passengerReducer = (
   passengerList: Passenger[],
@@ -180,11 +180,13 @@ export const passengerReducer = (
 ) => {
   switch (action.type) {
     case "create": {
-      console.log([...passengerList, action.passenger]);
       return [...passengerList, action.passenger];
     }
     case "delete": {
       return [...passengerList].filter((x) => x !== action.passenger);
+    }
+    case "set": {
+      return action.passengerlist;
     }
     default:
       throw Error("Unknown action");
