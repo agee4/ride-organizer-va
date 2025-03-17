@@ -152,7 +152,6 @@ export const driverReducer = (
 ) => {
   switch (action.type) {
     case "create": {
-      console.log([...driverList, action.driver]);
       return [...driverList, action.driver];
     }
     case "delete": {

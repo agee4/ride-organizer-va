@@ -42,8 +42,6 @@ export default function Page() {
 
   const [rmDisplay, setRMdisplay] = useState(false);
 
-  const debug = true;
-
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setSelectedFile(event.target.files[0]);
@@ -52,11 +50,11 @@ export default function Page() {
     }
   };
 
-  const usePlaceholder = () => {
+  const usePlaceholderSheet = () => {
     setSelectedFile(null);
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
-    passengerDispatch({type:"set", passengerlist:[]});
-    driverDispatch({type:"set", driverlist:[]});
+    passengerDispatch({ type: "set", passengerlist: [] });
+    driverDispatch({ type: "set", driverlist: [] });
   };
 
   const loadTest = () => {
@@ -116,8 +114,8 @@ export default function Page() {
               year: x.Year ? (x.Year as Year) : Year.OTHER,
               backup: backuprideneeds,
               notes: x.Notes,
-            })
-          })
+            }),
+          });
         }
 
         const driverws = wb.Sheets[wb.SheetNames[1]];
@@ -150,8 +148,8 @@ export default function Page() {
               address: x.Address ? x.Address : "",
               college: x.College ? (x.College as College) : College.OTHER,
               notes: x.Notes,
-            })
-          })
+            }),
+          });
         }
       })();
     }
@@ -190,7 +188,7 @@ export default function Page() {
             </button>
             <button
               className="rounded-full border px-2"
-              onClick={usePlaceholder}
+              onClick={usePlaceholderSheet}
             >
               Clear
             </button>
@@ -203,7 +201,10 @@ export default function Page() {
         </button>
 
         <div className={rmDisplay ? "w-full" : "hidden"}>
-          <RideManager passengerList={passengerList} driverList={driverList} />
+          <RideManager
+            originPassengerList={passengerList}
+            originDriverList={driverList}
+          />
         </div>
         <div className={rmDisplay ? "hidden" : "w-full"}>
           <PeopleManager

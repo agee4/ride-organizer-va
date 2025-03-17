@@ -125,7 +125,7 @@ const RM_RideComponent = ({ data }: RideProps) => {
         setPassengers(data.passengers);
       }
     }
-    console.log(data.passengers);
+    /* console.log(data.passengers); */
   };
 
   const seatsleft = data.driver.seats - data.passengers.size;
@@ -187,13 +187,13 @@ interface RideManagerContextProps {
 const RideManagerContext = createContext<RideManagerContextProps | null>(null);
 
 interface RideManagerProps {
-  passengerList: Passenger[];
-  driverList: Driver[];
+  originPassengerList: Passenger[];
+  originDriverList: Driver[];
 }
 
 export const RideManager = ({
-  passengerList,
-  driverList,
+  originPassengerList,
+  originDriverList,
 }: RideManagerProps) => {
   const [ridePassengerList, setRidePassengerList] = useState<Passenger[]>([]);
   const [rideList, setRideList] = useState<Ride[]>([]);
@@ -203,80 +203,89 @@ export const RideManager = ({
   const [rideSort, setRideSort] = useState<RideSort>(RideSort.NAME);
 
   useEffect(() => {
-    if (passengerList[0]) {
-      const newRPList = [...ridePassengerList];
-      let exists;
-      for (let passenger of passengerList) {
+    let newRPList = [...ridePassengerList];
+    let exists;
+    /* remove passengers, even if assigned a ride */
+    for (let passenger of ridePassengerList) {
+      if (!originPassengerList.includes(passenger))
+        newRPList = newRPList.filter((x) => x !== passenger);
+    }
+    for (let ride of rideList) {
+      for (let ridepassenger of ride.passengers.values()) {
+        if (!originPassengerList.includes(ridepassenger))
+          ride.passengers.delete(ridepassenger.name);
+      }
+    }
+    /* add new passengers */
+    for (let passenger of originPassengerList) {
+      if (!ridePassengerList.includes(passenger)) {
         exists = false;
-        for (let ride of ridePassengerList) {
-          if (JSON.stringify(ride) == JSON.stringify(passenger)) {
-            exists = true;
-            break;
-          }
-        }
-        if (!exists) {
-          for (let ride of rideList) {
-            for (let ridepassenger of ride.passengers.values())
-              if (JSON.stringify(ridepassenger) == JSON.stringify(passenger)) {
-                exists = true;
-                break;
-              }
-          }
+        for (let ride of rideList) {
+          for (let ridepassenger of ride.passengers.values())
+            if (JSON.stringify(ridepassenger) == JSON.stringify(passenger)) {
+              exists = true;
+              break;
+            }
         }
         if (!exists) {
           newRPList.push(passenger);
         }
       }
-      sortPassengers(newRPList, ridePassengerSort);
-      setRidePassengerList(newRPList);
     }
-  }, [passengerList]);
+    sortPassengers(newRPList, ridePassengerSort);
+    setRidePassengerList(newRPList);
+  }, [originPassengerList]);
   useEffect(() => {
-    if (driverList[0]) {
-      const newRideList = [...rideList];
-      let exists;
-      for (let driver of driverList) {
-        exists = false;
-        for (let ride of rideList) {
-          if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
-            exists = true;
-            break;
-          }
+    let exists;
+    let newRideList = [...rideList];
+    /* remove rides and move their passengers back into the unassigned list */
+    for (let ride of rideList) {
+      if (!originDriverList.includes(ride.driver)) {
+        let newRPList = [...ridePassengerList];
+        for (let passenger of ride.passengers.values()) {
+          newRPList.push(passenger);
+          sortPassengers(newRPList, ridePassengerSort);
         }
-        if (!exists) {
-          newRideList.push(
-            new Ride({
-              driver: driver,
-              passengers: new Map<string, Passenger>(),
-            })
-          );
+        setRidePassengerList(newRPList);
+        ride.passengers.clear();
+        newRideList = newRideList.filter((x) => x !== ride);
+      }
+    }
+
+    /* add new passengers */
+    for (let driver of originDriverList) {
+      exists = false;
+      for (let ride of rideList) {
+        if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
+          exists = true;
+          break;
         }
       }
-      sortRides(newRideList, rideSort);
-      setRideList(newRideList);
+      if (!exists) {
+        newRideList.push(
+          new Ride({
+            driver: driver,
+            passengers: new Map<string, Passenger>(),
+          })
+        );
+      }
     }
-  }, [driverList]);
+    sortRides(newRideList, rideSort);
+    setRideList(newRideList);
+  }, [originDriverList]);
 
   const refreshRides = () => {
-    if (passengerList[0]) {
-      const newRPList = [...ridePassengerList];
-      let exists;
-      for (let passenger of passengerList) {
+    let exists;
+    const newRPList = [...ridePassengerList];
+    for (let passenger of originPassengerList) {
+      if (!ridePassengerList.includes(passenger)) {
         exists = false;
-        for (let ride of ridePassengerList) {
-          if (JSON.stringify(ride) == JSON.stringify(passenger)) {
-            exists = true;
-            break;
-          }
-        }
-        if (!exists) {
-          for (let ride of rideList) {
-            for (let ridepassenger of ride.passengers.values())
-              if (JSON.stringify(ridepassenger) == JSON.stringify(passenger)) {
-                exists = true;
-                break;
-              }
-          }
+        for (let ride of rideList) {
+          for (let ridepassenger of ride.passengers.values())
+            if (JSON.stringify(ridepassenger) == JSON.stringify(passenger)) {
+              exists = true;
+              break;
+            }
         }
         if (!exists) {
           newRPList.push(passenger);
@@ -285,29 +294,38 @@ export const RideManager = ({
       sortPassengers(newRPList, ridePassengerSort);
       setRidePassengerList(newRPList);
     }
-    if (driverList[0]) {
-      const newRideList = [...rideList];
-      let exists;
-      for (let driver of driverList) {
-        exists = false;
-        for (let ride of rideList) {
-          if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
-            exists = true;
-            break;
-          }
+    let newRideList = [...rideList];
+    for (let ride of rideList) {
+      if (!originDriverList.includes(ride.driver)) {
+        const newRPList = [...ridePassengerList];
+        for (let passenger of ride.passengers.values()) {
+          newRPList.push(passenger);
+          sortPassengers(newRPList, ridePassengerSort);
+          setRidePassengerList(newRPList);
         }
-        if (!exists) {
-          newRideList.push(
-            new Ride({
-              driver: driver,
-              passengers: new Map<string, Passenger>(),
-            })
-          );
+        newRideList = newRideList.filter((x) => x !== ride);
+      }
+    }
+
+    for (let driver of originDriverList) {
+      exists = false;
+      for (let ride of rideList) {
+        if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
+          exists = true;
+          break;
         }
       }
-      sortRides(newRideList, rideSort);
-      setRideList(newRideList);
+      if (!exists) {
+        newRideList.push(
+          new Ride({
+            driver: driver,
+            passengers: new Map<string, Passenger>(),
+          })
+        );
+      }
     }
+    sortRides(newRideList, rideSort);
+    setRideList(newRideList);
   };
   const clearRides = () => {
     setRidePassengerList([]);
