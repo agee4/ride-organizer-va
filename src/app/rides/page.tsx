@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useReducer, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useReducer, useRef, useState } from "react";
 import { read, utils, writeFile } from "xlsx";
 import { College, RideTimes } from "../_classes/person";
 import { Passenger, passengerReducer, Year } from "../_classes/passenger";
@@ -57,25 +57,24 @@ export default function Page() {
     driverDispatch({ type: "set", driverlist: [] });
   };
 
-  const loadTest = () => {
-    {
-      (async () => {
-        const f = selectedFile
-          ? selectedFile
-          : await fetch("/placeholdersheet.xlsx");
-        const ab = await f.arrayBuffer();
+  const loadSheet = async () => {
+    const f = selectedFile
+      ? selectedFile
+      : await fetch("/placeholdersheet.xlsx");
+    const ab = await f.arrayBuffer();
 
-        const wb = read(ab);
+    const wb = read(ab);
 
-        const passengersws = wb.Sheets[wb.SheetNames[0]];
-        const passengerdata: PassengerParse[] =
-          utils.sheet_to_json<PassengerParse>(passengersws);
+    for (let wsn of wb.SheetNames) {
+      const ws = wb.Sheets[wsn];
+      const data: any[] = utils.sheet_to_json(ws);
+      if (wsn.toLocaleLowerCase().trim().includes("passenger")) {
         let mainrideneeds = [];
         let backuprideneeds = [];
-        for (let x of passengerdata) {
+        for (let x of data) {
           mainrideneeds = [];
           backuprideneeds = [];
-          if (x["Rides"])
+          if (x.Rides)
             for (let ride of x.Rides.split(", "))
               switch (ride) {
                 case "Friday Bible Study 7:00pm":
@@ -117,12 +116,9 @@ export default function Page() {
             }),
           });
         }
-
-        const driverws = wb.Sheets[wb.SheetNames[1]];
-        const driverdata: DriverParse[] =
-          utils.sheet_to_json<DriverParse>(driverws);
+      } else if (wsn.toLocaleLowerCase().trim().includes("driver")) {
         let rides = [];
-        for (let x of driverdata) {
+        for (let x of data) {
           rides = [];
           for (let ride of x.Rides.split(", "))
             switch (ride) {
@@ -151,9 +147,42 @@ export default function Page() {
             }),
           });
         }
-      })();
+      } else if (wsn.toLocaleLowerCase().trim().includes("ride")) {
+      }
     }
   };
+  const saveSheet = useCallback(() => {
+    const wb = utils.book_new();
+    let passengerJSON = [];
+    for (let passenger of passengerList) {
+      passengerJSON.push({
+        Name: passenger.name,
+        Rides: passenger.rides.toLocaleString(),
+        Address: passenger.address,
+        College: passenger.college,
+        Year: passenger.year,
+        "Backup Rides": passenger.backup?.toLocaleString(),
+        Notes: passenger.notes,
+      });
+    }
+    const ws_p = utils.json_to_sheet(passengerJSON);
+    utils.book_append_sheet(wb, ws_p, "Passengers");
+    let driverJSON = [];
+    for (let driver of driverList) {
+      driverJSON.push({
+        Name: driver.name,
+        Seats: driver.seats,
+        Rides: driver.rides.toLocaleString(),
+        Address: driver.address,
+        College: driver.college,
+        Notes: driver.notes,
+      });
+    }
+    console.log(driverJSON);
+    const ws_d = utils.json_to_sheet(driverJSON);
+    utils.book_append_sheet(wb, ws_d, "Drivers");
+    writeFile(wb, "ridelist.xlsx");
+  }, [passengerList, driverList]);
   const toggleDisplay = () => {
     setRMdisplay(!rmDisplay);
   };
@@ -182,7 +211,7 @@ export default function Page() {
           <div className="flex flex-row">
             <button
               className="rounded-full border px-2 disabled:text-neutral-500"
-              onClick={loadTest}
+              onClick={loadSheet}
             >
               Load
             </button>
@@ -214,6 +243,7 @@ export default function Page() {
             driverCallback={driverDispatch}
           />
         </div>
+        <button onClick={saveSheet}>Save File</button>
       </main>
     </div>
   );

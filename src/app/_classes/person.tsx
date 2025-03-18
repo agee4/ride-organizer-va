@@ -76,3 +76,29 @@ export const CollegeTag = ({ data }: { data: College }) => {
     <span className={"rounded-md p-1 mr-1 font-bold" + color}>{data}</span>
   );
 };
+
+/* export type ListReducerAction<T> =
+  | { type: "create"; item: T }
+  | { type: "delete"; item: T }
+  | { type: "set"; list: T[] };
+
+export const listReducer = (
+  list: [],
+  action: { type: "create"; item: Person }
+  | { type: "delete"; item: Person }
+  | { type: "set"; list: Person[] }
+) => {
+  switch (action.type) {
+    case "create": {
+      return [...list, action.item];
+    }
+    case "delete": {
+      return [...list].filter((x) => x !== action.item);
+    }
+    case "set": {
+      return action.list;
+    }
+    default:
+      throw Error("Unknown action");
+  }
+}; */
