@@ -177,6 +177,14 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
       <input
         className="rounded-sm border"
         type="text"
+        name="phone"
+        value={newDriverData.phone}
+        placeholder="Phone #"
+        onChange={updateForm}
+      />
+      <input
+        className="rounded-sm border"
+        type="text"
         name="notes"
         value={newDriverData.notes}
         placeholder="Notes"

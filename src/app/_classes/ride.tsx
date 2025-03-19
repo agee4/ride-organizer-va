@@ -90,14 +90,14 @@ const RideComponent = ({ data }: RideProps) => {
 
 export enum RideSort {
   "" = "",
-  NAME = "name",
-  ADDRESS = "driver address",
-  SEATS = "seats",
-  SEATS_LEFT = "seats left",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
   FRIDAY = "friday",
+  SEATS_LEFT = "seats left",
+  NAME = "name",
+  ADDRESS = "driver address",
+  SEATS = "seats",
 }
 
 export const sortRides = (list: Ride[], sort?: RideSort): Ride[] => {

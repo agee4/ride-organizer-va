@@ -196,25 +196,27 @@ export const RideManager = ({
   originDrivers: Map<string, Driver>;
   rideCallback: ActionDispatch<[action: RideReducerAction]>;
 }) => {
-  const [ridePassengerCollection, setRidePassengerCollection] = useState<
-    Map<string, Passenger>
-  >(new Map<string, Passenger>());
+  const [rpCollection, setRPCollection] = useState<Map<string, Passenger>>(
+    new Map<string, Passenger>()
+  );
   const [rpList, setRPList] = useState<Passenger[]>([]);
+  const [rideCollection, setRideCollection] = useState<Map<string, Ride>>(
+    new Map<string, Ride>()
+  );
   const [rideList, setRideList] = useState<Ride[]>([]);
-  const [ridePassengerSort, setRidePassengerSort] = useState<PassengerSort>(
+  const [rpSort, setRPSort] = useState<PassengerSort>(
     PassengerSort[""]
   );
   const [rideSort, setRideSort] = useState<RideSort>(RideSort[""]);
 
   useEffect(() => {
-    let newRPList = new Map([...ridePassengerCollection.entries()]);
-    let exists;
+    let newRPCollection = new Map([...rpCollection.entries()]);
     /* remove passengers, even if assigned a ride */
-    for (let passenger of ridePassengerCollection.values()) {
+    for (let passenger of rpCollection.values()) {
       if (!originPassengers.has(passenger.getEmail()))
-        newRPList.delete(passenger.getEmail());
+        newRPCollection.delete(passenger.getEmail());
     }
-    for (let ride of rideList) {
+    for (let ride of rideCollection.values()) {
       for (let ridepassenger of ride.passengers.values()) {
         if (!originPassengers.has(ridepassenger.getEmail()))
           ride.passengers.delete(ridepassenger.getEmail());
@@ -222,49 +224,30 @@ export const RideManager = ({
     }
     /* add new passengers */
     for (let passenger of originPassengers.values()) {
-      if (!ridePassengerCollection.has(passenger.getEmail())) {
-        exists = false;
-        for (let ride of rideList) {
-          for (let ridepassenger of ride.passengers.values())
-            if (JSON.stringify(ridepassenger) == JSON.stringify(passenger)) {
-              exists = true;
-              break;
-            }
-        }
-        if (!exists) {
-          newRPList.set(passenger.getEmail(), passenger);
-        }
+      if (!rpCollection.has(passenger.getEmail())) {
+        newRPCollection.set(passenger.getEmail(), passenger);
       }
     }
-    passengerCallback(newRPList);
-  }, [originPassengers]);
-  useEffect(() => {
-    let exists;
-    let newRideList = [...rideList];
+    let newRideCollection = new Map([...rideCollection.entries()]);
     /* remove rides and move their passengers back into the unassigned list */
-    for (let ride of rideList) {
+    for (let ride of rideCollection.values()) {
       if (!originDrivers.has(ride.driver.getEmail())) {
-        let newRPList = new Map([...ridePassengerCollection.entries()]);
         for (let passenger of ride.passengers.values()) {
-          newRPList.set(passenger.getEmail(), passenger);
+          if (originPassengers.has(passenger.getEmail()))
+            newRPCollection.set(passenger.getEmail(), passenger);
         }
-        passengerCallback(newRPList);
+        console.log("updated originDrivers");
+        console.log(newRPCollection);
         ride.passengers.clear();
-        newRideList = newRideList.filter((x) => x !== ride);
+        newRideCollection.delete(ride.getDriver().getEmail());
       }
     }
 
-    /* add new passengers */
+    /* add new rides */
     for (let driver of originDrivers.values()) {
-      exists = false;
-      for (let ride of rideList) {
-        if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
-          exists = true;
-          break;
-        }
-      }
-      if (!exists) {
-        newRideList.push(
+      if (!rideCollection.has(driver.getEmail())) {
+        newRideCollection.set(
+          driver.getEmail(),
           new Ride({
             driver: driver,
             passengers: new Map<string, Passenger>(),
@@ -272,9 +255,9 @@ export const RideManager = ({
         );
       }
     }
-    sortRides(newRideList, rideSort);
-    setRideList(newRideList);
-  }, [originDrivers]);
+    passengerCallback(newRPCollection);
+    rideUpdater(newRideCollection);
+  }, [originPassengers, originDrivers]);
 
   /* const refreshRides = () => {
     let exists;
@@ -330,40 +313,44 @@ export const RideManager = ({
     setRideList(newRideList);
   }; */
   const clearRides = () => {
-    let newRPList = new Map([...ridePassengerCollection.entries()]);
+    let newRPCollection = new Map([...rpCollection.entries()]);
     for (let ride of rideList) {
       for (let passenger of ride.getPassengerList().values()) {
-        newRPList.set(passenger.getEmail(), passenger);
+        newRPCollection.set(passenger.getEmail(), passenger);
       }
       ride.passengers.clear();
     }
-    passengerCallback(newRPList);
+    passengerCallback(newRPCollection);
   };
   const updateRidePassengerSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRidePassengerSort(event.target.value as PassengerSort);
+    setRPSort(event.target.value as PassengerSort);
     setRPList(
       sortPassengers(
-        [...ridePassengerCollection.values()],
+        [...rpCollection.values()],
         event.target.value as PassengerSort
       )
     );
   };
   const updateRideSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setRideSort(event.target.value as RideSort);
-    const sortedlist = [...rideList];
-    sortRides(sortedlist, event.target.value as RideSort);
-    setRideList(sortedlist);
+    setRideList(
+      sortRides([...rideCollection.values()], event.target.value as RideSort)
+    );
   };
 
   const passengerCallback = (data: Map<string, Passenger>) => {
-    setRidePassengerCollection(data);
-    setRPList(sortPassengers([...data.values()], ridePassengerSort));
+    setRPCollection(data);
+    setRPList(sortPassengers([...data.values()], rpSort));
+  };
+  const rideUpdater = (data: Map<string, Ride>) => {
+    setRideCollection(data);
+    setRideList(sortRides([...data.values()], rideSort));
   };
 
   return (
     <RideManagerContext.Provider
       value={{
-        passengerCollection: ridePassengerCollection,
+        passengerCollection: rpCollection,
         passengerList: rpList,
         rideList: rideList,
         passengerCallback: passengerCallback,
@@ -376,7 +363,7 @@ export const RideManager = ({
             Refresh
           </button> */}
           <button className="m-1 p-1 rounded-sm border" onClick={clearRides}>
-            Clear
+            Clear All Rides
           </button>
           <div className="flex flex-row">
             <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
@@ -384,7 +371,7 @@ export const RideManager = ({
                 <span className="text-neutral-500">Sort by: </span>
                 <select
                   className="rounded-sm border"
-                  defaultValue={ridePassengerSort}
+                  defaultValue={rpSort}
                   onChange={updateRidePassengerSort}
                 >
                   {Object.values(PassengerSort).map((option) => (

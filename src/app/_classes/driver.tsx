@@ -99,12 +99,12 @@ const DriverComponent = ({ data, display }: DriverProps) => {
 
 export enum DriverSort {
   "" = "",
-  NAME = "name",
-  ADDRESS = "address",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
   FRIDAY = "friday",
+  NAME = "name",
+  ADDRESS = "address",
 }
 
 export const sortDrivers = (list: Driver[], sort?: DriverSort): Driver[] => {

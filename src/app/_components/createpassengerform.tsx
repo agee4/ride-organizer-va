@@ -15,6 +15,9 @@ interface NewPassengerData {
   college: College;
   service?: RideTimes;
   friday?: RideTimes;
+  backupfirst?: RideTimes;
+  backupsecond?: RideTimes;
+  backupthird?: RideTimes;
   phone?: string;
   notes?: string;
 }
@@ -61,6 +64,13 @@ export const CreatePassengerForm = ({
         newPassengerRides.push(newPassengerData.friday);
       if (newPassengerData.service)
         newPassengerRides.push(newPassengerData.service);
+      const newPassengerBackup = [];
+      if (newPassengerData.backupfirst)
+        newPassengerBackup.push(newPassengerData.backupfirst);
+      if (newPassengerData.backupsecond)
+        newPassengerBackup.push(newPassengerData.backupsecond);
+      if (newPassengerData.backupthird)
+        newPassengerBackup.push(newPassengerData.backupthird);
       passengerCallback({
         type: "create",
         passenger: new Passenger({
@@ -72,6 +82,7 @@ export const CreatePassengerForm = ({
             ? newPassengerData.college
             : College.OTHER,
           year: Year.OTHER,
+          backup: newPassengerBackup,
           phone: newPassengerData.phone,
           notes: newPassengerData.notes,
         }),
@@ -166,6 +177,33 @@ export const CreatePassengerForm = ({
           onChange={updateForm}
         />
         <label htmlFor="friday">Friday</label>
+      </div>
+      <div className="block">
+        <label>Backup:</label>
+        <input
+          type="checkbox"
+          name="backupfirst"
+          id="backupfirst"
+          value={RideTimes.FIRST}
+          onChange={updateForm}
+        />
+        <label htmlFor="backupfirst">First</label>
+        <input
+          type="checkbox"
+          name="backupsecond"
+          id="backupsecond"
+          value={RideTimes.SECOND}
+          onChange={updateForm}
+        />
+        <label htmlFor="backupsecond">Second</label>
+        <input
+          type="checkbox"
+          name="backupthird"
+          id="backupthird"
+          value={RideTimes.THIRD}
+          onChange={updateForm}
+        />
+        <label htmlFor="backupthird">Third</label>
       </div>
       <input
         className="rounded-sm border"

@@ -36,9 +36,12 @@ export default function Page() {
     }
   };
 
-  const usePlaceholderSheet = () => {
+  const clearFile = () => {
     setSelectedFile(null);
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
+  }
+
+  const clearPeople = () => {
     passengerDispatch({
       type: "set",
       passengers: new Map<string, Passenger>(),
@@ -196,15 +199,16 @@ export default function Page() {
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-[calc(100vh-132px)] p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <h1>rides</h1>
-        <p>
-          Function: Upload a sheet (either file or google sheet integration),
-          process sheet into passengers/drivers/rides
-        </p>
-
         <div>
           <label className="block">
             <span className="text-neutral-500">Choose a sheet to upload:</span>
             <br />
+            <button
+              className="rounded-full border px-2"
+              onClick={clearFile}
+            >
+              Clear
+            </button>
             <input
               className="file:rounded-full file:border file:px-2"
               type="file"
@@ -218,20 +222,19 @@ export default function Page() {
               className="rounded-full border px-2 disabled:text-neutral-500"
               onClick={loadSheet}
             >
-              Load
+              Load People
             </button>
             <button
               className="rounded-full border px-2"
-              onClick={usePlaceholderSheet}
+              onClick={clearPeople}
             >
-              Clear
+              Clear People
             </button>
           </div>
-          <p>Using {selectedFile ? selectedFile.name : "placeholder sheet"}</p>
         </div>
 
         <button className="rounded-full border px-2" onClick={toggleDisplay}>
-          {rmDisplay ? "Manage Passengers and Drivers" : "Manage Rides"}
+          {rmDisplay ? "Manage People" : "Manage Rides"}
         </button>
 
         <div className={rmDisplay ? "w-full" : "hidden"}>
