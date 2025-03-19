@@ -15,21 +15,20 @@ import {
   PassengerReducerAction,
   PassengerSort,
   sortPassengers,
+  YearTag,
 } from "../_classes/passenger";
 import { CreatePassengerForm } from "./createpassengerform";
 import { CreateDriverForm } from "./createdriverform";
-
-interface PM_PassengerProps {
-  data: Passenger;
-  display?: PassengerDisplay[];
-  passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
-}
 
 const PM_PassengerComponent = ({
   data,
   display,
   passengerCallback,
-}: PM_PassengerProps) => {
+}: {
+  data: Passenger;
+  display?: PassengerDisplay[];
+  passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
+}) => {
   const deletePassenger = () => {
     passengerCallback({
       type: "delete",
@@ -61,7 +60,9 @@ const PM_PassengerComponent = ({
           </li>
         )}
         {(!display || display.includes(PassengerDisplay.YEAR)) && (
-          <li>Year: {data.year}</li>
+          <li>
+            <YearTag data={data.year} />
+          </li>
         )}
         <ul className="flex flex-row flex-wrap">
           {data.rides.map((item, index) => (
@@ -97,17 +98,15 @@ const PM_PassengerComponent = ({
   );
 };
 
-interface PM_DriverProps {
-  data: Driver;
-  display?: DriverDisplay[];
-  driverCallback: ActionDispatch<[action: DriverReducerAction]>;
-}
-
 const PM_DriverComponent = ({
   data,
   display,
   driverCallback,
-}: PM_DriverProps) => {
+}: {
+  data: Driver;
+  display?: DriverDisplay[];
+  driverCallback: ActionDispatch<[action: DriverReducerAction]>;
+}) => {
   const deleteDriver = () => {
     driverCallback({
       type: "delete",
@@ -126,6 +125,9 @@ const PM_DriverComponent = ({
         </button>
       </div>
       <ul className="m-1">
+        {(!display || display.includes(DriverDisplay.SEATS)) && (
+          <li>Seats: {data.seats}</li>
+        )}
         {(!display ||
           display.includes(DriverDisplay.ADDRESS) ||
           display.includes(DriverDisplay.COLLEGE)) && (
@@ -137,9 +139,6 @@ const PM_DriverComponent = ({
               <span>{data.address}</span>
             )}
           </li>
-        )}
-        {(!display || display.includes(DriverDisplay.SEATS)) && (
-          <li>Seats: {data.seats}</li>
         )}
         <ul className="flex flex-row flex-wrap">
           {data.rides.map((item, index) => (
@@ -165,51 +164,50 @@ const PM_DriverComponent = ({
   );
 };
 
-interface PeopleManagerProps {
-  passengerList: Passenger[];
-  driverList: Driver[];
-  passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
-  driverCallback: ActionDispatch<[action: DriverReducerAction]>;
-}
-
 export const PeopleManager = ({
-  passengerList,
-  driverList,
+  passengerCollection,
+  driverCollection,
   passengerCallback,
   driverCallback,
-}: PeopleManagerProps) => {
+}: {
+  passengerCollection: Passenger[];
+  driverCollection: Driver[];
+  passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
+  driverCallback: ActionDispatch<[action: DriverReducerAction]>;
+}) => {
   const [pmPassengerList, setPMPassengerList] =
-    useState<Passenger[]>(passengerList);
-  const [pmDriverList, setPMDriverList] = useState<Driver[]>(driverList);
+    useState<Passenger[]>(passengerCollection);
+  const [pmDriverList, setPMDriverList] = useState<Driver[]>(driverCollection);
 
   const [passengerSort, setPassengerSort] = useState<PassengerSort>(
-    PassengerSort.NAME
+    PassengerSort[""]
   );
-  const [driverSort, setDriverSort] = useState<DriverSort>(DriverSort.NAME);
+  const [driverSort, setDriverSort] = useState<DriverSort>(DriverSort[""]);
 
   const updatePassengerSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setPassengerSort(event.target.value as PassengerSort);
-    const sortedlist = [...pmPassengerList];
-    sortPassengers(sortedlist, event.target.value as PassengerSort);
-    setPMPassengerList(sortedlist);
+    setPMPassengerList(
+      sortPassengers(
+        [...passengerCollection],
+        event.target.value as PassengerSort
+      )
+    );
   };
   const updateDriverSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setDriverSort(event.target.value as DriverSort);
-    const sortedlist = [...pmDriverList];
-    sortDrivers(sortedlist, event.target.value as DriverSort);
-    setPMDriverList(sortedlist);
+    setPMDriverList(
+      sortDrivers([...driverCollection], event.target.value as DriverSort)
+    );
   };
 
   useEffect(() => {
-    const newPassengerList = [...passengerList];
-    sortPassengers(newPassengerList, passengerSort);
-    setPMPassengerList(newPassengerList);
-  }, [passengerList]);
+    setPMPassengerList(sortPassengers([...passengerCollection], passengerSort));
+  }, [passengerCollection]);
   useEffect(() => {
-    const newDriverList = [...driverList];
+    const newDriverList = [...driverCollection];
     sortDrivers(newDriverList, driverSort);
     setPMDriverList(newDriverList);
-  }, [driverList]);
+  }, [driverCollection]);
 
   return (
     <div className="flex flex-row w-full justify-evenly">

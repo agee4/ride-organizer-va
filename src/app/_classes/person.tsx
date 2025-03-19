@@ -16,19 +16,25 @@ export enum College {
 }
 
 export class Person {
+  private email: string;
+  private phone?: string;
   public name: string;
   public rides: RideTimes[];
   public address: string;
-  public college: string;
+  public college: College;
   public notes?: string;
 
   constructor(
+    email: string,
     name: string,
     rides: RideTimes[],
     address: string,
-    college: string,
+    college: College,
+    phone?: string,
     notes?: string
   ) {
+    this.email = email;
+    this.phone = phone;
     this.name = name;
     this.rides = rides;
     this.address = address;
@@ -36,11 +42,25 @@ export class Person {
     this.notes = notes;
   }
 
+  getEmail(): string {
+    return this.email;
+  }
+
   getName(): string {
     return this.name;
   }
 
+  setName(updatedname: string): string {
+    this.name = updatedname;
+    return this.name;
+  }
+
   getAddress(): string {
+    return this.address;
+  }
+
+  setAddress(updatedaddress: string): string {
+    this.address = updatedaddress;
     return this.address;
   }
 
@@ -69,7 +89,7 @@ export const CollegeTag = ({ data }: { data: College }) => {
       color = " text-red-500 bg-black";
       break;
     default:
-      color = "bg-neutral-200 dark:bg-neutral-800";
+      color = " bg-neutral-200 dark:bg-neutral-800";
   }
 
   return (

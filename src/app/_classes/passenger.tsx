@@ -11,28 +11,56 @@ export enum Year {
   OTHER = "Other",
 }
 
+export const YearTag = ({ data }: { data: Year }) => {
+  let color;
+  switch (data) {
+    case Year.FRESHMAN:
+      color = " text-blue-700 bg-yellow-300";
+      break;
+    case Year.SOPHOMORE:
+      color = " text-green-800 bg-red-500";
+      break;
+    case Year.JUNIOR:
+      color = " text-red-800 bg-green-500";
+      break;
+    case Year.SENIOR:
+      color = " text-yellow-300 bg-blue-700";
+      break;
+    default:
+      color = " bg-neutral-200 dark:bg-neutral-800";
+  }
+
+  return (
+    <span className={"rounded-md p-1 mr-1 font-bold" + color}>{data}</span>
+  );
+};
+
 export class Passenger extends Person {
   public year: Year;
   public backup?: RideTimes[];
 
   constructor({
+    email,
     name,
     rides,
     address,
     college,
     year,
     backup,
+    phone,
     notes,
   }: {
+    email: string;
     name: string;
     rides: RideTimes[];
     address: string;
     college: College;
     year: Year;
     backup?: RideTimes[];
+    phone?: string;
     notes?: string;
   }) {
-    super(name, rides, address, college, notes);
+    super(email, name, rides, address, college, phone, notes);
     this.year = year;
     this.backup = backup;
   }
@@ -79,7 +107,9 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
           </li>
         )}
         {(!display || display.includes(PassengerDisplay.YEAR)) && (
-          <li>Year: {data.year}</li>
+          <li>
+            <YearTag data={data.year} />
+          </li>
         )}
         <ul className="flex flex-row flex-wrap">
           {data.rides.map((item, index) => (
@@ -116,15 +146,19 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
 };
 
 export enum PassengerSort {
-  NAME = "name",
-  ADDRESS = "address",
+  "" = "",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
   FRIDAY = "friday",
+  NAME = "name",
+  ADDRESS = "address",
 }
 
-export const sortPassengers = (list: Passenger[], sort: PassengerSort) => {
+export const sortPassengers = (
+  list: Passenger[],
+  sort: PassengerSort
+): Passenger[] => {
   switch (sort) {
     case PassengerSort.ADDRESS:
       list.sort((a, b) => a.address.localeCompare(b.address));
@@ -164,29 +198,36 @@ export const sortPassengers = (list: Passenger[], sort: PassengerSort) => {
       );
       break;
     case PassengerSort.NAME:
-    default:
       list.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    default:
   }
+  return list;
 };
 
 export type PassengerReducerAction =
   | { type: "create"; passenger: Passenger }
   | { type: "delete"; passenger: Passenger }
-  | { type: "set"; passengerlist: Passenger[] };
+  | { type: "set"; passengers: Map<string, Passenger> };
 
 export const passengerReducer = (
-  passengerList: Passenger[],
+  passengerCollection: Map<string, Passenger>,
   action: PassengerReducerAction
 ) => {
   switch (action.type) {
     case "create": {
-      return [...passengerList, action.passenger];
+      return new Map([...passengerCollection.entries()]).set(
+        action.passenger.getEmail(),
+        action.passenger
+      );
     }
     case "delete": {
-      return [...passengerList].filter((x) => x !== action.passenger);
+      let newCollection = new Map([...passengerCollection.entries()]);
+      newCollection.delete(action.passenger.getEmail());
+      return newCollection;
     }
     case "set": {
-      return action.passengerlist;
+      return action.passengers;
     }
     default:
       throw Error("Unknown action");

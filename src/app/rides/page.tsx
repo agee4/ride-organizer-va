@@ -7,38 +7,24 @@ import { Passenger, passengerReducer, Year } from "../_classes/passenger";
 import { Driver, driverReducer } from "../_classes/driver";
 import { RideManager } from "../_components/ride_manager";
 import { PeopleManager } from "../_components/people_manager";
-
-interface PassengerParse {
-  Timestamp: number;
-  "Email Address": string;
-  Name: string;
-  "Phone Number": string;
-  Rides: string;
-  Address: string;
-  College: string;
-  Year: string;
-  "Backup Rides": string;
-  Notes: string;
-}
-
-interface DriverParse {
-  Timestamp: number;
-  Name: string;
-  "Phone Number": string;
-  Seats: number;
-  Rides: string;
-  Address: string;
-  College: string;
-  Notes: string;
-  "Email Address": string;
-}
+import { Ride, rideReducer } from "../_classes/ride";
 
 export default function Page() {
   const fileSelectorRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [passengerList, passengerDispatch] = useReducer(passengerReducer, []);
-  const [driverList, driverDispatch] = useReducer(driverReducer, []);
+  const [passengerCollection, passengerDispatch] = useReducer(
+    passengerReducer,
+    new Map<string, Passenger>()
+  );
+  const [driverCollection, driverDispatch] = useReducer(
+    driverReducer,
+    new Map<string, Driver>()
+  );
+  const [rideCollection, rideDispatch] = useReducer(
+    rideReducer,
+    new Map<string, Ride>()
+  );
 
   const [rmDisplay, setRMdisplay] = useState(false);
 
@@ -53,8 +39,11 @@ export default function Page() {
   const usePlaceholderSheet = () => {
     setSelectedFile(null);
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
-    passengerDispatch({ type: "set", passengerlist: [] });
-    driverDispatch({ type: "set", driverlist: [] });
+    passengerDispatch({
+      type: "set",
+      passengers: new Map<string, Passenger>(),
+    });
+    driverDispatch({ type: "set", drivers: new Map<string, Driver>() });
   };
 
   const loadSheet = async () => {
@@ -106,12 +95,14 @@ export default function Page() {
           passengerDispatch({
             type: "create",
             passenger: new Passenger({
+              email: x["Email Address"] ? x["Email Address"] : "",
               name: x.Name ? x.Name : "",
               rides: mainrideneeds,
               address: x.Address ? x.Address : "",
               college: x.College ? (x.College as College) : College.OTHER,
               year: x.Year ? (x.Year as Year) : Year.OTHER,
               backup: backuprideneeds,
+              phone: x["Phone Number"],
               notes: x.Notes,
             }),
           });
@@ -138,11 +129,13 @@ export default function Page() {
           driverDispatch({
             type: "create",
             driver: new Driver({
+              email: x["Email Address"] ? x["Email Address"] : "",
               name: x.Name ? x.Name : "",
               rides: rides,
               seats: x.Seats ? x.Seats : 0,
               address: x.Address ? x.Address : "",
               college: x.College ? (x.College as College) : College.OTHER,
+              phone: x["Phone Number"],
               notes: x.Notes,
             }),
           });
@@ -154,8 +147,9 @@ export default function Page() {
   const saveSheet = useCallback(() => {
     const wb = utils.book_new();
     let passengerJSON = [];
-    for (let passenger of passengerList) {
+    for (let passenger of passengerCollection.values()) {
       passengerJSON.push({
+        Email: passenger.getEmail(),
         Name: passenger.name,
         Rides: passenger.rides.toLocaleString(),
         Address: passenger.address,
@@ -168,8 +162,9 @@ export default function Page() {
     const ws_p = utils.json_to_sheet(passengerJSON);
     utils.book_append_sheet(wb, ws_p, "Passengers");
     let driverJSON = [];
-    for (let driver of driverList) {
+    for (let driver of driverCollection.values()) {
       driverJSON.push({
+        Email: driver.getEmail(),
         Name: driver.name,
         Seats: driver.seats,
         Rides: driver.rides.toLocaleString(),
@@ -181,8 +176,18 @@ export default function Page() {
     console.log(driverJSON);
     const ws_d = utils.json_to_sheet(driverJSON);
     utils.book_append_sheet(wb, ws_d, "Drivers");
-    writeFile(wb, "ridelist.xlsx");
-  }, [passengerList, driverList]);
+    if (rideCollection.size > 0) {
+      let rideJSON = [];
+      for (let ride of rideCollection.values()) {
+        rideJSON.push({
+          ride: ride.passengers,
+        });
+      }
+      const ws_r = utils.json_to_sheet(rideJSON);
+      utils.book_append_sheet(wb, ws_r, "Rides");
+    }
+    writeFile(wb, "ridesheet.xlsx");
+  }, [passengerCollection, driverCollection]);
   const toggleDisplay = () => {
     setRMdisplay(!rmDisplay);
   };
@@ -231,14 +236,15 @@ export default function Page() {
 
         <div className={rmDisplay ? "w-full" : "hidden"}>
           <RideManager
-            originPassengerList={passengerList}
-            originDriverList={driverList}
+            originPassengers={passengerCollection}
+            originDrivers={driverCollection}
+            rideCallback={rideDispatch}
           />
         </div>
         <div className={rmDisplay ? "hidden" : "w-full"}>
           <PeopleManager
-            passengerList={passengerList}
-            driverList={driverList}
+            passengerCollection={[...passengerCollection.values()]}
+            driverCollection={[...driverCollection.values()]}
             passengerCallback={passengerDispatch}
             driverCallback={driverDispatch}
           />

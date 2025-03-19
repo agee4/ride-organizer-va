@@ -9,11 +9,13 @@ import { Passenger, PassengerReducerAction, Year } from "../_classes/passenger";
 import { College, RideTimes } from "../_classes/person";
 
 interface NewPassengerData {
+  email: string;
   name: string;
   address: string;
   college: College;
   service?: RideTimes;
   friday?: RideTimes;
+  phone?: string;
   notes?: string;
 }
 
@@ -26,21 +28,22 @@ export const CreatePassengerForm = ({
 }: CreatePassengerFormProps) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [newPassengerData, setNewPassengerData] = useState<NewPassengerData>({
+    email: "",
     name: "",
     address: "",
     college: College.OTHER,
+    phone: "",
     notes: "",
   });
   const [rideSelect, setRideSelect] = useState<RideTimes>();
   const [collegeSelect, setCollegeSelect] = useState<College>();
 
-  const updateFormInput = (event: ChangeEvent<HTMLInputElement>) => {
+  const updateForm = (
+    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
+  ) => {
     const { name, value } = event.target;
-    setNewPassengerData({ ...newPassengerData, [name]: value });
-  };
-  const updateFormSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = event.target;
-    setRideSelect(value as RideTimes);
+    if (typeof event.target == typeof HTMLSelectElement)
+      setRideSelect(value as RideTimes);
     setNewPassengerData({ ...newPassengerData, [name]: value });
   };
   const createNewPassenger = (event: FormEvent) => {
@@ -61,6 +64,7 @@ export const CreatePassengerForm = ({
       passengerCallback({
         type: "create",
         passenger: new Passenger({
+          email: newPassengerData.email,
           name: newPassengerData.name,
           rides: newPassengerRides,
           address: newPassengerData.address,
@@ -68,13 +72,16 @@ export const CreatePassengerForm = ({
             ? newPassengerData.college
             : College.OTHER,
           year: Year.OTHER,
+          phone: newPassengerData.phone,
           notes: newPassengerData.notes,
         }),
       });
       setNewPassengerData({
+        email: "",
         name: "",
         address: "",
         college: College.OTHER,
+        phone: "",
         notes: "",
       });
       formRef.current?.reset();
@@ -96,7 +103,17 @@ export const CreatePassengerForm = ({
         placeholder="Name"
         required
         minLength={1}
-        onChange={updateFormInput}
+        onChange={updateForm}
+      />
+      <input
+        className="rounded-sm border"
+        type="text"
+        name="email"
+        value={newPassengerData.email}
+        placeholder="Email"
+        required
+        minLength={1}
+        onChange={updateForm}
       />
       <div className="block">
         <input
@@ -107,13 +124,9 @@ export const CreatePassengerForm = ({
           placeholder="Address"
           required
           minLength={1}
-          onChange={updateFormInput}
+          onChange={updateForm}
         />
-        <select
-          name="college"
-          value={collegeSelect}
-          onChange={updateFormSelect}
-        >
+        <select name="college" value={collegeSelect} onChange={updateForm}>
           <option className="dark:text-black">--</option>
           <option className="dark:text-black" value={College.UCI}>
             UCI
@@ -133,7 +146,7 @@ export const CreatePassengerForm = ({
         </select>
       </div>
       <div className="block">
-        <select name="service" value={rideSelect} onChange={updateFormSelect}>
+        <select name="service" value={rideSelect} onChange={updateForm}>
           <option className="dark:text-black">--choose a ride--</option>
           <option className="dark:text-black" value={RideTimes.FIRST}>
             First
@@ -150,17 +163,25 @@ export const CreatePassengerForm = ({
           name="friday"
           id="friday"
           value={RideTimes.FRIDAY}
-          onChange={updateFormInput}
+          onChange={updateForm}
         />
         <label htmlFor="friday">Friday</label>
       </div>
       <input
         className="rounded-sm border"
         type="text"
+        name="phone"
+        value={newPassengerData.phone}
+        placeholder="Phone #"
+        onChange={updateForm}
+      />
+      <input
+        className="rounded-sm border"
+        type="text"
         name="notes"
         value={newPassengerData.notes}
         placeholder="Notes"
-        onChange={updateFormInput}
+        onChange={updateForm}
       />
       <br />
       <button type="submit">Submit</button>

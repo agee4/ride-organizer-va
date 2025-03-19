@@ -7,21 +7,25 @@ export class Driver extends Person {
   public seats: number;
 
   constructor({
+    email,
     name,
     rides,
     address,
     college,
     seats,
+    phone,
     notes,
   }: {
+    email: string;
     name: string;
     rides: RideTimes[];
     address: string;
     college: College;
     seats: number;
+    phone?: string;
     notes?: string;
   }) {
-    super(name, rides, address, college, notes);
+    super(email, name, rides, address, college, phone, notes);
     this.seats = seats;
   }
 
@@ -94,6 +98,7 @@ const DriverComponent = ({ data, display }: DriverProps) => {
 };
 
 export enum DriverSort {
+  "" = "",
   NAME = "name",
   ADDRESS = "address",
   FIRST = "first",
@@ -102,7 +107,7 @@ export enum DriverSort {
   FRIDAY = "friday",
 }
 
-export const sortDrivers = (list: Driver[], sort?: DriverSort) => {
+export const sortDrivers = (list: Driver[], sort?: DriverSort): Driver[] => {
   switch (sort) {
     case DriverSort.ADDRESS:
       list.sort((a, b) => a.address.localeCompare(b.address));
@@ -136,29 +141,36 @@ export const sortDrivers = (list: Driver[], sort?: DriverSort) => {
       );
       break;
     case DriverSort.NAME:
-    default:
       list.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    default:
   }
+  return list;
 };
 
 export type DriverReducerAction =
   | { type: "create"; driver: Driver }
   | { type: "delete"; driver: Driver }
-  | { type: "set"; driverlist: Driver[] };
+  | { type: "set"; drivers: Map<string, Driver> };
 
 export const driverReducer = (
-  driverList: Driver[],
+  driverCollection: Map<string, Driver>,
   action: DriverReducerAction
 ) => {
   switch (action.type) {
     case "create": {
-      return [...driverList, action.driver];
+      return new Map([...driverCollection.entries()]).set(
+        action.driver.getEmail(),
+        action.driver
+      );
     }
     case "delete": {
-      return [...driverList].filter((x) => x !== action.driver);
+      let newCollection = new Map([...driverCollection.entries()]);
+      newCollection.delete(action.driver.getEmail());
+      return newCollection;
     }
     case "set": {
-      return action.driverlist;
+      return action.drivers;
     }
     default:
       throw Error("Unknown action");

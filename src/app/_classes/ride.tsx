@@ -3,6 +3,7 @@
 import { ReactElement } from "react";
 import { Driver, DriverDisplay } from "./driver";
 import { Passenger, PassengerDisplay } from "./passenger";
+import { RideTimes } from "./person";
 
 export class Ride {
   public driver: Driver;
@@ -31,7 +32,7 @@ export class Ride {
 
   addPassenger(passenger: Passenger): boolean {
     if (this.passengers.size <= this.driver.seats) {
-      this.passengers.set(passenger.name, passenger);
+      this.passengers.set(passenger.getEmail(), passenger);
       return true;
     } else {
       return false;
@@ -58,7 +59,11 @@ const RideComponent = ({ data }: RideProps) => {
     >
       <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
       <ul className="m-1">
-        {data.driver.display([DriverDisplay.ADDRESS, DriverDisplay.COLLEGE, DriverDisplay.NOTES])}
+        {data.driver.display([
+          DriverDisplay.ADDRESS,
+          DriverDisplay.COLLEGE,
+          DriverDisplay.NOTES,
+        ])}
         <ul className="m-1">
           <li className="text-center">Seats Left: {seatsleft}</li>
           {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
@@ -84,14 +89,22 @@ const RideComponent = ({ data }: RideProps) => {
 };
 
 export enum RideSort {
+  "" = "",
   NAME = "name",
   ADDRESS = "driver address",
   SEATS = "seats",
   SEATS_LEFT = "seats left",
+  FIRST = "first",
+  SECOND = "second",
+  THIRD = "third",
+  FRIDAY = "friday",
 }
 
-export const sortRides = (list: Ride[], sort?: RideSort) => {
+export const sortRides = (list: Ride[], sort?: RideSort): Ride[] => {
   switch (sort) {
+    case RideSort.NAME:
+      list.sort((a, b) => a.driver.name.localeCompare(b.driver.name));
+      break;
     case RideSort.ADDRESS:
       list.sort((a, b) => a.driver.address.localeCompare(b.driver.address));
       break;
@@ -106,8 +119,64 @@ export const sortRides = (list: Ride[], sort?: RideSort) => {
           (a.driver.seats - a.passengers.size)
       );
       break;
-    case RideSort.NAME:
+    case RideSort.FIRST:
+      list.sort(
+        (a, b) =>
+          +b.driver.rides.includes(RideTimes.FIRST) -
+          +a.driver.rides.includes(RideTimes.FIRST)
+      );
+      break;
+    case RideSort.SECOND:
+      list.sort(
+        (a, b) =>
+          +b.driver.rides.includes(RideTimes.SECOND) -
+          +a.driver.rides.includes(RideTimes.SECOND)
+      );
+      break;
+    case RideSort.THIRD:
+      list.sort(
+        (a, b) =>
+          +b.driver.rides.includes(RideTimes.THIRD) -
+          +a.driver.rides.includes(RideTimes.THIRD)
+      );
+      break;
+    case RideSort.FRIDAY:
+      list.sort(
+        (a, b) =>
+          +b.driver.rides.includes(RideTimes.FRIDAY) -
+          +a.driver.rides.includes(RideTimes.FRIDAY)
+      );
+      break;
     default:
-      list.sort((a, b) => a.driver.name.localeCompare(b.driver.name));
+  }
+  return list;
+};
+
+export type RideReducerAction =
+  | { type: "create"; ride: Ride }
+  | { type: "delete"; ride: Ride }
+  | { type: "set"; rides: Map<string, Ride> };
+
+export const rideReducer = (
+  rideCollection: Map<string, Ride>,
+  action: RideReducerAction
+) => {
+  switch (action.type) {
+    case "create": {
+      return new Map([...rideCollection.entries()]).set(
+        action.ride.driver.getEmail(),
+        action.ride
+      );
+    }
+    case "delete": {
+      let newCollection = new Map([...rideCollection.entries()]);
+      newCollection.delete(action.ride.driver.getEmail());
+      return newCollection;
+    }
+    case "set": {
+      return action.rides;
+    }
+    default:
+      throw Error("Unknown action");
   }
 };

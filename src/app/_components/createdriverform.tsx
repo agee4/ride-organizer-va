@@ -1,14 +1,22 @@
-import { ActionDispatch, ChangeEvent, FormEvent, useRef, useState } from "react";
+import {
+  ActionDispatch,
+  ChangeEvent,
+  FormEvent,
+  useRef,
+  useState,
+} from "react";
 import { College, RideTimes } from "../_classes/person";
 import { Driver, DriverReducerAction } from "../_classes/driver";
 
 interface NewDriverData {
+  email: string;
   name: string;
   address: string;
   college: College.OTHER;
   seats: number;
   service?: RideTimes;
   friday?: RideTimes;
+  phone?: string;
   notes?: string;
 }
 
@@ -19,10 +27,12 @@ interface CreateDriverFormProps {
 export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [newDriverData, setNewDriverData] = useState<NewDriverData>({
+    email: "",
     name: "",
+    seats: 0,
     address: "",
     college: College.OTHER,
-    seats: 0,
+    phone: "",
     notes: "",
   });
   const [rideSelect, setRideSelect] = useState<RideTimes>();
@@ -52,19 +62,23 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
     driverCallback({
       type: "create",
       driver: new Driver({
+        email: newDriverData.email,
         name: newDriverData.name,
         rides: newDriverRides,
         seats: newDriverData.seats,
         address: newDriverData.address,
         college: newDriverData.college ? newDriverData.college : College.OTHER,
+        phone: newDriverData.phone,
         notes: newDriverData.notes,
       }),
     });
     setNewDriverData({
+      email: "",
       name: "",
+      seats: 0,
       address: "",
       college: College.OTHER,
-      seats: 0,
+      phone: "",
       notes: "",
     });
     formRef.current?.reset();
@@ -85,6 +99,26 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
         placeholder="Name"
         required
         minLength={1}
+        onChange={updateForm}
+      />
+      <input
+        className="rounded-sm border"
+        type="text"
+        name="email"
+        value={newDriverData.email}
+        placeholder="Email"
+        required
+        minLength={1}
+        onChange={updateForm}
+      />
+      <input
+        className="rounded-sm border"
+        type="number"
+        name="seats"
+        value={newDriverData.seats}
+        min="1"
+        placeholder="Seats"
+        required
         onChange={updateForm}
       />
       <div className="block">
@@ -117,16 +151,6 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
           </option>
         </select>
       </div>
-      <input
-        className="rounded-sm border"
-        type="number"
-        name="seats"
-        value={newDriverData.seats}
-        min="1"
-        placeholder="Seats"
-        required
-        onChange={updateForm}
-      />
       <div className="block">
         <select name="service" value={rideSelect} onChange={updateForm}>
           <option className="dark:text-black">--choose a ride--</option>
