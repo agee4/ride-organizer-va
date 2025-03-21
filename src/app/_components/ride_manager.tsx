@@ -6,6 +6,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { Driver, DriverDisplay } from "../_classes/driver";
@@ -17,6 +18,103 @@ import {
 } from "../_classes/passenger";
 import { Ride, RideReducerAction, RideSort, sortRides } from "../_classes/ride";
 import { College, CollegeTag } from "../_classes/person";
+import { DndProvider, DropTargetMonitor, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { TestType } from "../_classes/ItemTypes";
+
+interface DragItem {
+  email: string;
+}
+
+const RM_RPComponent = ({
+  data,
+  display,
+}: {
+  data: Passenger;
+  display?: PassengerDisplay[];
+}) => {
+  const dragref = useRef<HTMLDivElement>(null);
+  const dragpreviewref = useRef<HTMLDivElement>(null);
+  const [{ isDragging }, drag, dragPreview] = useDrag<
+    DragItem,
+    void,
+    { isDragging: boolean }
+  >(() => ({
+    type: TestType.TEST,
+    item: { email: data.getEmail() },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
+  drag(dragref);
+  dragPreview(dragpreviewref);
+
+  return isDragging ? (
+    <div
+      className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[248px]"
+      ref={dragpreviewref}
+    >
+      {(!display || display.includes(PassengerDisplay.NAME)) && (
+        <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+      )}
+    </div>
+  ) : (
+    <div
+      className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[248px]"
+      ref={dragref}
+    >
+      {(!display || display.includes(PassengerDisplay.NAME)) && (
+        <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+      )}
+      <ul className="m-1">
+        {(!display ||
+          display.includes(PassengerDisplay.ADDRESS) ||
+          display.includes(PassengerDisplay.COLLEGE)) && (
+          <li>
+            {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
+              <CollegeTag data={data.college as College} />
+            )}
+            {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
+              <span>{data.address}</span>
+            )}
+          </li>
+        )}
+        {(!display || display.includes(PassengerDisplay.YEAR)) && (
+          <li>Year: {data.year}</li>
+        )}
+        <ul className="flex flex-row flex-wrap">
+          {data.rides.map((item, index) => (
+            <li
+              className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
+              key={index}
+            >
+              {item}
+            </li>
+          ))}
+          {data.backup &&
+            data.backup.map((item, index) => (
+              <li
+                className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                key={index}
+              >
+                {item}
+              </li>
+            ))}
+        </ul>
+        {(!display || display.includes(PassengerDisplay.NOTES)) &&
+          data.notes && (
+            <ul className="mt-1">
+              <li>
+                <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
+                  {data.notes}
+                </span>
+              </li>
+            </ul>
+          )}
+      </ul>
+    </div>
+  );
+};
 
 const RM_PassengerComponent = ({
   data,
@@ -104,10 +202,48 @@ const RM_PassengerComponent = ({
   );
 };
 
-const RM_RideComponent = ({ data }: { data: Ride }) => {
+const RM_RideComponent = ({
+  data,
+}: /* onDrop, */
+{
+  data: Ride;
+  /* onDrop: (item: DragItem, monitor: DropTargetMonitor<DragItem>) => void ; */
+}) => {
   const rmcontext = useContext(RideManagerContext);
+  const ref = useRef<HTMLDivElement>(null);
   const [passengers, setPassengers] = useState<Map<string, Passenger>>(
     data.passengers
+  );
+  const [{ canDrop, isOver }, drop] = useDrop<
+    DragItem,
+    void,
+    { canDrop: Boolean; isOver: boolean }
+  >(
+    () => ({
+      accept: TestType.TEST,
+      drop: (item, monitor) => {
+        console.log(item)
+        if (rmcontext?.passengerCollection) {
+          let test = rmcontext.passengerCollection.get(item.email);
+          if (!!test) {
+            data.addPassenger(test);
+            let newpassengercollection = new Map([
+              ...rmcontext.passengerCollection.entries(),
+            ]);
+            newpassengercollection.delete(test.getEmail());
+            rmcontext.passengerCallback(newpassengercollection);
+            setPassengers(data.passengers);
+            console.log(newpassengercollection);
+            console.log(data.passengers);
+          }
+        }
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+    }),
+    []
   );
 
   const updatePassengers = (data: Map<string, Passenger>) => {
@@ -117,7 +253,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
   const addPassenger = () => {
     if (rmcontext?.passengerList) {
       const nextpassenger = [...rmcontext?.passengerList].shift();
-      if (nextpassenger !== undefined) {
+      if (!!nextpassenger) {
         data.addPassenger(nextpassenger);
         let newpassengercollection = new Map([
           ...rmcontext.passengerCollection.entries(),
@@ -133,11 +269,19 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
   const seatsleft = data.driver.seats - data.passengers.size;
   let valid = seatsleft >= 0;
 
+  drop(ref);
+
   return (
     <div
       className={
-        "p-2 my-1 rounded-md " + (valid ? "bg-neutral-500" : "bg-red-500")
+        "p-2 my-1 rounded-md " +
+        (!valid
+          ? "bg-red-500"
+          : isOver && canDrop
+          ? "bg-amber-300"
+          : "bg-neutral-500")
       }
+      ref={ref}
     >
       <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
       <ul className="m-1">
@@ -204,9 +348,7 @@ export const RideManager = ({
     new Map<string, Ride>()
   );
   const [rideList, setRideList] = useState<Ride[]>([]);
-  const [rpSort, setRPSort] = useState<PassengerSort>(
-    PassengerSort[""]
-  );
+  const [rpSort, setRPSort] = useState<PassengerSort>(PassengerSort[""]);
   const [rideSort, setRideSort] = useState<RideSort>(RideSort[""]);
 
   useEffect(() => {
@@ -259,49 +401,45 @@ export const RideManager = ({
     rideUpdater(newRideCollection);
   }, [originPassengers, originDrivers]);
 
-  /* const refreshRides = () => {
-    let exists;
-    const newRPList = [...ridePassengerList];
-    for (let passenger of originPassengerList) {
-      if (!ridePassengerList.includes(passenger)) {
-        exists = false;
-        for (let ride of rideList) {
-          for (let ridepassenger of ride.passengers.values())
-            if (JSON.stringify(ridepassenger) == JSON.stringify(passenger)) {
-              exists = true;
-              break;
-            }
-        }
-        if (!exists) {
-          newRPList.push(passenger);
-        }
-      }
-      sortPassengers(newRPList, ridePassengerSort);
-      setRidePassengerList(newRPList);
+  const refreshRides = () => {
+    let newRPCollection = new Map([...rpCollection.entries()]);
+    /* remove passengers, even if assigned a ride */
+    for (let passenger of rpCollection.values()) {
+      if (!originPassengers.has(passenger.getEmail()))
+        newRPCollection.delete(passenger.getEmail());
     }
-    let newRideList = [...rideList];
-    for (let ride of rideList) {
-      if (!originDriverList.includes(ride.driver)) {
-        const newRPList = [...ridePassengerList];
+    for (let ride of rideCollection.values()) {
+      for (let ridepassenger of ride.passengers.values()) {
+        if (!originPassengers.has(ridepassenger.getEmail()))
+          ride.passengers.delete(ridepassenger.getEmail());
+      }
+    }
+    /* add new passengers */
+    for (let passenger of originPassengers.values()) {
+      if (!rpCollection.has(passenger.getEmail())) {
+        newRPCollection.set(passenger.getEmail(), passenger);
+      }
+    }
+    let newRideCollection = new Map([...rideCollection.entries()]);
+    /* remove rides and move their passengers back into the unassigned list */
+    for (let ride of rideCollection.values()) {
+      if (!originDrivers.has(ride.driver.getEmail())) {
         for (let passenger of ride.passengers.values()) {
-          newRPList.push(passenger);
-          sortPassengers(newRPList, ridePassengerSort);
-          setRidePassengerList(newRPList);
+          if (originPassengers.has(passenger.getEmail()))
+            newRPCollection.set(passenger.getEmail(), passenger);
         }
-        newRideList = newRideList.filter((x) => x !== ride);
+        console.log("updated originDrivers");
+        console.log(newRPCollection);
+        ride.passengers.clear();
+        newRideCollection.delete(ride.getDriver().getEmail());
       }
     }
 
-    for (let driver of originDriverList) {
-      exists = false;
-      for (let ride of rideList) {
-        if (JSON.stringify(ride.driver) == JSON.stringify(driver)) {
-          exists = true;
-          break;
-        }
-      }
-      if (!exists) {
-        newRideList.push(
+    /* add new rides */
+    for (let driver of originDrivers.values()) {
+      if (!rideCollection.has(driver.getEmail())) {
+        newRideCollection.set(
+          driver.getEmail(),
           new Ride({
             driver: driver,
             passengers: new Map<string, Passenger>(),
@@ -309,9 +447,9 @@ export const RideManager = ({
         );
       }
     }
-    sortRides(newRideList, rideSort);
-    setRideList(newRideList);
-  }; */
+    passengerCallback(newRPCollection);
+    rideUpdater(newRideCollection);
+  };
   const clearRides = () => {
     let newRPCollection = new Map([...rpCollection.entries()]);
     for (let ride of rideList) {
@@ -348,79 +486,83 @@ export const RideManager = ({
   };
 
   return (
-    <RideManagerContext.Provider
-      value={{
-        passengerCollection: rpCollection,
-        passengerList: rpList,
-        rideList: rideList,
-        passengerCallback: passengerCallback,
-      }}
-    >
-      <div className="flex flex-row w-full justify-evenly">
-        <div className="p-2 rounded-md border border-neutral-500">
-          <h2>Ride Manager</h2>
-          {/* <button className="m-1 p-1 rounded-sm border" onClick={refreshRides}>
-            Refresh
-          </button> */}
-          <button className="m-1 p-1 rounded-sm border" onClick={clearRides}>
-            Clear All Rides
-          </button>
-          <div className="flex flex-row">
-            <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
-              <label>
-                <span className="text-neutral-500">Sort by: </span>
-                <select
-                  className="rounded-sm border"
-                  defaultValue={rpSort}
-                  onChange={updateRidePassengerSort}
-                >
-                  {Object.values(PassengerSort).map((option) => (
-                    <option
-                      className="dark:text-black"
-                      key={option}
-                      value={option}
-                    >
-                      {option}
-                    </option>
+    <DndProvider backend={HTML5Backend}>
+      <RideManagerContext.Provider
+        value={{
+          passengerCollection: rpCollection,
+          passengerList: rpList,
+          rideList: rideList,
+          passengerCallback: passengerCallback,
+        }}
+      >
+        <div className="flex flex-row w-full justify-evenly">
+          <div className="p-2 rounded-md border border-neutral-500">
+            <h2>Ride Manager</h2>
+            <button className="m-1 p-1 rounded-sm border" onClick={refreshRides}>
+              Refresh
+            </button>
+            <button className="m-1 p-1 rounded-sm border" onClick={clearRides}>
+              Clear All Rides
+            </button>
+            <div className="flex flex-row">
+              <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
+                <label>
+                  <span className="text-neutral-500">Sort by: </span>
+                  <select
+                    className="rounded-sm border"
+                    defaultValue={rpSort}
+                    onChange={updateRidePassengerSort}
+                  >
+                    {Object.values(PassengerSort).map((option) => (
+                      <option
+                        className="dark:text-black"
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <ul className="m-1 max-h-[70dvh] overflow-auto">
+                  {rpList.map((item, index) => (
+                    <li key={index}>
+                      <RM_RPComponent data={item} />
+                    </li>
                   ))}
-                </select>
-              </label>
-              <ul className="m-1 max-h-[70dvh] overflow-auto">
-                {rpList.map((item, index) => (
-                  <li key={index}>{item.display()}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
-              <label>
-                <span className="text-neutral-500">Sort by: </span>
-                <select
-                  className="rounded-sm border"
-                  defaultValue={rideSort}
-                  onChange={updateRideSort}
-                >
-                  {Object.values(RideSort).map((option) => (
-                    <option
-                      className="dark:text-black"
-                      key={option}
-                      value={option}
-                    >
-                      {option}
-                    </option>
+                </ul>
+              </div>
+              <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
+                <label>
+                  <span className="text-neutral-500">Sort by: </span>
+                  <select
+                    className="rounded-sm border"
+                    defaultValue={rideSort}
+                    onChange={updateRideSort}
+                  >
+                    {Object.values(RideSort).map((option) => (
+                      <option
+                        className="dark:text-black"
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <ul className="m-1 max-h-[70dvh] overflow-auto">
+                  {rideList.map((item, index) => (
+                    <li key={index}>
+                      <RM_RideComponent data={item} />
+                    </li>
                   ))}
-                </select>
-              </label>
-              <ul className="m-1 max-h-[70dvh] overflow-auto">
-                {rideList.map((item, index) => (
-                  <li key={index}>
-                    <RM_RideComponent data={item} />
-                  </li>
-                ))}
-              </ul>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </RideManagerContext.Provider>
+      </RideManagerContext.Provider>
+    </DndProvider>
   );
 };
