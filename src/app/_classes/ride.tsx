@@ -3,7 +3,7 @@
 import { ReactElement } from "react";
 import { Driver, DriverDisplay } from "./driver";
 import { Passenger, PassengerDisplay } from "./passenger";
-import { RideTimes } from "./person";
+import { College, RideTimes } from "./person";
 
 export class Ride {
   public driver: Driver;
@@ -89,18 +89,19 @@ const RideComponent = ({ data }: RideProps) => {
 };
 
 export enum RideSort {
-  "" = "",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
   FRIDAY = "friday",
-  SEATS_LEFT = "seats left",
   NAME = "name",
-  ADDRESS = "driver address",
+  ADDRESS = "address",
   SEATS = "seats",
 }
 
-export const sortRides = (list: Ride[], sort?: RideSort): Ride[] => {
+export const sortRides = (
+  list: Ride[],
+  sort?: RideSort | undefined
+): Ride[] => {
   switch (sort) {
     case RideSort.NAME:
       list.sort((a, b) => a.driver.name.localeCompare(b.driver.name));
@@ -109,9 +110,6 @@ export const sortRides = (list: Ride[], sort?: RideSort): Ride[] => {
       list.sort((a, b) => a.driver.address.localeCompare(b.driver.address));
       break;
     case RideSort.SEATS:
-      list.sort((a, b) => b.driver.seats - a.driver.seats);
-      break;
-    case RideSort.SEATS_LEFT:
       list.sort(
         (a, b) =>
           b.driver.seats -
@@ -150,6 +148,21 @@ export const sortRides = (list: Ride[], sort?: RideSort): Ride[] => {
     default:
   }
   return list;
+};
+
+export const filterRides = (
+  list: Ride[],
+  filter: RideTimes | College | undefined
+): Ride[] => {
+  if (Object.values(RideTimes).includes(filter as RideTimes)) {
+    return [...list.values()].filter((x) =>
+      x.driver.rides.includes(filter as RideTimes)
+    );
+  } else if (Object.values(College).includes(filter as College)) {
+    return [...list.values()].filter((x) => x.driver.college === filter);
+  } else {
+    return list;
+  }
 };
 
 export type RideReducerAction =

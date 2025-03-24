@@ -11,14 +11,28 @@ import {
 } from "react";
 import { Driver, DriverDisplay } from "../_classes/driver";
 import {
+  filterPassengers,
   Passenger,
   PassengerDisplay,
   PassengerSort,
   sortPassengers,
+  YearTag,
 } from "../_classes/passenger";
-import { Ride, RideReducerAction, RideSort, sortRides } from "../_classes/ride";
-import { College, CollegeTag } from "../_classes/person";
-import { DndProvider, DropTargetMonitor, useDrag, useDrop } from "react-dnd";
+import {
+  filterRides,
+  Ride,
+  RideReducerAction,
+  RideSort,
+  sortRides,
+} from "../_classes/ride";
+import { College, CollegeTag, RideTimes } from "../_classes/person";
+import {
+  DndProvider,
+  DropTargetMonitor,
+  useDrag,
+  useDragLayer,
+  useDrop,
+} from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TestType } from "../_classes/ItemTypes";
 
@@ -60,7 +74,7 @@ const RM_RPComponent = ({
     </div>
   ) : (
     <div
-      className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[248px]"
+      className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px]"
       ref={dragref}
     >
       {(!display || display.includes(PassengerDisplay.NAME)) && (
@@ -80,7 +94,9 @@ const RM_RPComponent = ({
           </li>
         )}
         {(!display || display.includes(PassengerDisplay.YEAR)) && (
-          <li>Year: {data.year}</li>
+          <li>
+            <YearTag data={data.year} />
+          </li>
         )}
         <ul className="flex flex-row flex-wrap">
           {data.rides.map((item, index) => (
@@ -116,21 +132,26 @@ const RM_RPComponent = ({
   );
 };
 
+const CustomDragLayer = () => {
+  const {} = useDragLayer((monitor) => ({
+    item: monitor.getItem(),
+  }));
+  return <div></div>;
+};
+
 const RM_PassengerComponent = ({
   data,
   ride,
   display,
-  ridePassengerCallback,
 }: {
   data: Passenger;
   ride: Ride;
   display?: PassengerDisplay[];
-  ridePassengerCallback: (data: Map<string, Passenger>) => void;
 }) => {
   const rmcontext = useContext(RideManagerContext);
 
   const removePassenger = () => {
-    if (rmcontext?.passengerCollection) {
+    if (rmcontext) {
       rmcontext.passengerCallback(
         new Map([...rmcontext.passengerCollection.entries()]).set(
           data.getEmail(),
@@ -138,7 +159,9 @@ const RM_PassengerComponent = ({
         )
       );
       ride.passengers.delete(data.getEmail());
-      ridePassengerCallback(ride.passengers);
+      rmcontext.rideCallback(
+        rmcontext.rideCollection.set(ride.getDriver().getEmail(), ride)
+      );
     }
   };
 
@@ -202,18 +225,9 @@ const RM_PassengerComponent = ({
   );
 };
 
-const RM_RideComponent = ({
-  data,
-}: /* onDrop, */
-{
-  data: Ride;
-  /* onDrop: (item: DragItem, monitor: DropTargetMonitor<DragItem>) => void ; */
-}) => {
+const RM_RideComponent = ({ data }: { data: Ride }) => {
   const rmcontext = useContext(RideManagerContext);
   const ref = useRef<HTMLDivElement>(null);
-  const [passengers, setPassengers] = useState<Map<string, Passenger>>(
-    data.passengers
-  );
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
     void,
@@ -222,7 +236,6 @@ const RM_RideComponent = ({
     () => ({
       accept: TestType.TEST,
       drop: (item, monitor) => {
-        console.log(item)
         if (rmcontext?.passengerCollection) {
           let test = rmcontext.passengerCollection.get(item.email);
           if (!!test) {
@@ -230,11 +243,11 @@ const RM_RideComponent = ({
             let newpassengercollection = new Map([
               ...rmcontext.passengerCollection.entries(),
             ]);
-            newpassengercollection.delete(test.getEmail());
+            newpassengercollection.delete(item.email);
+            rmcontext.rideCallback(
+              rmcontext.rideCollection.set(data.getDriver().getEmail(), data)
+            );
             rmcontext.passengerCallback(newpassengercollection);
-            setPassengers(data.passengers);
-            console.log(newpassengercollection);
-            console.log(data.passengers);
           }
         }
       },
@@ -246,13 +259,9 @@ const RM_RideComponent = ({
     []
   );
 
-  const updatePassengers = (data: Map<string, Passenger>) => {
-    setPassengers(data);
-  };
-
   const addPassenger = () => {
-    if (rmcontext?.passengerList) {
-      const nextpassenger = [...rmcontext?.passengerList].shift();
+    if (rmcontext) {
+      const nextpassenger = [...rmcontext.passengerList].shift();
       if (!!nextpassenger) {
         data.addPassenger(nextpassenger);
         let newpassengercollection = new Map([
@@ -260,10 +269,11 @@ const RM_RideComponent = ({
         ]);
         newpassengercollection.delete(nextpassenger.getEmail());
         rmcontext.passengerCallback(newpassengercollection);
-        setPassengers(data.passengers);
+        rmcontext.rideCallback(
+          rmcontext.rideCollection.set(data.getDriver().getEmail(), data)
+        );
       }
     }
-    /* console.log(data.passengers); */
   };
 
   const seatsleft = data.driver.seats - data.passengers.size;
@@ -293,11 +303,10 @@ const RM_RideComponent = ({
         <ul className="m-1">
           <li className="text-center">Seats Left: {seatsleft}</li>
           {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
-          {Array.from(passengers).map(([key, value]) => (
+          {Array.from(data.passengers).map(([key, value]) => (
             <li key={key}>
               <RM_PassengerComponent
                 data={value}
-                ridePassengerCallback={updatePassengers}
                 ride={data}
                 display={[
                   PassengerDisplay.NAME,
@@ -327,8 +336,9 @@ const RM_RideComponent = ({
 const RideManagerContext = createContext<{
   passengerCollection: Map<string, Passenger>;
   passengerList: Passenger[];
-  rideList: Ride[];
+  rideCollection: Map<string, Ride>;
   passengerCallback: (data: Map<string, Passenger>) => void;
+  rideCallback: (data: Map<string, Ride>) => void;
 } | null>(null);
 
 export const RideManager = ({
@@ -344,62 +354,34 @@ export const RideManager = ({
     new Map<string, Passenger>()
   );
   const [rpList, setRPList] = useState<Passenger[]>([]);
+  const [rpSort, setRPSort] = useState<PassengerSort>();
+  const [rpFilter, setRPFilter] = useState<RideTimes | College>();
+
   const [rideCollection, setRideCollection] = useState<Map<string, Ride>>(
     new Map<string, Ride>()
   );
   const [rideList, setRideList] = useState<Ride[]>([]);
-  const [rpSort, setRPSort] = useState<PassengerSort>(PassengerSort[""]);
-  const [rideSort, setRideSort] = useState<RideSort>(RideSort[""]);
+  const [rideSort, setRideSort] = useState<RideSort>();
+  const [rideFilter, setRideFilter] = useState<RideTimes | College>();
 
+  /**add/remove people from manager states based on origin */
   useEffect(() => {
-    let newRPCollection = new Map([...rpCollection.entries()]);
-    /* remove passengers, even if assigned a ride */
-    for (let passenger of rpCollection.values()) {
-      if (!originPassengers.has(passenger.getEmail()))
-        newRPCollection.delete(passenger.getEmail());
-    }
-    for (let ride of rideCollection.values()) {
-      for (let ridepassenger of ride.passengers.values()) {
-        if (!originPassengers.has(ridepassenger.getEmail()))
-          ride.passengers.delete(ridepassenger.getEmail());
-      }
-    }
-    /* add new passengers */
-    for (let passenger of originPassengers.values()) {
-      if (!rpCollection.has(passenger.getEmail())) {
-        newRPCollection.set(passenger.getEmail(), passenger);
-      }
-    }
-    let newRideCollection = new Map([...rideCollection.entries()]);
-    /* remove rides and move their passengers back into the unassigned list */
-    for (let ride of rideCollection.values()) {
-      if (!originDrivers.has(ride.driver.getEmail())) {
-        for (let passenger of ride.passengers.values()) {
-          if (originPassengers.has(passenger.getEmail()))
-            newRPCollection.set(passenger.getEmail(), passenger);
-        }
-        console.log("updated originDrivers");
-        console.log(newRPCollection);
-        ride.passengers.clear();
-        newRideCollection.delete(ride.getDriver().getEmail());
-      }
-    }
-
-    /* add new rides */
-    for (let driver of originDrivers.values()) {
-      if (!rideCollection.has(driver.getEmail())) {
-        newRideCollection.set(
-          driver.getEmail(),
-          new Ride({
-            driver: driver,
-            passengers: new Map<string, Passenger>(),
-          })
-        );
-      }
-    }
-    passengerCallback(newRPCollection);
-    rideUpdater(newRideCollection);
+    refreshRides();
   }, [originPassengers, originDrivers]);
+  /**sort and filter passengers */
+  useEffect(() => {
+    setRPList(
+      sortPassengers(
+        filterPassengers([...rpCollection.values()], rpFilter),
+        rpSort
+      )
+    );
+  }, [rpCollection, rpSort, rpFilter]);
+  useEffect(() => {
+    setRideList(
+      sortRides(filterRides([...rideCollection.values()], rideFilter), rideSort)
+    );
+  }, [rideCollection, rideSort, rideFilter]);
 
   const refreshRides = () => {
     let newRPCollection = new Map([...rpCollection.entries()]);
@@ -417,7 +399,16 @@ export const RideManager = ({
     /* add new passengers */
     for (let passenger of originPassengers.values()) {
       if (!rpCollection.has(passenger.getEmail())) {
-        newRPCollection.set(passenger.getEmail(), passenger);
+        /**check if passenger already in rpCollection */
+        let exists = false;
+        for (let ride of rideCollection.values()) {
+          /**check if passenger in a ride */
+          if (ride.passengers.has(passenger.getEmail())) {
+            exists = true;
+            break;
+          }
+        }
+        if (!exists) newRPCollection.set(passenger.getEmail(), passenger);
       }
     }
     let newRideCollection = new Map([...rideCollection.entries()]);
@@ -428,8 +419,6 @@ export const RideManager = ({
           if (originPassengers.has(passenger.getEmail()))
             newRPCollection.set(passenger.getEmail(), passenger);
         }
-        console.log("updated originDrivers");
-        console.log(newRPCollection);
         ride.passengers.clear();
         newRideCollection.delete(ride.getDriver().getEmail());
       }
@@ -447,7 +436,8 @@ export const RideManager = ({
         );
       }
     }
-    passengerCallback(newRPCollection);
+    /**update passenger and ride lists */
+    passengerUpdater(newRPCollection);
     rideUpdater(newRideCollection);
   };
   const clearRides = () => {
@@ -458,47 +448,56 @@ export const RideManager = ({
       }
       ride.passengers.clear();
     }
-    passengerCallback(newRPCollection);
+    passengerUpdater(newRPCollection);
   };
-  const updateRidePassengerSort = (event: ChangeEvent<HTMLSelectElement>) => {
+
+  const updateRPSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setRPSort(event.target.value as PassengerSort);
-    setRPList(
-      sortPassengers(
-        [...rpCollection.values()],
-        event.target.value as PassengerSort
-      )
-    );
+  };
+  const updateRPFilter = (event: ChangeEvent<HTMLSelectElement>) => {
+    if (Object.values(RideTimes).includes(event.target.value as RideTimes)) {
+      setRPFilter(event.target.value as RideTimes);
+    } else if (Object.values(College).includes(event.target.value as College)) {
+      setRPFilter(event.target.value as College);
+    } else setRPFilter(undefined);
   };
   const updateRideSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setRideSort(event.target.value as RideSort);
-    setRideList(
-      sortRides([...rideCollection.values()], event.target.value as RideSort)
-    );
+  };
+  const updateRideFilter = (event: ChangeEvent<HTMLSelectElement>) => {
+    if (Object.values(RideTimes).includes(event.target.value as RideTimes)) {
+      setRideFilter(event.target.value as RideTimes);
+    } else if (Object.values(College).includes(event.target.value as College)) {
+      setRideFilter(event.target.value as College);
+    } else setRideFilter(undefined);
   };
 
-  const passengerCallback = (data: Map<string, Passenger>) => {
+  const passengerUpdater = (data: Map<string, Passenger>) => {
     setRPCollection(data);
-    setRPList(sortPassengers([...data.values()], rpSort));
   };
   const rideUpdater = (data: Map<string, Ride>) => {
     setRideCollection(data);
-    setRideList(sortRides([...data.values()], rideSort));
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <RideManagerContext.Provider
-        value={{
-          passengerCollection: rpCollection,
-          passengerList: rpList,
-          rideList: rideList,
-          passengerCallback: passengerCallback,
-        }}
-      >
+    <RideManagerContext.Provider
+      value={{
+        passengerCollection: rpCollection,
+        passengerList: rpList,
+        rideCollection: rideCollection,
+        passengerCallback: passengerUpdater,
+        rideCallback: rideUpdater,
+      }}
+    >
+      <DndProvider backend={HTML5Backend}>
+        <CustomDragLayer />
         <div className="flex flex-row w-full justify-evenly">
           <div className="p-2 rounded-md border border-neutral-500">
             <h2>Ride Manager</h2>
-            <button className="m-1 p-1 rounded-sm border" onClick={refreshRides}>
+            <button
+              className="m-1 p-1 rounded-sm border"
+              onClick={refreshRides}
+            >
               Refresh
             </button>
             <button className="m-1 p-1 rounded-sm border" onClick={clearRides}>
@@ -507,12 +506,17 @@ export const RideManager = ({
             <div className="flex flex-row">
               <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
                 <label>
-                  <span className="text-neutral-500">Sort by: </span>
+                  <span className="text-neutral-500">Sort: </span>
                   <select
                     className="rounded-sm border"
                     defaultValue={rpSort}
-                    onChange={updateRidePassengerSort}
+                    onChange={updateRPSort}
                   >
+                    <option
+                      className="dark:text-black"
+                      key={undefined}
+                      value={undefined}
+                    />
                     {Object.values(PassengerSort).map((option) => (
                       <option
                         className="dark:text-black"
@@ -524,23 +528,28 @@ export const RideManager = ({
                     ))}
                   </select>
                 </label>
-                <ul className="m-1 max-h-[70dvh] overflow-auto">
-                  {rpList.map((item, index) => (
-                    <li key={index}>
-                      <RM_RPComponent data={item} />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
                 <label>
-                  <span className="text-neutral-500">Sort by: </span>
+                  <span className="text-neutral-500"> Filter: </span>
                   <select
                     className="rounded-sm border"
-                    defaultValue={rideSort}
-                    onChange={updateRideSort}
+                    defaultValue={rpFilter}
+                    onChange={updateRPFilter}
                   >
-                    {Object.values(RideSort).map((option) => (
+                    <option
+                      className="dark:text-black"
+                      key={undefined}
+                      value={undefined}
+                    />
+                    {Object.values(RideTimes).map((option) => (
+                      <option
+                        className="dark:text-black"
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                    {Object.values(College).map((option) => (
                       <option
                         className="dark:text-black"
                         key={option}
@@ -552,8 +561,72 @@ export const RideManager = ({
                   </select>
                 </label>
                 <ul className="m-1 max-h-[70dvh] overflow-auto">
-                  {rideList.map((item, index) => (
-                    <li key={index}>
+                  {rpList.map((item) => (
+                    <li key={item.getEmail()}>
+                      <RM_RPComponent data={item} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
+                <label>
+                  <span className="text-neutral-500">Sort: </span>
+                  <select
+                    className="rounded-sm border"
+                    defaultValue={rideSort}
+                    onChange={updateRideSort}
+                  >
+                    <option
+                      className="dark:text-black"
+                      key={undefined}
+                      value={undefined}
+                    />
+                    {Object.values(RideSort).map((option) => (
+                      <option
+                        className="dark:text-black"
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className="text-neutral-500"> Filter: </span>
+                  <select
+                    className="rounded-sm border"
+                    defaultValue={rideFilter}
+                    onChange={updateRideFilter}
+                  >
+                    <option
+                      className="dark:text-black"
+                      key={undefined}
+                      value={undefined}
+                    />
+                    {Object.values(RideTimes).map((option) => (
+                      <option
+                        className="dark:text-black"
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                    {Object.values(College).map((option) => (
+                      <option
+                        className="dark:text-black"
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <ul className="m-1 max-h-[70dvh] overflow-auto">
+                  {rideList.map((item) => (
+                    <li key={item.getDriver().getEmail()}>
                       <RM_RideComponent data={item} />
                     </li>
                   ))}
@@ -562,7 +635,7 @@ export const RideManager = ({
             </div>
           </div>
         </div>
-      </RideManagerContext.Provider>
-    </DndProvider>
+      </DndProvider>
+    </RideManagerContext.Provider>
   );
 };

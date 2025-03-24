@@ -146,18 +146,17 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
 };
 
 export enum PassengerSort {
-  "" = "",
+  NAME = "name",
+  ADDRESS = "address",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
   FRIDAY = "friday",
-  NAME = "name",
-  ADDRESS = "address",
 }
 
 export const sortPassengers = (
   list: Passenger[],
-  sort: PassengerSort
+  sort: PassengerSort | undefined
 ): Passenger[] => {
   switch (sort) {
     case PassengerSort.ADDRESS:
@@ -203,6 +202,21 @@ export const sortPassengers = (
     default:
   }
   return list;
+};
+
+export const filterPassengers = (
+  list: Passenger[],
+  filter: RideTimes | College | undefined
+): Passenger[] => {
+  if (Object.values(RideTimes).includes(filter as RideTimes)) {
+    return [...list.values()].filter((x) =>
+      x.rides.includes(filter as RideTimes) || x.backup?.includes(filter as RideTimes)
+    );
+  } else if (Object.values(College).includes(filter as College)) {
+    return [...list.values()].filter((x) => x.college === filter);
+  } else {
+    return list;
+  }
 };
 
 export type PassengerReducerAction =
