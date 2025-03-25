@@ -53,6 +53,7 @@ const RM_RPComponent = ({
 }) => {
   const dragRef = useRef<HTMLDivElement>(null);
   const dragPreviewRef = useRef<HTMLDivElement>(null);
+  const [showDetail, setShowDetail] = useState<boolean>(false);
   const [{ isDragging }, drag, dragPreview] = useDrag<
     DragItem,
     void,
@@ -67,71 +68,76 @@ const RM_RPComponent = ({
   drag(dragRef);
   dragPreview(dragPreviewRef);
 
-  return isDragging ? (
+  const toggleDetail = () => {
+    setShowDetail(!showDetail);
+  };
+
+  return (
     <div
-      className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px] opacity-50"
-      ref={dragPreviewRef}
-    >
-      {(!display || display.includes(PassengerDisplay.NAME)) && (
-        <h3 className="m-1 font-bold text-lg">{data.name}</h3>
-      )}
-    </div>
-  ) : (
-    <div
-      className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px]"
+      className={
+        "p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px] " +
+        (isDragging && "opacity-50")
+      }
       ref={dragRef}
     >
-      {(!display || display.includes(PassengerDisplay.NAME)) && (
-        <h3 className="m-1 font-bold text-lg">{data.name}</h3>
-      )}
-      <ul className="m-1">
-        {(!display ||
-          display.includes(PassengerDisplay.ADDRESS) ||
-          display.includes(PassengerDisplay.COLLEGE)) && (
-          <li>
-            {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-              <CollegeTag data={data.college as College} />
-            )}
-            {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-              <span>{data.address}</span>
-            )}
-          </li>
+      <div className="flex flex-row place-content-between">
+        {(!display || display.includes(PassengerDisplay.NAME)) && (
+          <h3 className="m-1 font-bold text-lg">{data.name}</h3>
         )}
-        {(!display || display.includes(PassengerDisplay.YEAR)) && (
-          <li>
-            <YearTag data={data.year} />
-          </li>
-        )}
-        <ul className="flex flex-row flex-wrap">
-          {data.rides.map((item, index) => (
-            <li
-              className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
-              key={index}
-            >
-              {item}
+        <button className="m-1 font-bold text-lg" onClick={toggleDetail}>
+          {showDetail ? <span>&and;</span> : <span>&or;</span>}
+        </button>
+      </div>
+      {showDetail && (
+        <ul className="m-1">
+          {(!display ||
+            display.includes(PassengerDisplay.ADDRESS) ||
+            display.includes(PassengerDisplay.COLLEGE)) && (
+            <li>
+              {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
+                <CollegeTag data={data.college as College} />
+              )}
+              {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
+                <span>{data.address}</span>
+              )}
             </li>
-          ))}
-          {data.backup &&
-            data.backup.map((item, index) => (
+          )}
+          {(!display || display.includes(PassengerDisplay.YEAR)) && (
+            <li>
+              <YearTag data={data.year} />
+            </li>
+          )}
+          <ul className="flex flex-row flex-wrap">
+            {data.rides.map((item, index) => (
               <li
-                className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
                 key={index}
               >
                 {item}
               </li>
             ))}
+            {data.backup &&
+              data.backup.map((item, index) => (
+                <li
+                  className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                  key={index}
+                >
+                  {item}
+                </li>
+              ))}
+          </ul>
+          {(!display || display.includes(PassengerDisplay.NOTES)) &&
+            data.notes && (
+              <ul className="mt-1">
+                <li>
+                  <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
+                    {data.notes}
+                  </span>
+                </li>
+              </ul>
+            )}
         </ul>
-        {(!display || display.includes(PassengerDisplay.NOTES)) &&
-          data.notes && (
-            <ul className="mt-1">
-              <li>
-                <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
-                  {data.notes}
-                </span>
-              </li>
-            </ul>
-          )}
-      </ul>
+      )}
     </div>
   );
 };
@@ -225,6 +231,8 @@ const RM_PassengerComponent = ({
 const RM_RideComponent = ({ data }: { data: Ride }) => {
   const rmContext = useContext(RideManagerContext);
   const dropRef = useRef<HTMLDivElement>(null);
+  const [showDriverDetail, setShowDriverDetail] = useState<boolean>(false);
+  const [showPassengers, setShowPassengers] = useState<boolean>(true);
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
     void,
@@ -269,6 +277,13 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
     }
   };
 
+  const toggleDriverDetail = () => {
+    setShowDriverDetail(!showDriverDetail);
+  };
+  const togglePassengers = () => {
+    setShowPassengers(!showPassengers);
+  };
+
   const seatsleft = data.driver.seats - data.passengers.size;
   let valid = seatsleft >= 0;
 
@@ -286,40 +301,57 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
       }
       ref={dropRef}
     >
-      <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
+      <div className="flex flex-row place-content-between">
+        <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
+        <button className="m-1 font-bold text-lg" onClick={toggleDriverDetail}>
+          {showDriverDetail ? <span>&and;</span> : <span>&or;</span>}
+        </button>
+      </div>
       <ul className="m-1">
-        {data.driver.display([
-          DriverDisplay.ADDRESS,
-          DriverDisplay.COLLEGE,
-          DriverDisplay.NOTES,
-        ])}
+        {showDriverDetail &&
+          data.driver.display([
+            DriverDisplay.ADDRESS,
+            DriverDisplay.COLLEGE,
+            DriverDisplay.NOTES,
+          ])}
         <ul className="m-1">
-          <li className="text-center">Seats Left: {seatsleft}</li>
+          <li className="text-center">
+            <button
+              className="p-1 rounded-md bg-neutral-300 dark:bg-neutral-700"
+              onClick={togglePassengers}
+            >
+              Seats Left: {seatsleft}
+            </button>
+          </li>
           {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
-          {Array.from(data.passengers).map(([key, value]) => (
-            <li key={key}>
-              <RM_PassengerComponent
-                data={value}
-                ride={data}
-                display={[
-                  PassengerDisplay.NAME,
-                  PassengerDisplay.ADDRESS,
-                  PassengerDisplay.COLLEGE,
-                  PassengerDisplay.NOTES,
-                ]}
-              />
-            </li>
-          ))}
-          {Array.from({ length: seatsleft }, (_, index) => (
-            <li key={index}>
-              <button
-                className="my-1 w-full rounded-md bg-white dark:bg-black"
-                onClick={addPassenger}
-              >
-                +
-              </button>
-            </li>
-          ))}
+          {showPassengers && (
+            <>
+              {Array.from(data.passengers).map(([key, value]) => (
+                <li key={key}>
+                  <RM_PassengerComponent
+                    data={value}
+                    ride={data}
+                    display={[
+                      PassengerDisplay.NAME,
+                      PassengerDisplay.ADDRESS,
+                      PassengerDisplay.COLLEGE,
+                      PassengerDisplay.NOTES,
+                    ]}
+                  />
+                </li>
+              ))}
+              {Array.from({ length: seatsleft }, (_, index) => (
+                <li key={index}>
+                  <button
+                    className="my-1 w-full rounded-md bg-white dark:bg-black"
+                    onClick={addPassenger}
+                  >
+                    +
+                  </button>
+                </li>
+              ))}
+            </>
+          )}
         </ul>
       </ul>
     </div>
@@ -349,6 +381,7 @@ export const RideManager = ({
   );
   const [rpList, setRPList] = useState<Passenger[]>([]);
   const [rpSort, setRPSort] = useState<PassengerSort>();
+  const [rpReverse, setRPReverse] = useState<boolean>(false);
   const [rpFilter, setRPFilter] = useState<RideTimes | College>();
 
   const [rideCollection, rideDispatch] = useReducer(
@@ -366,12 +399,17 @@ export const RideManager = ({
   /**sort and filter passengers */
   useEffect(() => {
     setRPList(
-      sortPassengers(
-        filterPassengers([...rpCollection.values()], rpFilter),
-        rpSort
-      )
+      rpReverse
+        ? sortPassengers(
+            filterPassengers([...rpCollection.values()], rpFilter),
+            rpSort
+          ).reverse()
+        : sortPassengers(
+            filterPassengers([...rpCollection.values()], rpFilter),
+            rpSort
+          )
     );
-  }, [rpCollection, rpSort, rpFilter]);
+  }, [rpCollection, rpSort, rpReverse, rpFilter]);
   useEffect(() => {
     setRideList(
       sortRides(filterRides([...rideCollection.values()], rideFilter), rideSort)
@@ -448,6 +486,9 @@ export const RideManager = ({
       setRPFilter(event.target.value as College);
     } else setRPFilter(undefined);
   };
+  const updateRPReverse = () => {
+    setRPReverse(!rpReverse);
+  };
   const updateRideSort = (event: ChangeEvent<HTMLSelectElement>) => {
     setRideSort(event.target.value as RideSort);
   };
@@ -507,6 +548,12 @@ export const RideManager = ({
                       </option>
                     ))}
                   </select>
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={updateRPReverse}
+                  >
+                    {rpReverse ? <span>&and;</span> : <span>&or;</span>}
+                  </button>
                 </label>
                 <label>
                   <span className="text-neutral-500"> Filter: </span>
