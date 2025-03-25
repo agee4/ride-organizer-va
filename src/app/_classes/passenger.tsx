@@ -89,7 +89,7 @@ interface PassengerProps {
 
 export const PassengerComponent = ({ data, display }: PassengerProps) => {
   return (
-    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[248px]">
+    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px]">
       {(!display || display.includes(PassengerDisplay.NAME)) && (
         <h3 className="m-1 font-bold text-lg">{data.name}</h3>
       )}
