@@ -46,6 +46,10 @@ export class Person {
     return this.email;
   }
 
+  getPhone(): string | undefined {
+    return this.phone;
+  }
+
   getName(): string {
     return this.name;
   }

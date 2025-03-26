@@ -39,7 +39,7 @@ export default function Page() {
   const clearFile = () => {
     setSelectedFile(null);
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
-  }
+  };
 
   const clearPeople = () => {
     passengerDispatch({
@@ -56,6 +56,8 @@ export default function Page() {
     const ab = await f.arrayBuffer();
 
     const wb = read(ab);
+    let passengertemp = new Map<string, Passenger>();
+    let drivertemp = new Map<string, Driver>();
 
     for (let wsn of wb.SheetNames) {
       const ws = wb.Sheets[wsn];
@@ -95,21 +97,24 @@ export default function Page() {
                   backuprideneeds.push(RideTimes.THIRD);
                   break;
               }
-          passengerDispatch({
-            type: "create",
-            passenger: new Passenger({
-              email: x["Email Address"] ? x["Email Address"] : "",
-              name: x.Name ? x.Name : "",
-              rides: mainrideneeds,
-              address: x.Address ? x.Address : "",
-              college: x.College ? (x.College as College) : College.OTHER,
-              year: x.Year ? (x.Year as Year) : Year.OTHER,
-              backup: backuprideneeds,
-              phone: x["Phone Number"],
-              notes: x.Notes,
-            }),
+          const newpassenger = new Passenger({
+            email: x["Email Address"] ? x["Email Address"] : "",
+            name: x.Name ? x.Name : "",
+            rides: mainrideneeds,
+            address: x.Address ? x.Address : "",
+            college: x.College ? (x.College as College) : College.OTHER,
+            year: x.Year ? (x.Year as Year) : Year.OTHER,
+            backup: backuprideneeds,
+            phone: x["Phone Number"],
+            notes: x.Notes,
           });
+
+          passengertemp.set(newpassenger.getEmail(), newpassenger);
         }
+        passengerDispatch({
+          type: "set",
+          passengers: passengertemp,
+        });
       } else if (wsn.toLocaleLowerCase().trim().includes("driver")) {
         let rides = [];
         for (let x of data) {
@@ -129,21 +134,47 @@ export default function Page() {
                 rides.push(RideTimes.THIRD);
                 break;
             }
-          driverDispatch({
-            type: "create",
-            driver: new Driver({
-              email: x["Email Address"] ? x["Email Address"] : "",
-              name: x.Name ? x.Name : "",
-              rides: rides,
-              seats: x.Seats ? x.Seats : 0,
-              address: x.Address ? x.Address : "",
-              college: x.College ? (x.College as College) : College.OTHER,
-              phone: x["Phone Number"],
-              notes: x.Notes,
-            }),
+          const newdriver = new Driver({
+            email: x["Email Address"] ? x["Email Address"] : "",
+            name: x.Name ? x.Name : "",
+            rides: rides,
+            seats: x.Seats ? x.Seats : 0,
+            address: x.Address ? x.Address : "",
+            college: x.College ? (x.College as College) : College.OTHER,
+            phone: x["Phone Number"],
+            notes: x.Notes,
           });
+          drivertemp.set(newdriver.getEmail(), newdriver);
         }
+        driverDispatch({
+          type: "set",
+          drivers: drivertemp,
+        });
       } else if (wsn.toLocaleLowerCase().trim().includes("ride")) {
+        for (let x of data) {
+          let rdriver = drivertemp.get(x.Driver);
+          let rpassengers = new Map<string, Passenger>();
+          if (x.Passengers) {
+            for (let rpassengerstring of x.Passengers.split(",")) {
+              let rpassengeremail = rpassengerstring.slice(
+                rpassengerstring.indexOf("(") + 1,
+                rpassengerstring.indexOf(")")
+              );
+              let rpassenger = passengertemp.get(rpassengeremail);
+              if (rpassenger) {
+                rpassengers.set(rpassengeremail, rpassenger);
+              }
+            }
+          }
+          if (rdriver && true)
+            rideDispatch({
+              type: "create",
+              ride: new Ride({
+                driver: rdriver,
+                passengers: rpassengers,
+              }),
+            });
+        }
       }
     }
   };
@@ -152,8 +183,9 @@ export default function Page() {
     let passengerJSON = [];
     for (let passenger of passengerCollection.values()) {
       passengerJSON.push({
-        Email: passenger.getEmail(),
+        "Email Address": passenger.getEmail(),
         Name: passenger.name,
+        "Phone Number": passenger.getPhone(),
         Rides: passenger.rides.toLocaleString(),
         Address: passenger.address,
         College: passenger.college,
@@ -167,30 +199,39 @@ export default function Page() {
     let driverJSON = [];
     for (let driver of driverCollection.values()) {
       driverJSON.push({
-        Email: driver.getEmail(),
+        "Email Address": driver.getEmail(),
         Name: driver.name,
+        "Phone Number": driver.getPhone(),
         Seats: driver.seats,
+        College: driver.college,
         Rides: driver.rides.toLocaleString(),
         Address: driver.address,
-        College: driver.college,
         Notes: driver.notes,
       });
     }
-    console.log(driverJSON);
     const ws_d = utils.json_to_sheet(driverJSON);
     utils.book_append_sheet(wb, ws_d, "Drivers");
     if (rideCollection.size > 0) {
       let rideJSON = [];
       for (let ride of rideCollection.values()) {
+        const passengers: string[] = [];
+        Array.from(ride.getPassengerList().values()).forEach((x) =>
+          passengers.push(x.getName() + "(" + x.getEmail() + ")")
+        );
         rideJSON.push({
-          ride: ride.passengers,
+          Driver:
+            ride.getDriver().getName() +
+            "(" +
+            ride.getDriver().getEmail() +
+            ")",
+          Passengers: passengers.toLocaleString(),
         });
       }
       const ws_r = utils.json_to_sheet(rideJSON);
       utils.book_append_sheet(wb, ws_r, "Rides");
     }
     writeFile(wb, "ridesheet.xlsx");
-  }, [passengerCollection, driverCollection]);
+  }, [passengerCollection, driverCollection, rideCollection]);
   const toggleDisplay = () => {
     setRMdisplay(!rmDisplay);
   };
@@ -203,10 +244,7 @@ export default function Page() {
           <label className="block">
             <span className="text-neutral-500">Choose a sheet to upload:</span>
             <br />
-            <button
-              className="rounded-full border px-2"
-              onClick={clearFile}
-            >
+            <button className="rounded-full border px-2" onClick={clearFile}>
               Clear
             </button>
             <input
@@ -224,10 +262,7 @@ export default function Page() {
             >
               Load People
             </button>
-            <button
-              className="rounded-full border px-2"
-              onClick={clearPeople}
-            >
+            <button className="rounded-full border px-2" onClick={clearPeople}>
               Clear People
             </button>
           </div>
@@ -241,6 +276,7 @@ export default function Page() {
           <RideManager
             originPassengers={passengerCollection}
             originDrivers={driverCollection}
+            originRides={rideCollection}
             rideCallback={rideDispatch}
           />
         </div>

@@ -79,6 +79,7 @@ const RM_RPComponent = ({
         (isDragging && "opacity-50")
       }
       ref={dragRef}
+      onClick={toggleDetail}
     >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
@@ -369,10 +370,12 @@ const RideManagerContext = createContext<{
 export const RideManager = ({
   originPassengers,
   originDrivers,
+  originRides,
   rideCallback,
 }: {
   originPassengers: Map<string, Passenger>;
   originDrivers: Map<string, Driver>;
+  originRides: Map<string, Ride>;
   rideCallback: ActionDispatch<[action: RideReducerAction]>;
 }) => {
   const [rpCollection, rpDispatch] = useReducer(
@@ -384,10 +387,6 @@ export const RideManager = ({
   const [rpReverse, setRPReverse] = useState<boolean>(false);
   const [rpFilter, setRPFilter] = useState<RideTimes | College>();
 
-  const [rideCollection, rideDispatch] = useReducer(
-    rideReducer,
-    new Map<string, Ride>()
-  );
   const [rideList, setRideList] = useState<Ride[]>([]);
   const [rideSort, setRideSort] = useState<RideSort>();
   const [rideFilter, setRideFilter] = useState<RideTimes | College>();
@@ -412,9 +411,9 @@ export const RideManager = ({
   }, [rpCollection, rpSort, rpReverse, rpFilter]);
   useEffect(() => {
     setRideList(
-      sortRides(filterRides([...rideCollection.values()], rideFilter), rideSort)
+      sortRides(filterRides([...originRides.values()], rideFilter), rideSort)
     );
-  }, [rideCollection, rideSort, rideFilter]);
+  }, [originRides, rideSort, rideFilter]);
 
   const refreshRides = () => {
     /* remove passengers, even if assigned a ride */
@@ -422,7 +421,7 @@ export const RideManager = ({
       if (!originPassengers.has(passenger.getEmail()))
         rpDispatch({ type: "delete", passenger: passenger });
     }
-    for (let ride of rideCollection.values()) {
+    for (let ride of originRides.values()) {
       for (let ridepassenger of ride.passengers.values()) {
         if (!originPassengers.has(ridepassenger.getEmail()))
           ride.passengers.delete(ridepassenger.getEmail());
@@ -433,7 +432,7 @@ export const RideManager = ({
       if (!rpCollection.has(passenger.getEmail())) {
         /**check if passenger already in rpCollection */
         let exists = false;
-        for (let ride of rideCollection.values()) {
+        for (let ride of originRides.values()) {
           /**check if passenger in a ride */
           if (ride.passengers.has(passenger.getEmail())) {
             exists = true;
@@ -444,20 +443,20 @@ export const RideManager = ({
       }
     }
     /* remove rides and move their passengers back into the unassigned list */
-    for (let ride of rideCollection.values()) {
+    for (let ride of originRides.values()) {
       if (!originDrivers.has(ride.driver.getEmail())) {
         for (let passenger of ride.passengers.values()) {
           if (originPassengers.has(passenger.getEmail()))
             rpDispatch({ type: "create", passenger: passenger });
         }
-        rideDispatch({ type: "delete", ride: ride });
+        rideCallback({ type: "delete", ride: ride });
       }
     }
 
     /* add new rides */
     for (let driver of originDrivers.values()) {
-      if (!rideCollection.has(driver.getEmail())) {
-        rideDispatch({
+      if (!originRides.has(driver.getEmail())) {
+        rideCallback({
           type: "create",
           ride: new Ride({
             driver: driver,
@@ -505,9 +504,9 @@ export const RideManager = ({
       value={{
         passengerCollection: rpCollection,
         passengerList: rpList,
-        rideCollection: rideCollection,
+        rideCollection: originRides,
         passengerCallback: rpDispatch,
-        rideCallback: rideDispatch,
+        rideCallback: rideCallback,
       }}
     >
       <DndProvider backend={HTML5Backend}>
