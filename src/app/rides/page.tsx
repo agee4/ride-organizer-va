@@ -282,8 +282,8 @@ export default function Page() {
         </div>
         <div className={rmDisplay ? "hidden" : "w-full"}>
           <PeopleManager
-            passengerCollection={[...passengerCollection.values()]}
-            driverCollection={[...driverCollection.values()]}
+            passengerCollection={passengerCollection}
+            driverCollection={driverCollection}
             passengerCallback={passengerDispatch}
             driverCallback={driverDispatch}
           />

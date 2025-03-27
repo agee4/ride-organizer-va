@@ -89,13 +89,13 @@ const RideComponent = ({ data }: RideProps) => {
 };
 
 export enum RideSort {
+  NAME = "name",
+  ADDRESS = "address",
+  SEATS = "seats",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
   FRIDAY = "friday",
-  NAME = "name",
-  ADDRESS = "address",
-  SEATS = "seats",
 }
 
 export const sortRides = (
@@ -152,17 +152,24 @@ export const sortRides = (
 
 export const filterRides = (
   list: Ride[],
-  filter: RideTimes | College | undefined
+  filter: (RideTimes | College | undefined)[] | undefined
 ): Ride[] => {
-  if (Object.values(RideTimes).includes(filter as RideTimes)) {
-    return [...list.values()].filter((x) =>
-      x.driver.rides.includes(filter as RideTimes)
-    );
-  } else if (Object.values(College).includes(filter as College)) {
-    return [...list.values()].filter((x) => x.driver.college === filter);
-  } else {
-    return list;
+  if (filter) {
+    if (filter.length > 0) {
+      let newlist = [...list];
+      for (let f of filter) {
+        if (Object.values(RideTimes).includes(f as RideTimes)) {
+          newlist = [...newlist].filter((x) =>
+            x.driver.rides.includes(f as RideTimes)
+          );
+        } else if (Object.values(College).includes(f as College)) {
+          newlist = [...newlist].filter((x) => x.driver.college === f);
+        }
+      }
+      return newlist;
+    }
   }
+  return list;
 };
 
 export type RideReducerAction =

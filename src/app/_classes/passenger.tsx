@@ -206,17 +206,26 @@ export const sortPassengers = (
 
 export const filterPassengers = (
   list: Passenger[],
-  filter: RideTimes | College | undefined
+  filter: (RideTimes | College | undefined)[] | undefined
 ): Passenger[] => {
-  if (Object.values(RideTimes).includes(filter as RideTimes)) {
-    return [...list.values()].filter((x) =>
-      x.rides.includes(filter as RideTimes) || x.backup?.includes(filter as RideTimes)
-    );
-  } else if (Object.values(College).includes(filter as College)) {
-    return [...list.values()].filter((x) => x.college === filter);
-  } else {
-    return list;
+  if (filter) {
+    if (filter.length > 0) {
+      let newlist = [...list];
+      for (let f of filter) {
+        if (Object.values(RideTimes).includes(f as RideTimes)) {
+          newlist = [...newlist].filter(
+            (x) =>
+              x.rides.includes(f as RideTimes) ||
+              x.backup?.includes(f as RideTimes)
+          );
+        } else if (Object.values(College).includes(f as College)) {
+          newlist = [...newlist].filter((x) => x.college === f);
+        }
+      }
+      return newlist;
+    }
   }
+  return list;
 };
 
 export type PassengerReducerAction =

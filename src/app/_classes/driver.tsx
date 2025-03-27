@@ -98,13 +98,12 @@ const DriverComponent = ({ data, display }: DriverProps) => {
 };
 
 export enum DriverSort {
-  "" = "",
+  NAME = "name",
+  ADDRESS = "address",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
   FRIDAY = "friday",
-  NAME = "name",
-  ADDRESS = "address",
 }
 
 export const sortDrivers = (list: Driver[], sort?: DriverSort): Driver[] => {
@@ -144,6 +143,28 @@ export const sortDrivers = (list: Driver[], sort?: DriverSort): Driver[] => {
       list.sort((a, b) => a.name.localeCompare(b.name));
       break;
     default:
+  }
+  return list;
+};
+
+export const filterDrivers = (
+  list: Driver[],
+  filter: (RideTimes | College | undefined)[] | undefined
+): Driver[] => {
+  if (filter) {
+    if (filter.length > 0) {
+      let newlist = [...list];
+      for (let f of filter) {
+        if (Object.values(RideTimes).includes(f as RideTimes)) {
+          newlist = [...newlist].filter((x) =>
+            x.rides.includes(f as RideTimes)
+          );
+        } else if (Object.values(College).includes(f as College)) {
+          newlist = [...newlist].filter((x) => x.college === f);
+        }
+      }
+      return newlist;
+    }
   }
   return list;
 };

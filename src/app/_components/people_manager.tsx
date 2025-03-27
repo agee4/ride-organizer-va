@@ -37,7 +37,7 @@ const PM_PassengerComponent = ({
   };
 
   return (
-    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[248px]">
+    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px]">
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
           <h3 className="m-1 font-bold text-lg">{data.name}</h3>
@@ -115,7 +115,7 @@ const PM_DriverComponent = ({
   };
 
   return (
-    <div className="p-2 my-1 rounded-md bg-orange-300 dark:bg-orange-700 max-w-[248px]">
+    <div className="p-2 my-1 rounded-md bg-orange-300 dark:bg-orange-700 max-w-[496px]">
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(DriverDisplay.NAME)) && (
           <h3 className="m-1 font-bold text-lg">{data.name}</h3>
@@ -170,66 +170,92 @@ export const PeopleManager = ({
   passengerCallback,
   driverCallback,
 }: {
-  passengerCollection: Passenger[];
-  driverCollection: Driver[];
+  passengerCollection: Map<string, Passenger>;
+  driverCollection: Map<string, Driver>;
   passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
   driverCallback: ActionDispatch<[action: DriverReducerAction]>;
 }) => {
-  const [pmPassengerList, setPMPassengerList] =
-    useState<Passenger[]>(passengerCollection);
-  const [pmDriverList, setPMDriverList] = useState<Driver[]>(driverCollection);
+  const [pmPassengerList, setPMPassengerList] = useState<Passenger[]>([]);
+  const [pmDriverList, setPMDriverList] = useState<Driver[]>([]);
 
-  const [passengerSort, setPassengerSort] = useState<PassengerSort>(
-    PassengerSort[""]
-  );
-  const [driverSort, setDriverSort] = useState<DriverSort>(DriverSort[""]);
+  const [passengerSort, setPassengerSort] = useState<PassengerSort>();
+  const [passengerReverse, setPassengerReverse] = useState<boolean>(false);
+  const [driverSort, setDriverSort] = useState<DriverSort>();
+  const [driverReverse, setDriverReverse] = useState<boolean>(false);
+
+  useEffect(() => {
+    setPMPassengerList(
+      passengerReverse
+        ? sortPassengers(
+            [...passengerCollection.values()],
+            passengerSort
+          ).reverse()
+        : sortPassengers([...passengerCollection.values()], passengerSort)
+    );
+  }, [passengerCollection, passengerSort, passengerReverse]);
+  useEffect(() => {
+    setPMDriverList(
+      driverReverse
+        ? sortDrivers([...driverCollection.values()], driverSort).reverse()
+        : sortDrivers([...driverCollection.values()], driverSort)
+    );
+  }, [driverCollection, driverSort, driverReverse]);
 
   const updatePassengerSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setPassengerSort(event.target.value as PassengerSort);
-    setPMPassengerList(
-      sortPassengers(
-        [...passengerCollection],
-        event.target.value as PassengerSort
-      )
+    setPassengerSort(
+      Object.values(PassengerSort).includes(event.target.value as PassengerSort)
+        ? (event.target.value as PassengerSort)
+        : undefined
     );
+  };
+  const togglePassengerReverse = () => {
+    setPassengerReverse(!passengerReverse);
   };
   const updateDriverSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setDriverSort(event.target.value as DriverSort);
-    setPMDriverList(
-      sortDrivers([...driverCollection], event.target.value as DriverSort)
+    setDriverSort(
+      Object.values(DriverSort).includes(event.target.value as DriverSort)
+        ? (event.target.value as DriverSort)
+        : undefined
     );
   };
-
-  useEffect(() => {
-    setPMPassengerList(sortPassengers([...passengerCollection], passengerSort));
-  }, [passengerCollection]);
-  useEffect(() => {
-    const newDriverList = [...driverCollection];
-    sortDrivers(newDriverList, driverSort);
-    setPMDriverList(newDriverList);
-  }, [driverCollection]);
+  const toggleDriverReverse = () => {
+    setDriverReverse(!driverReverse);
+  };
 
   return (
     <div className="flex flex-row w-full justify-evenly">
       <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
-        <h2>Passengers</h2>
-        <label>
-          <span className="text-neutral-500">Sort by: </span>
-          <select
-            className="rounded-sm border"
-            value={passengerSort}
-            onChange={updatePassengerSort}
-          >
-            {Object.values(PassengerSort).map((option) => (
-              <option className="dark:text-black" key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-row place-content-between">
+          <h2>Passengers</h2>
+          <span className="px-1 rounded-full bg-cyan-500">
+            {passengerCollection.size}
+          </span>
+        </div>
+        <select
+          className={
+            "rounded-sm border " + (!passengerSort && "text-neutral-500")
+          }
+          value={passengerSort}
+          onChange={updatePassengerSort}
+        >
+          <option className="dark:text-black" key={undefined} value={undefined}>
+            -Sort-
+          </option>
+          {Object.values(PassengerSort).map((option) => (
+            <option className="dark:text-black" key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <button
+          className="ml-1 font-bold text-neutral-500"
+          onClick={togglePassengerReverse}
+        >
+          {passengerReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+        </button>
         <ul className="max-h-[50dvh] overflow-auto">
-          {pmPassengerList.map((item, index) => (
-            <li key={index}>
+          {pmPassengerList.map((item) => (
+            <li key={item.getEmail()}>
               <PM_PassengerComponent
                 data={item}
                 passengerCallback={passengerCallback}
@@ -241,24 +267,35 @@ export const PeopleManager = ({
       </div>
 
       <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
-        <h2>Drivers</h2>
-        <label>
-          <span className="text-neutral-500">Sort by: </span>
-          <select
-            className="rounded-sm border"
-            value={driverSort}
-            onChange={updateDriverSort}
-          >
-            {Object.values(DriverSort).map((option) => (
-              <option className="dark:text-black" key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-row place-content-between">
+          <h2>Drivers</h2>
+          <span className="px-1 rounded-full bg-orange-500">
+            {driverCollection.size}
+          </span>
+        </div>
+        <select
+          className={"rounded-sm border " + (!driverSort && "text-neutral-500")}
+          value={driverSort}
+          onChange={updateDriverSort}
+        >
+          <option className="dark:text-black" key={undefined} value={undefined}>
+            -Sort-
+          </option>
+          {Object.values(DriverSort).map((option) => (
+            <option className="dark:text-black" key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <button
+          className="ml-1 font-bold text-neutral-500"
+          onClick={toggleDriverReverse}
+        >
+          {driverReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+        </button>
         <ul className="max-h-[50dvh] overflow-auto">
-          {pmDriverList.map((item, index) => (
-            <li key={index}>
+          {pmDriverList.map((item) => (
+            <li key={item.getEmail()}>
               <PM_DriverComponent data={item} driverCallback={driverCallback} />
             </li>
           ))}

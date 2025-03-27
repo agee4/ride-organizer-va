@@ -385,11 +385,14 @@ export const RideManager = ({
   const [rpList, setRPList] = useState<Passenger[]>([]);
   const [rpSort, setRPSort] = useState<PassengerSort>();
   const [rpReverse, setRPReverse] = useState<boolean>(false);
-  const [rpFilter, setRPFilter] = useState<RideTimes | College>();
+  const [showRPFilter, setShowRPFilter] = useState<boolean>(false);
+  const [rpFilter, setRPFilter] = useState<(RideTimes | College)[]>([]);
 
   const [rideList, setRideList] = useState<Ride[]>([]);
   const [rideSort, setRideSort] = useState<RideSort>();
-  const [rideFilter, setRideFilter] = useState<RideTimes | College>();
+  const [rideReverse, setRideReverse] = useState<boolean>(false);
+  const [showRideFilter, setShowRideFilter] = useState<boolean>(false);
+  const [rideFilter, setRideFilter] = useState<(RideTimes | College)[]>([]);
 
   /**add/remove people from manager states based on origin */
   useEffect(() => {
@@ -411,9 +414,17 @@ export const RideManager = ({
   }, [rpCollection, rpSort, rpReverse, rpFilter]);
   useEffect(() => {
     setRideList(
-      sortRides(filterRides([...originRides.values()], rideFilter), rideSort)
+      rideReverse
+        ? sortRides(
+            filterRides([...originRides.values()], rideFilter),
+            rideSort
+          ).reverse()
+        : sortRides(
+            filterRides([...originRides.values()], rideFilter),
+            rideSort
+          )
     );
-  }, [originRides, rideSort, rideFilter]);
+  }, [rpCollection, originRides, rideSort, rideReverse, rideFilter]);
 
   const refreshRides = () => {
     /* remove passengers, even if assigned a ride */
@@ -476,33 +487,55 @@ export const RideManager = ({
   };
 
   const updateRPSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRPSort(event.target.value as PassengerSort);
+    setRPSort(
+      Object.values(PassengerSort).includes(event.target.value as PassengerSort)
+        ? (event.target.value as PassengerSort)
+        : undefined
+    );
   };
-  const updateRPFilter = (event: ChangeEvent<HTMLSelectElement>) => {
-    if (Object.values(RideTimes).includes(event.target.value as RideTimes)) {
-      setRPFilter(event.target.value as RideTimes);
-    } else if (Object.values(College).includes(event.target.value as College)) {
-      setRPFilter(event.target.value as College);
-    } else setRPFilter(undefined);
-  };
-  const updateRPReverse = () => {
+  const toggleRPReverse = () => {
     setRPReverse(!rpReverse);
   };
+  const toggleShowRPFilter = () => {
+    setShowRPFilter(!showRPFilter);
+  };
+  const updateRPFilter = (event: ChangeEvent<HTMLSelectElement>) => {
+    setRPFilter(
+      [...event.target.selectedOptions].map((o) =>
+        Object.values(RideTimes).includes(o.value as RideTimes)
+          ? (o.value as RideTimes)
+          : (o.value as College)
+      )
+    );
+  };
+
   const updateRideSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRideSort(event.target.value as RideSort);
+    setRideSort(
+      Object.values(RideSort).includes(event.target.value as RideSort)
+        ? (event.target.value as RideSort)
+        : undefined
+    );
+  };
+  const toggleRideReverse = () => {
+    setRideReverse(!rideReverse);
+  };
+  const toggleShowRideFilter = () => {
+    setShowRideFilter(!showRideFilter);
   };
   const updateRideFilter = (event: ChangeEvent<HTMLSelectElement>) => {
-    if (Object.values(RideTimes).includes(event.target.value as RideTimes)) {
-      setRideFilter(event.target.value as RideTimes);
-    } else if (Object.values(College).includes(event.target.value as College)) {
-      setRideFilter(event.target.value as College);
-    } else setRideFilter(undefined);
+    setRideFilter(
+      [...event.target.selectedOptions].map((o) =>
+        Object.values(RideTimes).includes(o.value as RideTimes)
+          ? (o.value as RideTimes)
+          : (o.value as College)
+      )
+    );
   };
 
   return (
     <RideManagerContext.Provider
       value={{
-        passengerCollection: rpCollection,
+        passengerCollection: originPassengers,
         passengerList: rpList,
         rideCollection: originRides,
         passengerCallback: rpDispatch,
@@ -525,67 +558,99 @@ export const RideManager = ({
             </button>
             <div className="flex flex-row">
               <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
-                <label>
-                  <span className="text-neutral-500">Sort: </span>
-                  <select
-                    className="rounded-sm border"
-                    defaultValue={rpSort}
-                    onChange={updateRPSort}
-                  >
-                    <option
-                      className="dark:text-black"
-                      key={undefined}
-                      value={undefined}
-                    />
-                    {Object.values(PassengerSort).map((option) => (
+                <div className="flex flex-row place-content-between">
+                  <span className="px-1 rounded-full bg-cyan-500">
+                    {rpList.length}/{rpCollection.size}
+                  </span>
+                  <div className="flex flex-row">
+                    <select
+                      className={
+                        "rounded-sm border " + (!rpSort && "text-neutral-500")
+                      }
+                      defaultValue={rpSort}
+                      onChange={updateRPSort}
+                    >
                       <option
                         className="dark:text-black"
-                        key={option}
-                        value={option}
+                        key={undefined}
+                        value={undefined}
                       >
-                        {option}
+                        -Sort-
                       </option>
-                    ))}
-                  </select>
+                      {Object.values(PassengerSort).map((option) => (
+                        <option
+                          className="dark:text-black"
+                          key={option}
+                          value={option}
+                        >
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="ml-1 font-bold text-neutral-500"
+                      onClick={toggleRPReverse}
+                    >
+                      {rpReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-row place-content-end">
+                  {showRPFilter ? (
+                    <select
+                      className={
+                        "rounded-sm border " + (!rpFilter && "text-neutral-500")
+                      }
+                      defaultValue={rpFilter}
+                      onChange={updateRPFilter}
+                      multiple
+                    >
+                      <option
+                        className="dark:text-black"
+                        key={undefined}
+                        value={undefined}
+                        disabled
+                      >
+                        -Filter-
+                      </option>
+                      <optgroup label="Ride Times">
+                        {Object.values(RideTimes).map((option) => (
+                          <option
+                            className="dark:text-black"
+                            key={option}
+                            value={option}
+                          >
+                            {option}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Colleges">
+                        {Object.values(College).map((option) => (
+                          <option
+                            className="dark:text-black"
+                            key={option}
+                            value={option}
+                          >
+                            {option}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  ) : (
+                    <p
+                      className="text-neutral-500 rounded-sm border-neutral-500 border-[1px]"
+                      onClick={toggleShowRPFilter}
+                    >
+                      -Filter-
+                    </p>
+                  )}
                   <button
                     className="ml-1 font-bold text-neutral-500"
-                    onClick={updateRPReverse}
+                    onClick={toggleShowRPFilter}
                   >
-                    {rpReverse ? <span>&and;</span> : <span>&or;</span>}
+                    {showRPFilter ? <span>&uarr;</span> : <span>&darr;</span>}
                   </button>
-                </label>
-                <label>
-                  <span className="text-neutral-500"> Filter: </span>
-                  <select
-                    className="rounded-sm border"
-                    defaultValue={rpFilter}
-                    onChange={updateRPFilter}
-                  >
-                    <option
-                      className="dark:text-black"
-                      key={undefined}
-                      value={undefined}
-                    />
-                    {Object.values(RideTimes).map((option) => (
-                      <option
-                        className="dark:text-black"
-                        key={option}
-                        value={option}
-                      >
-                        {option}
-                      </option>
-                    ))}
-                    {Object.values(College).map((option) => (
-                      <option
-                        className="dark:text-black"
-                        key={option}
-                        value={option}
-                      >
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                </div>
                 <ul className="m-1 max-h-[70dvh] overflow-auto">
                   {rpList.map((item) => (
                     <li key={item.getEmail()}>
@@ -595,61 +660,92 @@ export const RideManager = ({
                 </ul>
               </div>
               <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
-                <label>
-                  <span className="text-neutral-500">Sort: </span>
-                  <select
-                    className="rounded-sm border"
-                    defaultValue={rideSort}
-                    onChange={updateRideSort}
+                <div className="flex flex-row place-content-between">
+                  <span className="px-1 rounded-full bg-orange-500">
+                    {rideList.length}/{originRides.size}
+                  </span>
+                  <div className="flex flex-row">
+                    <select
+                      className={
+                        "rounded-sm border " + (!rideSort && "text-neutral-500")
+                      }
+                      defaultValue={rideSort}
+                      onChange={updateRideSort}
+                    >
+                      <option
+                        className="dark:text-neutral-500"
+                        key={undefined}
+                        value={undefined}
+                      >
+                        -Sort-
+                      </option>
+                      {Object.values(RideSort).map((option) => (
+                        <option
+                          className="dark:text-black"
+                          key={option}
+                          value={option}
+                        >
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="ml-1 font-bold text-neutral-500"
+                      onClick={toggleRideReverse}
+                    >
+                      {rideReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-row place-content-end">
+                  {showRideFilter ? (
+                    <select
+                      className={
+                        "rounded-sm border " +
+                        (!rideFilter && "text-neutral-500")
+                      }
+                      value={rideFilter}
+                      onChange={updateRideFilter}
+                      multiple
+                    >
+                      <optgroup label="Ride Times">
+                        {Object.values(RideTimes).map((option) => (
+                          <option
+                            className="dark:text-black"
+                            key={option}
+                            value={option}
+                          >
+                            {option}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Colleges">
+                        {Object.values(College).map((option) => (
+                          <option
+                            className="dark:text-black"
+                            key={option}
+                            value={option}
+                          >
+                            {option}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  ) : (
+                    <p
+                      className="text-neutral-500 rounded-sm border-neutral-500 border-[1px]"
+                      onClick={toggleShowRideFilter}
+                    >
+                      -Filter-
+                    </p>
+                  )}
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={toggleShowRideFilter}
                   >
-                    <option
-                      className="dark:text-black"
-                      key={undefined}
-                      value={undefined}
-                    />
-                    {Object.values(RideSort).map((option) => (
-                      <option
-                        className="dark:text-black"
-                        key={option}
-                        value={option}
-                      >
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span className="text-neutral-500"> Filter: </span>
-                  <select
-                    className="rounded-sm border"
-                    defaultValue={rideFilter}
-                    onChange={updateRideFilter}
-                  >
-                    <option
-                      className="dark:text-black"
-                      key={undefined}
-                      value={undefined}
-                    />
-                    {Object.values(RideTimes).map((option) => (
-                      <option
-                        className="dark:text-black"
-                        key={option}
-                        value={option}
-                      >
-                        {option}
-                      </option>
-                    ))}
-                    {Object.values(College).map((option) => (
-                      <option
-                        className="dark:text-black"
-                        key={option}
-                        value={option}
-                      >
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {showRideFilter ? <span>&uarr;</span> : <span>&darr;</span>}
+                  </button>
+                </div>
                 <ul className="m-1 max-h-[70dvh] overflow-auto">
                   {rideList.map((item) => (
                     <li key={item.getDriver().getEmail()}>
