@@ -133,36 +133,24 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
           onChange={updateForm}
         />
         <select name="college" value={collegeSelect} onChange={updateForm}>
-          <option className="dark:text-black">--</option>
-          <option className="dark:text-black" value={College.UCI}>
-            UCI
-          </option>
-          <option className="dark:text-black" value={College.CSULB}>
-            CSULB
-          </option>
-          <option className="dark:text-black" value={College.BIOLA}>
-            Biola
-          </option>
-          <option className="dark:text-black" value={College.CHAPMAN}>
-            Chapman
-          </option>
-          <option className="dark:text-black" value={College.OTHER}>
-            Other
-          </option>
+          <option className="dark:text-black">-college-</option>
+          {Object.values(College).map((option) => (
+            <option className="dark:text-black" key={option} value={option}>
+              {option}
+            </option>
+          ))}
         </select>
       </div>
       <div className="block">
         <select name="service" value={rideSelect} onChange={updateForm}>
-          <option className="dark:text-black">--choose a ride--</option>
-          <option className="dark:text-black" value={RideTimes.FIRST}>
-            First
-          </option>
-          <option className="dark:text-black" value={RideTimes.SECOND}>
-            Second
-          </option>
-          <option className="dark:text-black" value={RideTimes.THIRD}>
-            Third
-          </option>
+          <option className="dark:text-black">-main ride-</option>
+          {Object.values(RideTimes)
+            .filter((x) => x != RideTimes.FRIDAY)
+            .map((option) => (
+              <option className="dark:text-black" key={option} value={option}>
+                {option}
+              </option>
+            ))}
         </select>
         <label>
           <input

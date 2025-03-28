@@ -18,6 +18,7 @@ interface NewPassengerData {
   backupfirst?: RideTimes;
   backupsecond?: RideTimes;
   backupthird?: RideTimes;
+  year: Year;
   phone?: string;
   notes?: string;
 }
@@ -35,6 +36,7 @@ export const CreatePassengerForm = ({
     name: "",
     address: "",
     college: College.OTHER,
+    year: Year.OTHER,
     phone: "",
     notes: "",
   });
@@ -81,7 +83,7 @@ export const CreatePassengerForm = ({
           college: newPassengerData.college
             ? newPassengerData.college
             : College.OTHER,
-          year: Year.OTHER,
+          year: newPassengerData.year ? newPassengerData.year : Year.OTHER,
           backup: newPassengerBackup,
           phone: newPassengerData.phone,
           notes: newPassengerData.notes,
@@ -92,6 +94,7 @@ export const CreatePassengerForm = ({
         name: "",
         address: "",
         college: College.OTHER,
+        year: Year.OTHER,
         phone: "",
         notes: "",
       });
@@ -138,36 +141,24 @@ export const CreatePassengerForm = ({
           onChange={updateForm}
         />
         <select name="college" value={collegeSelect} onChange={updateForm}>
-          <option className="dark:text-black">--</option>
-          <option className="dark:text-black" value={College.UCI}>
-            UCI
-          </option>
-          <option className="dark:text-black" value={College.CSULB}>
-            CSULB
-          </option>
-          <option className="dark:text-black" value={College.BIOLA}>
-            Biola
-          </option>
-          <option className="dark:text-black" value={College.CHAPMAN}>
-            Chapman
-          </option>
-          <option className="dark:text-black" value={College.OTHER}>
-            Other
-          </option>
+          <option className="dark:text-black">-college-</option>
+          {Object.values(College).map((option) => (
+            <option className="dark:text-black" key={option} value={option}>
+              {option}
+            </option>
+          ))}
         </select>
       </div>
       <div className="block">
         <select name="service" value={rideSelect} onChange={updateForm}>
-          <option className="dark:text-black">--choose a ride--</option>
-          <option className="dark:text-black" value={RideTimes.FIRST}>
-            First
-          </option>
-          <option className="dark:text-black" value={RideTimes.SECOND}>
-            Second
-          </option>
-          <option className="dark:text-black" value={RideTimes.THIRD}>
-            Third
-          </option>
+          <option className="dark:text-black">-main ride-</option>
+          {Object.values(RideTimes)
+            .filter((x) => x != RideTimes.FRIDAY)
+            .map((option) => (
+              <option className="dark:text-black" key={option} value={option}>
+                {option}
+              </option>
+            ))}
         </select>
         <input
           type="checkbox"
@@ -205,14 +196,24 @@ export const CreatePassengerForm = ({
         />
         <label htmlFor="backupthird">Third</label>
       </div>
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="phone"
-        value={newPassengerData.phone}
-        placeholder="Phone #"
-        onChange={updateForm}
-      />
+      <div className="block">
+        <input
+          className="rounded-sm border w-[142px]"
+          type="text"
+          name="phone"
+          value={newPassengerData.phone}
+          placeholder="Phone #"
+          onChange={updateForm}
+        />
+        <select name="year" value={rideSelect} onChange={updateForm}>
+          <option className="dark:text-black">-year-</option>
+          {Object.values(Year).map((option) => (
+            <option className="dark:text-black" key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
       <input
         className="rounded-sm border"
         type="text"

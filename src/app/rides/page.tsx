@@ -12,6 +12,7 @@ import { Ride, rideReducer } from "../_classes/ride";
 export default function Page() {
   const fileSelectorRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [saveSheetName, setSaveSheetName] = useState<string>("ridesheet");
 
   const [passengerCollection, passengerDispatch] = useReducer(
     passengerReducer,
@@ -49,6 +50,10 @@ export default function Page() {
     driverDispatch({ type: "set", drivers: new Map<string, Driver>() });
   };
 
+  const updateSaveSheetName = (event: ChangeEvent<HTMLInputElement>) => {
+    setSaveSheetName(event.target.value);
+  };
+
   const loadSheet = async () => {
     const f = selectedFile
       ? selectedFile
@@ -68,35 +73,30 @@ export default function Page() {
         for (let x of data) {
           mainrideneeds = [];
           backuprideneeds = [];
+          let test = "test";
+          test.toLocaleLowerCase().trim().includes("friday");
           if (x.Rides)
-            for (let ride of x.Rides.split(", "))
-              switch (ride) {
-                case "Friday Bible Study 7:00pm":
-                  mainrideneeds.push(RideTimes.FRIDAY);
-                  break;
-                case "Sunday First Service 8:00am":
-                  mainrideneeds.push(RideTimes.FIRST);
-                  break;
-                case "Sunday Second Service 9:30am":
-                  mainrideneeds.push(RideTimes.SECOND);
-                  break;
-                case "Sunday Third Service 11:30am":
-                  mainrideneeds.push(RideTimes.THIRD);
-                  break;
+            for (let ride of x.Rides.split(",")) {
+              if (ride.toLocaleLowerCase().trim().includes("friday")) {
+                mainrideneeds.push(RideTimes.FRIDAY);
+              } else if (ride.toLocaleLowerCase().trim().includes("first")) {
+                mainrideneeds.push(RideTimes.FIRST);
+              } else if (ride.toLocaleLowerCase().trim().includes("second")) {
+                mainrideneeds.push(RideTimes.SECOND);
+              } else if (ride.toLocaleLowerCase().trim().includes("third")) {
+                mainrideneeds.push(RideTimes.THIRD);
               }
+            }
           if (x["Backup Rides"])
-            for (let ride of x["Backup Rides"].split(", "))
-              switch (ride) {
-                case "Sunday First Service 8:00am":
-                  backuprideneeds.push(RideTimes.FIRST);
-                  break;
-                case "Sunday Second Service 9:30am":
-                  backuprideneeds.push(RideTimes.SECOND);
-                  break;
-                case "Sunday Third Service 11:30am":
-                  backuprideneeds.push(RideTimes.THIRD);
-                  break;
+            for (let ride of x["Backup Rides"].split(", ")) {
+              if (ride.toLocaleLowerCase().trim().includes("first")) {
+                backuprideneeds.push(RideTimes.FIRST);
+              } else if (ride.toLocaleLowerCase().trim().includes("second")) {
+                backuprideneeds.push(RideTimes.SECOND);
+              } else if (ride.toLocaleLowerCase().trim().includes("third")) {
+                backuprideneeds.push(RideTimes.THIRD);
               }
+            }
           const newpassenger = new Passenger({
             email: x["Email Address"] ? x["Email Address"] : "",
             name: x.Name ? x.Name : "",
@@ -119,21 +119,20 @@ export default function Page() {
         let rides = [];
         for (let x of data) {
           rides = [];
-          for (let ride of x.Rides.split(", "))
-            switch (ride) {
-              case "Friday Bible Study 7:00pm":
-                rides.push(RideTimes.FRIDAY);
-                break;
-              case "Sunday First Service 8:00am":
-                rides.push(RideTimes.FIRST);
-                break;
-              case "Sunday Second Service 9:30am":
-                rides.push(RideTimes.SECOND);
-                break;
-              case "Sunday Third Service 11:30am":
-                rides.push(RideTimes.THIRD);
-                break;
+          for (let ride of x.Rides.split(",")) {
+            console.log(ride);
+            if (ride.toLocaleLowerCase().trim().includes("friday")) {
+              rides.push(RideTimes.FRIDAY);
+              console.log("friday");
+            } else if (ride.toLocaleLowerCase().trim().includes("first")) {
+              rides.push(RideTimes.FIRST);
+              console.log("first");
+            } else if (ride.toLocaleLowerCase().trim().includes("second")) {
+              rides.push(RideTimes.SECOND);
+            } else if (ride.toLocaleLowerCase().trim().includes("third")) {
+              rides.push(RideTimes.THIRD);
             }
+          }
           const newdriver = new Driver({
             email: x["Email Address"] ? x["Email Address"] : "",
             name: x.Name ? x.Name : "",
@@ -150,9 +149,16 @@ export default function Page() {
           type: "set",
           drivers: drivertemp,
         });
-      } else if (wsn.toLocaleLowerCase().trim().includes("ride")) {
+      }
+    }
+    for (let wsn of wb.SheetNames) {
+      const ws = wb.Sheets[wsn];
+      const data: any[] = utils.sheet_to_json(ws);
+      if (wsn.toLocaleLowerCase().trim().includes("ride")) {
         for (let x of data) {
-          let rdriver = drivertemp.get(x.Driver);
+          let rdriver = drivertemp.get(
+            x.Driver.slice(x.Driver.indexOf("(") + 1, x.Driver.indexOf(")"))
+          );
           let rpassengers = new Map<string, Passenger>();
           if (x.Passengers) {
             for (let rpassengerstring of x.Passengers.split(",")) {
@@ -230,8 +236,11 @@ export default function Page() {
       const ws_r = utils.json_to_sheet(rideJSON);
       utils.book_append_sheet(wb, ws_r, "Rides");
     }
-    writeFile(wb, "ridesheet.xlsx");
-  }, [passengerCollection, driverCollection, rideCollection]);
+    writeFile(
+      wb,
+      (saveSheetName.length > 1 ? saveSheetName : "savedsheet") + ".xlsx"
+    );
+  }, [passengerCollection, driverCollection, rideCollection, saveSheetName]);
   const toggleDisplay = () => {
     setRMdisplay(!rmDisplay);
   };
@@ -288,7 +297,21 @@ export default function Page() {
             driverCallback={driverDispatch}
           />
         </div>
-        <button onClick={saveSheet}>Save File</button>
+        <div>
+          <div className="flex flex-row">
+            <input
+              className="rounded-sm border"
+              type="text"
+              value={saveSheetName}
+              placeholder="Set Sheet Name"
+              onChange={updateSaveSheetName}
+            />
+            .xlsx
+          </div>
+          <button className="rounded-full border px-2" onClick={saveSheet}>
+            Save Rides to Sheet
+          </button>
+        </div>
       </main>
     </div>
   );

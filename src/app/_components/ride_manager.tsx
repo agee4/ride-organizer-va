@@ -160,6 +160,22 @@ const RM_PassengerComponent = ({
   display?: PassengerDisplay[];
 }) => {
   const rmContext = useContext(RideManagerContext);
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragPreviewRef = useRef<HTMLDivElement>(null);
+  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [{ isDragging }, drag, dragPreview] = useDrag<
+    DragItem,
+    void,
+    { isDragging: boolean }
+  >(() => ({
+    type: TestType.TEST,
+    item: { email: data.getEmail() },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
+  drag(dragRef);
+  dragPreview(dragPreviewRef);
 
   const removePassenger = () => {
     if (rmContext) {
@@ -169,8 +185,19 @@ const RM_PassengerComponent = ({
     }
   };
 
+  const toggleDetail = () => {
+    setShowDetail(!showDetail);
+  };
+
   return (
-    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px]">
+    <div
+      className={
+        "p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px] " +
+        (isDragging && "opacity-50")
+      }
+      ref={dragRef}
+      onClick={toggleDetail}
+    >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
           <h3 className="m-1 font-bold text-lg">{data.name}</h3>
@@ -179,52 +206,54 @@ const RM_PassengerComponent = ({
           &times;
         </button>
       </div>
-      <ul className="m-1">
-        {(!display ||
-          display.includes(PassengerDisplay.ADDRESS) ||
-          display.includes(PassengerDisplay.COLLEGE)) && (
-          <li>
-            {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-              <CollegeTag data={data.college as College} />
-            )}
-            {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-              <span>{data.address}</span>
-            )}
-          </li>
-        )}
-        {(!display || display.includes(PassengerDisplay.YEAR)) && (
-          <li>Year: {data.year}</li>
-        )}
-        <ul className="flex flex-row flex-wrap">
-          {data.rides.map((item, index) => (
-            <li
-              className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
-              key={index}
-            >
-              {item}
+      {showDetail && (
+        <ul className="m-1">
+          {(!display ||
+            display.includes(PassengerDisplay.ADDRESS) ||
+            display.includes(PassengerDisplay.COLLEGE)) && (
+            <li>
+              {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
+                <CollegeTag data={data.college as College} />
+              )}
+              {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
+                <span>{data.address}</span>
+              )}
             </li>
-          ))}
-          {data.backup &&
-            data.backup.map((item, index) => (
+          )}
+          {(!display || display.includes(PassengerDisplay.YEAR)) && (
+            <li>Year: {data.year}</li>
+          )}
+          <ul className="flex flex-row flex-wrap">
+            {data.rides.map((item, index) => (
               <li
-                className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
                 key={index}
               >
                 {item}
               </li>
             ))}
+            {data.backup &&
+              data.backup.map((item, index) => (
+                <li
+                  className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                  key={index}
+                >
+                  {item}
+                </li>
+              ))}
+          </ul>
+          {(!display || display.includes(PassengerDisplay.NOTES)) &&
+            data.notes && (
+              <ul className="mt-1">
+                <li>
+                  <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
+                    {data.notes}
+                  </span>
+                </li>
+              </ul>
+            )}
         </ul>
-        {(!display || display.includes(PassengerDisplay.NOTES)) &&
-          data.notes && (
-            <ul className="mt-1">
-              <li>
-                <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
-                  {data.notes}
-                </span>
-              </li>
-            </ul>
-          )}
-      </ul>
+      )}
     </div>
   );
 };
@@ -233,7 +262,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
   const rmContext = useContext(RideManagerContext);
   const dropRef = useRef<HTMLDivElement>(null);
   const [showDriverDetail, setShowDriverDetail] = useState<boolean>(false);
-  const [showPassengers, setShowPassengers] = useState<boolean>(true);
+  const [showPassengers, setShowPassengers] = useState<boolean>(false);
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
     void,
@@ -425,6 +454,12 @@ export const RideManager = ({
           )
     );
   }, [rpCollection, originRides, rideSort, rideReverse, rideFilter]);
+  useEffect(() => {
+    for (let ride of originRides.values()) {
+      for (let ridepassenger of ride.passengers.values())
+        rpDispatch({ type: "delete", passenger: ridepassenger });
+    }
+  }, [originRides]);
 
   const refreshRides = () => {
     /* remove passengers, even if assigned a ride */
@@ -560,7 +595,7 @@ export const RideManager = ({
               <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
                 <div className="flex flex-row place-content-between">
                   <span className="px-1 rounded-full bg-cyan-500">
-                    {rpList.length}/{rpCollection.size}
+                    {rpList.length}/{rpCollection.size}/{originPassengers.size}
                   </span>
                   <div className="flex flex-row">
                     <select
@@ -605,14 +640,6 @@ export const RideManager = ({
                       onChange={updateRPFilter}
                       multiple
                     >
-                      <option
-                        className="dark:text-black"
-                        key={undefined}
-                        value={undefined}
-                        disabled
-                      >
-                        -Filter-
-                      </option>
                       <optgroup label="Ride Times">
                         {Object.values(RideTimes).map((option) => (
                           <option
@@ -638,17 +665,25 @@ export const RideManager = ({
                     </select>
                   ) : (
                     <p
-                      className="text-neutral-500 rounded-sm border-neutral-500 border-[1px]"
+                      className={
+                        "rounded-sm border " +
+                        (rpFilter.length < 1 &&
+                          " text-neutral-500 border-neutral-500")
+                      }
                       onClick={toggleShowRPFilter}
                     >
-                      -Filter-
+                      {rpFilter.length < 1 ? "-Filter-" : rpFilter}
                     </p>
                   )}
                   <button
                     className="ml-1 font-bold text-neutral-500"
                     onClick={toggleShowRPFilter}
                   >
-                    {showRPFilter ? <span>&uarr;</span> : <span>&darr;</span>}
+                    {showRPFilter ? (
+                      <span>&times;</span>
+                    ) : (
+                      <span>&hellip;</span>
+                    )}
                   </button>
                 </div>
                 <ul className="m-1 max-h-[70dvh] overflow-auto">
@@ -733,17 +768,25 @@ export const RideManager = ({
                     </select>
                   ) : (
                     <p
-                      className="text-neutral-500 rounded-sm border-neutral-500 border-[1px]"
+                      className={
+                        "rounded-sm border " +
+                        (rideFilter.length < 1 &&
+                          " text-neutral-500 border-neutral-500")
+                      }
                       onClick={toggleShowRideFilter}
                     >
-                      -Filter-
+                      {rideFilter.length < 1 ? "-Filter-" : rideFilter}
                     </p>
                   )}
                   <button
                     className="ml-1 font-bold text-neutral-500"
                     onClick={toggleShowRideFilter}
                   >
-                    {showRideFilter ? <span>&uarr;</span> : <span>&darr;</span>}
+                    {showRideFilter ? (
+                      <span>&times;</span>
+                    ) : (
+                      <span>&hellip;</span>
+                    )}
                   </button>
                 </div>
                 <ul className="m-1 max-h-[70dvh] overflow-auto">
