@@ -41,7 +41,10 @@ export const CreatePassengerForm = ({
     notes: "",
   });
   const [rideSelect, setRideSelect] = useState<RideTimes>();
-  const [collegeSelect, setCollegeSelect] = useState<College>();
+  const [Friday, setFriday] = useState<boolean>(false);
+  const [backupFirst, setBackupFirst] = useState<boolean>(false);
+  const [backupSecond, setBackupSecond] = useState<boolean>(false);
+  const [backupThird, setBackupThird] = useState<boolean>(false);
 
   const updateForm = (
     event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
@@ -62,17 +65,13 @@ export const CreatePassengerForm = ({
       return;
     else {
       const newPassengerRides = [];
-      if (newPassengerData.friday)
-        newPassengerRides.push(newPassengerData.friday);
+      if (Friday) newPassengerRides.push(RideTimes.FRIDAY);
       if (newPassengerData.service)
         newPassengerRides.push(newPassengerData.service);
       const newPassengerBackup = [];
-      if (newPassengerData.backupfirst)
-        newPassengerBackup.push(newPassengerData.backupfirst);
-      if (newPassengerData.backupsecond)
-        newPassengerBackup.push(newPassengerData.backupsecond);
-      if (newPassengerData.backupthird)
-        newPassengerBackup.push(newPassengerData.backupthird);
+      if (backupFirst) newPassengerBackup.push(RideTimes.FIRST);
+      if (backupSecond) newPassengerBackup.push(RideTimes.SECOND);
+      if (backupThird) newPassengerBackup.push(RideTimes.THIRD);
       passengerCallback({
         type: "create",
         passenger: new Passenger({
@@ -100,6 +99,10 @@ export const CreatePassengerForm = ({
       });
       formRef.current?.reset();
       setRideSelect(undefined);
+      setFriday(false);
+      setBackupFirst(false);
+      setBackupSecond(false);
+      setBackupThird(false);
     }
   };
   return (
@@ -140,7 +143,11 @@ export const CreatePassengerForm = ({
           minLength={1}
           onChange={updateForm}
         />
-        <select name="college" value={collegeSelect} onChange={updateForm}>
+        <select
+          name="college"
+          value={newPassengerData.college}
+          onChange={updateForm}
+        >
           <option className="dark:text-black">-college-</option>
           {Object.values(College).map((option) => (
             <option className="dark:text-black" key={option} value={option}>
@@ -160,41 +167,41 @@ export const CreatePassengerForm = ({
               </option>
             ))}
         </select>
-        <input
-          type="checkbox"
-          name="friday"
-          id="friday"
-          value={RideTimes.FRIDAY}
-          onChange={updateForm}
-        />
-        <label htmlFor="friday">Friday</label>
+        <label>
+          <input
+            type="checkbox"
+            name="friday"
+            onChange={(e) => setFriday(e.target.checked)}
+          />
+          Friday
+        </label>
       </div>
       <div className="block">
         <label>Backup:</label>
-        <input
-          type="checkbox"
-          name="backupfirst"
-          id="backupfirst"
-          value={RideTimes.FIRST}
-          onChange={updateForm}
-        />
-        <label htmlFor="backupfirst">First</label>
-        <input
-          type="checkbox"
-          name="backupsecond"
-          id="backupsecond"
-          value={RideTimes.SECOND}
-          onChange={updateForm}
-        />
-        <label htmlFor="backupsecond">Second</label>
-        <input
-          type="checkbox"
-          name="backupthird"
-          id="backupthird"
-          value={RideTimes.THIRD}
-          onChange={updateForm}
-        />
-        <label htmlFor="backupthird">Third</label>
+        <label>
+          <input
+            type="checkbox"
+            name="backupfirst"
+            onChange={(e) => setBackupFirst(e.target.checked)}
+          />
+          First
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            name="backupsecond"
+            onChange={(e) => setBackupSecond(e.target.checked)}
+          />
+          Second
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            name="backupthird"
+            onChange={(e) => setBackupThird(e.target.checked)}
+          />
+          Third
+        </label>
       </div>
       <div className="block">
         <input
@@ -205,7 +212,7 @@ export const CreatePassengerForm = ({
           placeholder="Phone #"
           onChange={updateForm}
         />
-        <select name="year" value={rideSelect} onChange={updateForm}>
+        <select name="year" value={newPassengerData.year} onChange={updateForm}>
           <option className="dark:text-black">-year-</option>
           {Object.values(Year).map((option) => (
             <option className="dark:text-black" key={option} value={option}>

@@ -120,13 +120,10 @@ export default function Page() {
         for (let x of data) {
           rides = [];
           for (let ride of x.Rides.split(",")) {
-            console.log(ride);
             if (ride.toLocaleLowerCase().trim().includes("friday")) {
               rides.push(RideTimes.FRIDAY);
-              console.log("friday");
             } else if (ride.toLocaleLowerCase().trim().includes("first")) {
               rides.push(RideTimes.FIRST);
-              console.log("first");
             } else if (ride.toLocaleLowerCase().trim().includes("second")) {
               rides.push(RideTimes.SECOND);
             } else if (ride.toLocaleLowerCase().trim().includes("third")) {
@@ -253,64 +250,68 @@ export default function Page() {
           <label className="block">
             <span className="text-neutral-500">Choose a sheet to upload:</span>
             <br />
-            <button className="rounded-full border px-2" onClick={clearFile}>
-              Clear
-            </button>
             <input
-              className="file:rounded-full file:border file:px-2"
+              className="file:rounded-sm file:border file:px-2"
               type="file"
               onChange={handleFileChange}
               accept=".xlsx,.xls,.csv,.ods,.gsheet"
               ref={fileSelectorRef}
             />
+            {selectedFile && (
+              <button className="rounded-full border px-2" onClick={clearFile}>
+                Clear
+              </button>
+            )}
           </label>
           <div className="flex flex-row">
             <button
               className="rounded-full border px-2 disabled:text-neutral-500"
               onClick={loadSheet}
             >
-              Load People
+              Load Data
             </button>
             <button className="rounded-full border px-2" onClick={clearPeople}>
-              Clear People
+              Clear Data
             </button>
           </div>
         </div>
 
-        <button className="rounded-full border px-2" onClick={toggleDisplay}>
-          {rmDisplay ? "Manage People" : "Manage Rides"}
-        </button>
-
-        <div className={rmDisplay ? "w-full" : "hidden"}>
-          <RideManager
-            originPassengers={passengerCollection}
-            originDrivers={driverCollection}
-            originRides={rideCollection}
-            rideCallback={rideDispatch}
-          />
-        </div>
-        <div className={rmDisplay ? "hidden" : "w-full"}>
-          <PeopleManager
-            passengerCollection={passengerCollection}
-            driverCollection={driverCollection}
-            passengerCallback={passengerDispatch}
-            driverCallback={driverDispatch}
-          />
-        </div>
         <div>
-          <div className="flex flex-row">
-            <input
-              className="rounded-sm border"
-              type="text"
-              value={saveSheetName}
-              placeholder="Set Sheet Name"
-              onChange={updateSaveSheetName}
-            />
-            .xlsx
-          </div>
-          <button className="rounded-full border px-2" onClick={saveSheet}>
-            Save Rides to Sheet
+          <button className="rounded-full border px-2" onClick={toggleDisplay}>
+            {rmDisplay ? "Manage People" : "Manage Rides"}
           </button>
+
+          <div className={rmDisplay ? "w-full" : "hidden"}>
+            <RideManager
+              originPassengers={passengerCollection}
+              originDrivers={driverCollection}
+              originRides={rideCollection}
+              rideCallback={rideDispatch}
+            />
+          </div>
+          <div className={rmDisplay ? "hidden" : "w-full"}>
+            <PeopleManager
+              passengerCollection={passengerCollection}
+              driverCollection={driverCollection}
+              passengerCallback={passengerDispatch}
+              driverCallback={driverDispatch}
+            />
+          </div>
+          <div>
+            <div className="flex flex-row">
+              <input
+                className="rounded-sm border"
+                type="text"
+                value={saveSheetName}
+                placeholder="Set Sheet Name"
+                onChange={updateSaveSheetName}
+              />
+              .xlsx
+            </div>
+            <button className="rounded-full border px-2" onClick={saveSheet}>
+              Save Data to Sheet
+            </button>
+          </div>
         </div>
       </main>
     </div>

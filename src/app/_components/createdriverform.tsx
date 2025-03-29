@@ -36,7 +36,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
     notes: "",
   });
   const [rideSelect, setRideSelect] = useState<RideTimes>();
-  const [collegeSelect, setCollegeSelect] = useState<College>();
+  const [Friday, setFriday] = useState<boolean>(false);
 
   const updateForm = (
     event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
@@ -57,7 +57,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
       return;
     }
     const newDriverRides = [];
-    if (newDriverData.friday) newDriverRides.push(newDriverData.friday);
+    if (Friday) newDriverRides.push(RideTimes.FRIDAY);
     if (newDriverData.service) newDriverRides.push(newDriverData.service);
     driverCallback({
       type: "create",
@@ -83,6 +83,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
     });
     formRef.current?.reset();
     setRideSelect(undefined);
+    setFriday(false);
   };
   return (
     <form
@@ -132,7 +133,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
           minLength={1}
           onChange={updateForm}
         />
-        <select name="college" value={collegeSelect} onChange={updateForm}>
+        <select name="college" value={newDriverData.college} onChange={updateForm}>
           <option className="dark:text-black">-college-</option>
           {Object.values(College).map((option) => (
             <option className="dark:text-black" key={option} value={option}>
@@ -156,8 +157,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
           <input
             type="checkbox"
             name="friday"
-            value={RideTimes.FRIDAY}
-            onChange={updateForm}
+            onChange={e => setFriday(e.target.checked)}
           />
           Friday
         </label>

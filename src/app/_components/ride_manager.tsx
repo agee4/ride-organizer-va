@@ -53,7 +53,7 @@ const RM_RPComponent = ({
 }) => {
   const dragRef = useRef<HTMLDivElement>(null);
   const dragPreviewRef = useRef<HTMLDivElement>(null);
-  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [showDetail, setShowDetail] = useState<boolean>(true);
   const [{ isDragging }, drag, dragPreview] = useDrag<
     DragItem,
     void,
@@ -162,7 +162,7 @@ const RM_PassengerComponent = ({
   const rmContext = useContext(RideManagerContext);
   const dragRef = useRef<HTMLDivElement>(null);
   const dragPreviewRef = useRef<HTMLDivElement>(null);
-  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [showDetail, setShowDetail] = useState<boolean>(true);
   const [{ isDragging }, drag, dragPreview] = useDrag<
     DragItem,
     void,
@@ -189,11 +189,27 @@ const RM_PassengerComponent = ({
     setShowDetail(!showDetail);
   };
 
+  let invalid = "";
+  if (
+    data.getCollege() != ride.getDriver().getCollege() &&
+    data.getCollege() != College.OTHER &&
+    ride.getDriver().getCollege() != College.OTHER
+  )
+    invalid = "WRONG COLLEGE";
+  else if (
+    ride
+      .getDriver()
+      .rides.filter((x) => data.rides.includes(x) || data.backup?.includes(x))
+      .length <= 0
+  )
+    invalid = "NO RIDE OVERLAP";
+
   return (
     <div
       className={
-        "p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px] " +
-        (isDragging && "opacity-50")
+        "p-2 my-1 rounded-md bg-red-500 max-w-[496px] " +
+        (isDragging && "opacity-50 ") +
+        (invalid.length <= 0 && " bg-cyan-200 dark:bg-cyan-800")
       }
       ref={dragRef}
       onClick={toggleDetail}
@@ -261,8 +277,8 @@ const RM_PassengerComponent = ({
 const RM_RideComponent = ({ data }: { data: Ride }) => {
   const rmContext = useContext(RideManagerContext);
   const dropRef = useRef<HTMLDivElement>(null);
-  const [showDriverDetail, setShowDriverDetail] = useState<boolean>(false);
-  const [showPassengers, setShowPassengers] = useState<boolean>(false);
+  const [showDriverDetail, setShowDriverDetail] = useState<boolean>(true);
+  const [showPassengers, setShowPassengers] = useState<boolean>(true);
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
     void,
@@ -274,14 +290,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
         if (!!rmContext) {
           let dragpassenger = rmContext.passengerCollection.get(item.email);
           if (!!dragpassenger) {
-            data.addPassenger(dragpassenger);
-            if (!!dragpassenger) {
-              rmContext.passengerCallback({
-                type: "delete",
-                passenger: dragpassenger,
-              });
-            }
-            rmContext.rideCallback({ type: "create", ride: data });
+            addPassengerHelper(dragpassenger);
           }
         }
       },
@@ -293,17 +302,29 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
     []
   );
 
-  const addPassenger = () => {
+  const addPassengerButton = () => {
     if (!!rmContext) {
       const nextpassenger = [...rmContext.passengerList].shift();
       if (!!nextpassenger) {
-        data.addPassenger(nextpassenger);
-        rmContext.passengerCallback({
-          type: "delete",
-          passenger: nextpassenger,
-        });
-        rmContext.rideCallback({ type: "create", ride: data });
+        addPassengerHelper(nextpassenger);
       }
+    }
+  };
+
+  const addPassengerHelper = (passenger: Passenger) => {
+    if (!!rmContext) {
+      rmContext.passengerCallback({
+        type: "delete",
+        passenger: passenger,
+      });
+      for (let ride of rmContext.rideCollection.values()) {
+        if (ride.getPassengerList().has(passenger.getEmail())) {
+          ride.getPassengerList().delete(passenger.getEmail());
+          rmContext.rideCallback({ type: "create", ride: ride });
+        }
+      }
+      data.addPassenger(passenger);
+      rmContext.rideCallback({ type: "create", ride: data });
     }
   };
 
@@ -314,16 +335,35 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
     setShowPassengers(!showPassengers);
   };
 
-  const seatsleft = data.driver.seats - data.passengers.size;
-  let valid = seatsleft >= 0;
-
   drop(dropRef);
+  let invalid = "";
+  const seatsleft = data.driver.seats - data.passengers.size;
+  if (data.driver.seats - data.passengers.size < 0) {
+    invalid = "TOO MANY PASSENGERS!";
+  } else {
+    for (let passenger of data.getPassengerList().values()) {
+      if (
+        passenger.getCollege() != data.getDriver().getCollege() &&
+        passenger.getCollege() != College.OTHER &&
+        data.getDriver().getCollege() != College.OTHER
+      )
+        invalid = "WRONG COLLEGE";
+      else if (
+        data
+          .getDriver()
+          .rides.filter(
+            (x) => passenger.rides.includes(x) || passenger.backup?.includes(x)
+          ).length <= 0
+      )
+        invalid = "NO RIDE OVERLAP";
+    }
+  }
 
   return (
     <div
       className={
         "p-2 my-1 rounded-md " +
-        (!valid
+        (invalid.length > 0
           ? "bg-red-500"
           : isOver && canDrop
           ? "bg-amber-300"
@@ -353,7 +393,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
               Seats Left: {seatsleft}
             </button>
           </li>
-          {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
+          {invalid.length > 0 && <li className="text-center">{invalid}</li>}
           {showPassengers && (
             <>
               {Array.from(data.passengers).map(([key, value]) => (
@@ -374,7 +414,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
                 <li key={index}>
                   <button
                     className="my-1 w-full rounded-md bg-white dark:bg-black"
-                    onClick={addPassenger}
+                    onClick={addPassengerButton}
                   >
                     +
                   </button>
@@ -583,12 +623,15 @@ export const RideManager = ({
           <div className="p-2 rounded-md border border-neutral-500">
             <h2>Ride Manager</h2>
             <button
-              className="m-1 p-1 rounded-sm border"
+              className="m-1 p-1 rounded-full border"
               onClick={refreshRides}
             >
               Refresh
             </button>
-            <button className="m-1 p-1 rounded-sm border" onClick={clearRides}>
+            <button
+              className="m-1 p-1 rounded-full border"
+              onClick={clearRides}
+            >
               Clear All Rides
             </button>
             <div className="flex flex-row">
