@@ -12,13 +12,13 @@ interface NewPassengerData {
   email: string;
   name: string;
   address: string;
-  college: College;
+  college?: College;
   service?: RideTimes;
-  friday?: RideTimes;
-  backupfirst?: RideTimes;
-  backupsecond?: RideTimes;
-  backupthird?: RideTimes;
-  year: Year;
+  friday?: boolean;
+  backupfirst?: boolean;
+  backupsecond?: boolean;
+  backupthird?: boolean;
+  year?: Year;
   phone?: string;
   notes?: string;
 }
@@ -35,12 +35,9 @@ export const CreatePassengerForm = ({
     email: "",
     name: "",
     address: "",
-    college: College.OTHER,
-    year: Year.OTHER,
     phone: "",
     notes: "",
   });
-  const [rideSelect, setRideSelect] = useState<RideTimes>();
   const [Friday, setFriday] = useState<boolean>(false);
   const [backupFirst, setBackupFirst] = useState<boolean>(false);
   const [backupSecond, setBackupSecond] = useState<boolean>(false);
@@ -50,8 +47,6 @@ export const CreatePassengerForm = ({
     event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
   ) => {
     const { name, value } = event.target;
-    if (typeof event.target == typeof HTMLSelectElement)
-      setRideSelect(value as RideTimes);
     setNewPassengerData({ ...newPassengerData, [name]: value });
   };
   const createNewPassenger = (event: FormEvent) => {
@@ -65,13 +60,19 @@ export const CreatePassengerForm = ({
       return;
     else {
       const newPassengerRides = [];
-      if (Friday) newPassengerRides.push(RideTimes.FRIDAY);
-      if (newPassengerData.service)
+      if (newPassengerData.friday) newPassengerRides.push(RideTimes.FRIDAY);
+      if (
+        newPassengerData.service &&
+        Object.values(RideTimes).includes(newPassengerData.service as RideTimes)
+      )
         newPassengerRides.push(newPassengerData.service);
       const newPassengerBackup = [];
-      if (backupFirst) newPassengerBackup.push(RideTimes.FIRST);
-      if (backupSecond) newPassengerBackup.push(RideTimes.SECOND);
-      if (backupThird) newPassengerBackup.push(RideTimes.THIRD);
+      if (newPassengerData.backupfirst)
+        newPassengerBackup.push(RideTimes.FIRST);
+      if (newPassengerData.backupsecond)
+        newPassengerBackup.push(RideTimes.SECOND);
+      if (newPassengerData.backupthird)
+        newPassengerBackup.push(RideTimes.THIRD);
       passengerCallback({
         type: "create",
         passenger: new Passenger({
@@ -79,10 +80,16 @@ export const CreatePassengerForm = ({
           name: newPassengerData.name,
           rides: newPassengerRides,
           address: newPassengerData.address,
-          college: newPassengerData.college
-            ? newPassengerData.college
-            : College.OTHER,
-          year: newPassengerData.year ? newPassengerData.year : Year.OTHER,
+          college:
+            newPassengerData.college &&
+            Object.values(College).includes(newPassengerData.college as College)
+              ? newPassengerData.college
+              : College.OTHER,
+          year:
+            newPassengerData.year &&
+            Object.values(Year).includes(newPassengerData.year as Year)
+              ? newPassengerData.year
+              : Year.OTHER,
           backup: newPassengerBackup,
           phone: newPassengerData.phone,
           notes: newPassengerData.notes,
@@ -92,13 +99,10 @@ export const CreatePassengerForm = ({
         email: "",
         name: "",
         address: "",
-        college: College.OTHER,
-        year: Year.OTHER,
         phone: "",
         notes: "",
       });
       formRef.current?.reset();
-      setRideSelect(undefined);
       setFriday(false);
       setBackupFirst(false);
       setBackupSecond(false);
@@ -144,6 +148,7 @@ export const CreatePassengerForm = ({
           onChange={updateForm}
         />
         <select
+          className="rounded-sm border"
           name="college"
           value={newPassengerData.college}
           onChange={updateForm}
@@ -157,7 +162,12 @@ export const CreatePassengerForm = ({
         </select>
       </div>
       <div className="block">
-        <select name="service" value={rideSelect} onChange={updateForm}>
+        <select
+          className="rounded-sm border"
+          name="service"
+          value={newPassengerData.service}
+          onChange={updateForm}
+        >
           <option className="dark:text-black">-main ride-</option>
           {Object.values(RideTimes)
             .filter((x) => x != RideTimes.FRIDAY)
@@ -171,7 +181,14 @@ export const CreatePassengerForm = ({
           <input
             type="checkbox"
             name="friday"
-            onChange={(e) => setFriday(e.target.checked)}
+            checked={Friday}
+            onChange={(e) => {
+              setFriday(e.target.checked);
+              setNewPassengerData({
+                ...newPassengerData,
+                [e.target.name]: e.target.checked,
+              });
+            }}
           />
           Friday
         </label>
@@ -182,7 +199,14 @@ export const CreatePassengerForm = ({
           <input
             type="checkbox"
             name="backupfirst"
-            onChange={(e) => setBackupFirst(e.target.checked)}
+            checked={backupFirst}
+            onChange={(e) => {
+              setBackupFirst(e.target.checked);
+              setNewPassengerData({
+                ...newPassengerData,
+                [e.target.name]: e.target.checked,
+              });
+            }}
           />
           First
         </label>
@@ -190,7 +214,14 @@ export const CreatePassengerForm = ({
           <input
             type="checkbox"
             name="backupsecond"
-            onChange={(e) => setBackupSecond(e.target.checked)}
+            checked={backupSecond}
+            onChange={(e) => {
+              setBackupSecond(e.target.checked);
+              setNewPassengerData({
+                ...newPassengerData,
+                [e.target.name]: e.target.checked,
+              });
+            }}
           />
           Second
         </label>
@@ -198,7 +229,14 @@ export const CreatePassengerForm = ({
           <input
             type="checkbox"
             name="backupthird"
-            onChange={(e) => setBackupThird(e.target.checked)}
+            checked={backupThird}
+            onChange={(e) => {
+              setBackupThird(e.target.checked);
+              setNewPassengerData({
+                ...newPassengerData,
+                [e.target.name]: e.target.checked,
+              });
+            }}
           />
           Third
         </label>
@@ -212,7 +250,12 @@ export const CreatePassengerForm = ({
           placeholder="Phone #"
           onChange={updateForm}
         />
-        <select name="year" value={newPassengerData.year} onChange={updateForm}>
+        <select
+          className="rounded-sm border"
+          name="year"
+          value={newPassengerData.year}
+          onChange={updateForm}
+        >
           <option className="dark:text-black">-year-</option>
           {Object.values(Year).map((option) => (
             <option className="dark:text-black" key={option} value={option}>
@@ -230,7 +273,9 @@ export const CreatePassengerForm = ({
         onChange={updateForm}
       />
       <br />
-      <button type="submit">Submit</button>
+      <button className="rounded-full border" type="submit">
+        Submit
+      </button>
     </form>
   );
 };

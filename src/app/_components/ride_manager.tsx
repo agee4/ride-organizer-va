@@ -103,11 +103,6 @@ const RM_RPComponent = ({
               )}
             </li>
           )}
-          {(!display || display.includes(PassengerDisplay.YEAR)) && (
-            <li>
-              <YearTag data={data.year} />
-            </li>
-          )}
           <ul className="flex flex-row flex-wrap">
             {data.rides.map((item, index) => (
               <li
@@ -127,6 +122,11 @@ const RM_RPComponent = ({
                 </li>
               ))}
           </ul>
+          {(!display || display.includes(PassengerDisplay.YEAR)) && (
+            <li>
+              <YearTag data={data.year} />
+            </li>
+          )}
           {(!display || display.includes(PassengerDisplay.NOTES)) &&
             data.notes && (
               <ul className="mt-1">
@@ -236,9 +236,6 @@ const RM_PassengerComponent = ({
               )}
             </li>
           )}
-          {(!display || display.includes(PassengerDisplay.YEAR)) && (
-            <li>Year: {data.year}</li>
-          )}
           <ul className="flex flex-row flex-wrap">
             {data.rides.map((item, index) => (
               <li
@@ -258,6 +255,9 @@ const RM_PassengerComponent = ({
                 </li>
               ))}
           </ul>
+          {(!display || display.includes(PassengerDisplay.YEAR)) && (
+            <li>Year: {data.year}</li>
+          )}
           {(!display || display.includes(PassengerDisplay.NOTES)) &&
             data.notes && (
               <ul className="mt-1">
