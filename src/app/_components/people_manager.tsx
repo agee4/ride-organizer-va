@@ -48,14 +48,14 @@ const PM_PassengerComponent = ({
   };
 
   return (
-    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px]">
+    <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
       {!editMode ? (
         <>
           <div className="flex flex-row place-content-between">
             {(!display || display.includes(PassengerDisplay.NAME)) && (
-              <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+              <h3 className="m-1 text-lg font-bold">{data.name}</h3>
             )}
-            <button className="m-1 font-bold text-lg" onClick={toggleEditMode}>
+            <button className="m-1 text-lg font-bold" onClick={toggleEditMode}>
               &hellip;
             </button>
           </div>
@@ -75,7 +75,7 @@ const PM_PassengerComponent = ({
             <ul className="flex flex-row flex-wrap">
               {data.rides.map((item, index) => (
                 <li
-                  className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
+                  className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                   key={index}
                 >
                   {item}
@@ -84,7 +84,7 @@ const PM_PassengerComponent = ({
               {data.backup &&
                 data.backup.map((item, index) => (
                   <li
-                    className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                    className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                     key={index}
                   >
                     {item}
@@ -100,7 +100,7 @@ const PM_PassengerComponent = ({
               data.notes && (
                 <ul className="mt-1">
                   <li>
-                    <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
+                    <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
                       {data.notes}
                     </span>
                   </li>
@@ -123,13 +123,13 @@ const PM_PassengerComponent = ({
             />
             <div>
               <button
-                className="m-1 font-bold text-lg"
+                className="m-1 text-lg font-bold"
                 onClick={deletePassenger}
               >
                 &times;
               </button>
               <button
-                className="m-1 font-bold text-lg"
+                className="m-1 text-lg font-bold"
                 onClick={toggleEditMode}
               >
                 &hellip;
@@ -151,7 +151,7 @@ const PM_PassengerComponent = ({
               ))}
             </select>
             <input
-              className="rounded-sm border w-[142px]"
+              className="w-[142px] rounded-sm border"
               type="text"
               name="address"
               defaultValue={data.address}
@@ -296,14 +296,14 @@ const PM_DriverComponent = ({
   };
 
   return (
-    <div className="p-2 my-1 rounded-md bg-orange-300 dark:bg-orange-700 max-w-[496px]">
+    <div className="my-1 max-w-[496px] rounded-md bg-orange-300 p-2 dark:bg-orange-700">
       {!editMode ? (
         <>
           <div className="flex flex-row place-content-between">
             {(!display || display.includes(DriverDisplay.NAME)) && (
-              <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+              <h3 className="m-1 text-lg font-bold">{data.name}</h3>
             )}
-            <button className="m-1 font-bold text-lg" onClick={toggleEditMode}>
+            <button className="m-1 text-lg font-bold" onClick={toggleEditMode}>
               &hellip;
             </button>
           </div>
@@ -326,7 +326,7 @@ const PM_DriverComponent = ({
             <ul className="flex flex-row flex-wrap">
               {data.rides.map((item, index) => (
                 <li
-                  className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
+                  className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                   key={index}
                 >
                   {item}
@@ -337,7 +337,7 @@ const PM_DriverComponent = ({
               data.notes && (
                 <ul className="mt-1">
                   <li>
-                    <span className="p-1 rounded-md bg-orange-400 :dark:bg-orange-600">
+                    <span className=":dark:bg-orange-600 rounded-md bg-orange-400 p-1">
                       {data.notes}
                     </span>
                   </li>
@@ -359,11 +359,11 @@ const PM_DriverComponent = ({
               onChange={updateDriver}
             />
             <div>
-              <button className="m-1 font-bold text-lg" onClick={deleteDriver}>
+              <button className="m-1 text-lg font-bold" onClick={deleteDriver}>
                 &times;
               </button>
               <button
-                className="m-1 font-bold text-lg"
+                className="m-1 text-lg font-bold"
                 onClick={toggleEditMode}
               >
                 &hellip;
@@ -395,7 +395,7 @@ const PM_DriverComponent = ({
               ))}
             </select>
             <input
-              className="rounded-sm border w-[142px]"
+              className="w-[142px] rounded-sm border"
               type="text"
               name="address"
               defaultValue={data.address}
@@ -507,11 +507,11 @@ export const PeopleManager = ({
   };
 
   return (
-    <div className="flex flex-row w-full justify-evenly">
-      <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
+    <div className="flex w-full flex-row justify-evenly">
+      <div className="rounded-md border border-cyan-500 bg-cyan-50 p-2 dark:bg-cyan-950">
         <h2>Passengers</h2>
         <div className="flex flex-row place-content-between">
-          <span className="px-1 rounded-full bg-cyan-500">
+          <span className="rounded-full bg-cyan-500 px-1">
             {passengerCollection.size}
           </span>
           <div className="flex flex-row">
@@ -556,10 +556,10 @@ export const PeopleManager = ({
         <CreatePassengerForm passengerCallback={passengerCallback} />
       </div>
 
-      <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
+      <div className="rounded-md border border-orange-500 bg-orange-50 p-2 dark:bg-orange-950">
         <h2>Drivers</h2>
         <div className="flex flex-row place-content-between">
-          <span className="px-1 rounded-full bg-orange-500">
+          <span className="rounded-full bg-orange-500 px-1">
             {driverCollection.size}
           </span>
           <div className="flex flex-row">

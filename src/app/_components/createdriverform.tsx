@@ -89,7 +89,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
   };
   return (
     <form
-      className="my-1 p-2 flex flex-col rounded-md border border-orange-500 bg-orange-200 dark:bg-orange-800"
+      className="my-1 flex flex-col rounded-md border border-orange-500 bg-orange-200 p-2 dark:bg-orange-800"
       onSubmit={createNewDriver}
       ref={formRef}
     >
@@ -126,7 +126,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
       />
       <div className="block">
         <input
-          className="rounded-sm border w-[142px]"
+          className="w-[142px] rounded-sm border"
           type="text"
           name="address"
           value={newDriverData.address}

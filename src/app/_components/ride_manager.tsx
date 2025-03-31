@@ -78,7 +78,7 @@ const RM_RPComponent = ({
   return (
     <div
       className={
-        "p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px] " +
+        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800 " +
         (isDragging && "opacity-50")
       }
       ref={dragRef}
@@ -86,9 +86,9 @@ const RM_RPComponent = ({
     >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
-          <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+          <h3 className="m-1 text-lg font-bold">{data.name}</h3>
         )}
-        <button className="m-1 font-bold text-lg" onClick={toggleDetail}>
+        <button className="m-1 text-lg font-bold" onClick={toggleDetail}>
           {showDetail ? <span>&and;</span> : <span>&or;</span>}
         </button>
       </div>
@@ -109,7 +109,7 @@ const RM_RPComponent = ({
           <ul className="flex flex-row flex-wrap">
             {data.rides.map((item, index) => (
               <li
-                className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
+                className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                 key={index}
               >
                 {item}
@@ -118,7 +118,7 @@ const RM_RPComponent = ({
             {data.backup &&
               data.backup.map((item, index) => (
                 <li
-                  className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                  className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                   key={index}
                 >
                   {item}
@@ -134,7 +134,7 @@ const RM_RPComponent = ({
             data.notes && (
               <ul className="mt-1">
                 <li>
-                  <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
+                  <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
                     {data.notes}
                   </span>
                 </li>
@@ -290,8 +290,8 @@ const RM_PassengerComponent = ({
   return (
     <div
       className={
-        "p-2 my-1 rounded-md bg-red-500 max-w-[496px] " +
-        (isDragging && "opacity-50 ") +
+        "my-1 max-w-[496px] rounded-md bg-red-500 p-2 " +
+        (isDragging && "opacity-50") +
         (invalid.length <= 0 && " bg-cyan-200 dark:bg-cyan-800")
       }
       ref={dragRef}
@@ -299,9 +299,9 @@ const RM_PassengerComponent = ({
     >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
-          <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+          <h3 className="m-1 text-lg font-bold">{data.name}</h3>
         )}
-        <button className="m-1 font-bold text-lg" onClick={removePassenger}>
+        <button className="m-1 text-lg font-bold" onClick={removePassenger}>
           &times;
         </button>
       </div>
@@ -322,7 +322,7 @@ const RM_PassengerComponent = ({
           <ul className="flex flex-row flex-wrap">
             {data.rides.map((item, index) => (
               <li
-                className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
+                className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                 key={index}
               >
                 {item}
@@ -331,7 +331,7 @@ const RM_PassengerComponent = ({
             {data.backup &&
               data.backup.map((item, index) => (
                 <li
-                  className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                  className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                   key={index}
                 >
                   {item}
@@ -345,7 +345,7 @@ const RM_PassengerComponent = ({
             data.notes && (
               <ul className="mt-1">
                 <li>
-                  <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
+                  <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
                     {data.notes}
                   </span>
                 </li>
@@ -451,7 +451,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
   return (
     <div
       className={
-        "p-2 my-1 rounded-md " +
+        "my-1 rounded-md p-2 " +
         (invalid.length > 0
           ? "bg-red-500"
           : isOver && canDrop
@@ -461,8 +461,8 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
       ref={dropRef}
     >
       <div className="flex flex-row place-content-between">
-        <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
-        <button className="m-1 font-bold text-lg" onClick={toggleDriverDetail}>
+        <h3 className="m-1 text-lg font-bold">{data.driver.name}</h3>
+        <button className="m-1 text-lg font-bold" onClick={toggleDriverDetail}>
           {showDriverDetail ? <span>&and;</span> : <span>&or;</span>}
         </button>
       </div>
@@ -476,7 +476,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
         <ul className="m-1">
           <li className="text-center">
             <button
-              className="p-1 rounded-md bg-neutral-300 dark:bg-neutral-700"
+              className="rounded-md bg-neutral-300 p-1 dark:bg-neutral-700"
               onClick={togglePassengers}
             >
               Seats Left: {seatsleft}
@@ -712,19 +712,19 @@ export const RideManager = ({
     <RideManagerContext.Provider value={rmContextValues}>
       <DndProvider backend={HTML5Backend}>
         <CustomDragLayer />
-        <div className="flex flex-row w-full justify-evenly">
-          <div className="p-2 rounded-md border border-neutral-500">
+        <div className="flex w-full flex-row justify-evenly">
+          <div className="rounded-md border border-neutral-500 p-2">
             <h2>Ride Manager</h2>
-            <button className="px-2 rounded-full border" onClick={refreshRides}>
+            <button className="rounded-full border px-2" onClick={refreshRides}>
               Refresh
             </button>
-            <button className="px-2 rounded-full border" onClick={clearRides}>
+            <button className="rounded-full border px-2" onClick={clearRides}>
               Clear All Rides
             </button>
             <div className="flex flex-row">
-              <div className="p-2 rounded-md border border-cyan-500 bg-cyan-50 dark:bg-cyan-950">
+              <div className="rounded-md border border-cyan-500 bg-cyan-50 p-2 dark:bg-cyan-950">
                 <div className="flex flex-row place-content-between">
-                  <span className="px-1 rounded-full bg-cyan-500">
+                  <span className="rounded-full bg-cyan-500 px-1">
                     {rpList.length}/{rpCollection.size}/{originPassengers.size}
                   </span>
                   <div className="flex flex-row">
@@ -798,7 +798,7 @@ export const RideManager = ({
                       className={
                         "rounded-sm border " +
                         (rpFilter.length < 1 &&
-                          " text-neutral-500 border-neutral-500")
+                          " border-neutral-500 text-neutral-500")
                       }
                       onClick={toggleShowRPFilter}
                     >
@@ -818,9 +818,9 @@ export const RideManager = ({
                 </div>
                 <RM_RPListComponent />
               </div>
-              <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
+              <div className="rounded-md border border-orange-500 bg-orange-50 p-2 dark:bg-orange-950">
                 <div className="flex flex-row place-content-between">
-                  <span className="px-1 rounded-full bg-orange-500">
+                  <span className="rounded-full bg-orange-500 px-1">
                     {rideList.length}/{originRides.size}
                   </span>
                   <div className="flex flex-row">
@@ -895,7 +895,7 @@ export const RideManager = ({
                       className={
                         "rounded-sm border " +
                         (rideFilter.length < 1 &&
-                          " text-neutral-500 border-neutral-500")
+                          " border-neutral-500 text-neutral-500")
                       }
                       onClick={toggleShowRideFilter}
                     >

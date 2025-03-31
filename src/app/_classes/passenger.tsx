@@ -31,7 +31,7 @@ export const YearTag = ({ data }: { data: Year }) => {
   }
 
   return (
-    <span className={"rounded-md p-1 mr-1 font-bold" + color}>{data}</span>
+    <span className={"mr-1 rounded-md p-1 font-bold" + color}>{data}</span>
   );
 };
 
@@ -89,9 +89,9 @@ interface PassengerProps {
 
 export const PassengerComponent = ({ data, display }: PassengerProps) => {
   return (
-    <div className="p-2 my-1 rounded-md bg-cyan-200 dark:bg-cyan-800 max-w-[496px]">
+    <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
       {(!display || display.includes(PassengerDisplay.NAME)) && (
-        <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+        <h3 className="m-1 text-lg font-bold">{data.name}</h3>
       )}
       <ul className="m-1">
         {(!display ||
@@ -114,7 +114,7 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
         <ul className="flex flex-row flex-wrap">
           {data.rides.map((item, index) => (
             <li
-              className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
+              className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
               key={index}
             >
               {item}
@@ -123,7 +123,7 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
           {data.backup &&
             data.backup.map((item, index) => (
               <li
-                className="rounded-md bg-neutral-400 p-1 mr-1 dark:bg-neutral-600"
+                className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                 key={index}
               >
                 {item}
@@ -134,7 +134,7 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
           data.notes && (
             <ul className="mt-1">
               <li>
-                <span className="p-1 rounded-md bg-cyan-400 dark:bg-cyan-600">
+                <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
                   {data.notes}
                 </span>
               </li>

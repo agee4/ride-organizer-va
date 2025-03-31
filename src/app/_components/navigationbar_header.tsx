@@ -9,7 +9,7 @@ export default function NavBar() {
       >
         Home
       </Link>
-      <menu className="gap-4 items-center flex font-[family-name:var(--font-geist-mono)]">
+      <menu className="flex items-center gap-4 font-[family-name:var(--font-geist-mono)]">
         <Link href="/login">Login</Link>
         <Link href="/rides">Rides</Link>
         <Link href="/contact">Contact</Link>

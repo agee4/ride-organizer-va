@@ -97,7 +97,7 @@ export const CollegeTag = ({ data }: { data: College }) => {
   }
 
   return (
-    <span className={"rounded-md p-1 mr-1 font-bold" + color}>{data}</span>
+    <span className={"mr-1 rounded-md p-1 font-bold" + color}>{data}</span>
   );
 };
 

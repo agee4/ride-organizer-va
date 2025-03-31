@@ -111,7 +111,7 @@ export const CreatePassengerForm = ({
   };
   return (
     <form
-      className="my-1 p-2 flex flex-col rounded-md border border-cyan-500 bg-cyan-200 dark:bg-cyan-800"
+      className="my-1 flex flex-col rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800"
       onSubmit={createNewPassenger}
       ref={formRef}
     >
@@ -138,7 +138,7 @@ export const CreatePassengerForm = ({
       />
       <div className="block">
         <input
-          className="rounded-sm border w-[142px]"
+          className="w-[142px] rounded-sm border"
           type="text"
           name="address"
           value={newPassengerData.address}
@@ -243,7 +243,7 @@ export const CreatePassengerForm = ({
       </div>
       <div className="block">
         <input
-          className="rounded-sm border w-[142px]"
+          className="w-[142px] rounded-sm border"
           type="text"
           name="phone"
           value={newPassengerData.phone}

@@ -60,10 +60,10 @@ const RideComponent = ({ data }: RideProps) => {
   return (
     <div
       className={
-        "p-2 my-1 rounded-md " + (valid ? "bg-neutral-500" : "bg-red-500")
+        "my-1 rounded-md p-2 " + (valid ? "bg-neutral-500" : "bg-red-500")
       }
     >
-      <h3 className="m-1 font-bold text-lg">{data.driver.name}</h3>
+      <h3 className="m-1 text-lg font-bold">{data.driver.name}</h3>
       <ul className="m-1">
         {data.driver.display([
           DriverDisplay.ADDRESS,
@@ -85,7 +85,7 @@ const RideComponent = ({ data }: RideProps) => {
           ))}
           {Array.from({ length: seatsleft }, (_, index) => (
             <li key={index}>
-              <div className="p-2 my-1 w-full rounded-md bg-white dark:bg-black"></div>
+              <div className="my-1 w-full rounded-md bg-white p-2 dark:bg-black"></div>
             </li>
           ))}
         </ul>

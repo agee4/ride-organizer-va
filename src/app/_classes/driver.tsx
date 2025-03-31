@@ -53,9 +53,9 @@ interface DriverProps {
 
 const DriverComponent = ({ data, display }: DriverProps) => {
   return (
-    <div className="p-2 my-1 rounded-md bg-orange-300 dark:bg-orange-700 max-w-[496px]">
+    <div className="my-1 max-w-[496px] rounded-md bg-orange-300 p-2 dark:bg-orange-700">
       {(!display || display.includes(DriverDisplay.NAME)) && (
-        <h3 className="m-1 font-bold text-lg">{data.name}</h3>
+        <h3 className="m-1 text-lg font-bold">{data.name}</h3>
       )}
       <ul className="m-1">
         {(!display ||
@@ -76,7 +76,7 @@ const DriverComponent = ({ data, display }: DriverProps) => {
         <ul className="flex flex-row flex-wrap">
           {data.rides.map((item, index) => (
             <li
-              className="rounded-md bg-neutral-200 p-1 mr-1 dark:bg-neutral-800"
+              className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
               key={index}
             >
               {item}
@@ -86,7 +86,7 @@ const DriverComponent = ({ data, display }: DriverProps) => {
         {(!display || display.includes(DriverDisplay.NOTES)) && data.notes && (
           <ul className="mt-1">
             <li>
-              <span className="p-1 rounded-md bg-orange-400 :dark:bg-orange-600">
+              <span className=":dark:bg-orange-600 rounded-md bg-orange-400 p-1">
                 {data.notes}
               </span>
             </li>
