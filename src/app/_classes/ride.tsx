@@ -22,6 +22,12 @@ export class Ride {
     this.valid = driver.seats >= passengers.size;
   }
 
+  getCopy(): Ride {
+    const driver = this.driver;
+    const passengers = this.passengers;
+    return new Ride({ driver, passengers });
+  }
+
   getDriver(): Driver {
     return this.driver;
   }
@@ -183,10 +189,10 @@ export const rideReducer = (
 ) => {
   switch (action.type) {
     case "create": {
-      return new Map([...rideCollection.entries()]).set(
-        action.ride.driver.getEmail(),
-        action.ride
-      );
+      return new Map([
+        ...rideCollection.entries(),
+        [action.ride.driver.getEmail(), action.ride],
+      ]);
     }
     case "delete": {
       let newCollection = new Map([...rideCollection.entries()]);

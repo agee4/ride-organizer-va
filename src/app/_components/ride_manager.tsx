@@ -4,8 +4,10 @@ import {
   ActionDispatch,
   ChangeEvent,
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -65,12 +67,13 @@ const RM_RPComponent = ({
       isDragging: monitor.isDragging(),
     }),
   }));
-  drag(dragRef);
-  dragPreview(dragPreviewRef);
 
   const toggleDetail = () => {
     setShowDetail(!showDetail);
   };
+
+  drag(dragRef);
+  dragPreview(dragPreviewRef);
 
   return (
     <div
@@ -143,6 +146,82 @@ const RM_RPComponent = ({
   );
 };
 
+const RM_RPListComponent = () => {
+  const rmContext = useContext(RideManagerContext);
+  if (!rmContext) {
+    throw new Error(
+      "RM_RPListComponent must be used within a RideManagerProvider"
+    );
+  }
+  const {
+    passengerCollection,
+    passengerList,
+    passengerCallback,
+    rideCollection,
+    rideCallback,
+  } = rmContext;
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  const [{ canDrop, isOver }, drop] = useDrop<
+    DragItem,
+    void,
+    { canDrop: Boolean; isOver: boolean }
+  >(
+    () => ({
+      accept: TestType.TEST,
+      drop: (item, monitor) => {
+        console.log("drop");
+        addDragItem(item);
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+    }),
+    []
+  );
+
+  const addDragItem = useCallback(
+    (item: DragItem) => {
+      console.log(passengerCollection);
+      let dragpassenger = passengerCollection.get(item.email);
+      if (!!dragpassenger) {
+        for (let ride of rideCollection.values()) {
+          if (ride.getPassengerList().has(dragpassenger.getEmail())) {
+            let test = ride.getCopy();
+            test.getPassengerList().delete(dragpassenger.getEmail());
+            rideCallback({ type: "create", ride: test });
+          }
+        }
+        passengerCallback({
+          type: "create",
+          passenger: dragpassenger,
+        });
+      }
+    },
+    [passengerCollection, rideCollection]
+  );
+
+  drop(dropRef);
+
+  return (
+    <div
+      className={
+        "rounded-md " + (isOver && canDrop ? "bg-amber-300" : "bg-neutral-500")
+      }
+      ref={dropRef}
+    >
+      <ul className="m-1 max-h-[70dvh] overflow-auto">
+        {passengerList.map((item) => (
+          <li key={item.getEmail()}>
+            <RM_RPComponent data={item} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const CustomDragLayer = () => {
   const {} = useDragLayer((monitor) => ({
     item: monitor.getItem(),
@@ -160,6 +239,12 @@ const RM_PassengerComponent = ({
   display?: PassengerDisplay[];
 }) => {
   const rmContext = useContext(RideManagerContext);
+  if (!rmContext) {
+    throw new Error(
+      "RM_PassengerComponent must be used within a RideManagerProvider"
+    );
+  }
+  const { passengerCallback, rideCallback } = rmContext;
   const dragRef = useRef<HTMLDivElement>(null);
   const dragPreviewRef = useRef<HTMLDivElement>(null);
   const [showDetail, setShowDetail] = useState<boolean>(true);
@@ -178,11 +263,9 @@ const RM_PassengerComponent = ({
   dragPreview(dragPreviewRef);
 
   const removePassenger = () => {
-    if (rmContext) {
-      rmContext.passengerCallback({ type: "create", passenger: data });
-      ride.passengers.delete(data.getEmail());
-      rmContext.rideCallback({ type: "create", ride: ride });
-    }
+    passengerCallback({ type: "create", passenger: data });
+    ride.passengers.delete(data.getEmail());
+    rideCallback({ type: "create", ride: ride });
   };
 
   const toggleDetail = () => {
@@ -276,6 +359,18 @@ const RM_PassengerComponent = ({
 
 const RM_RideComponent = ({ data }: { data: Ride }) => {
   const rmContext = useContext(RideManagerContext);
+  if (!rmContext) {
+    throw new Error(
+      "RM_PassengerComponent must be used within a RideManagerProvider"
+    );
+  }
+  const {
+    passengerCollection,
+    passengerList,
+    passengerCallback,
+    rideCollection,
+    rideCallback,
+  } = rmContext;
   const dropRef = useRef<HTMLDivElement>(null);
   const [showDriverDetail, setShowDriverDetail] = useState<boolean>(true);
   const [showPassengers, setShowPassengers] = useState<boolean>(true);
@@ -287,11 +382,9 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
     () => ({
       accept: TestType.TEST,
       drop: (item, monitor) => {
-        if (!!rmContext) {
-          let dragpassenger = rmContext.passengerCollection.get(item.email);
-          if (!!dragpassenger) {
-            addPassengerHelper(dragpassenger);
-          }
+        let dragpassenger = passengerCollection.get(item.email);
+        if (!!dragpassenger) {
+          addPassengerHelper(dragpassenger);
         }
       },
       collect: (monitor) => ({
@@ -303,29 +396,25 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
   );
 
   const addPassengerButton = () => {
-    if (!!rmContext) {
-      const nextpassenger = [...rmContext.passengerList].shift();
-      if (!!nextpassenger) {
-        addPassengerHelper(nextpassenger);
-      }
+    const nextpassenger = [...passengerList].shift();
+    if (!!nextpassenger) {
+      addPassengerHelper(nextpassenger);
     }
   };
 
   const addPassengerHelper = (passenger: Passenger) => {
-    if (!!rmContext) {
-      rmContext.passengerCallback({
-        type: "delete",
-        passenger: passenger,
-      });
-      for (let ride of rmContext.rideCollection.values()) {
-        if (ride.getPassengerList().has(passenger.getEmail())) {
-          ride.getPassengerList().delete(passenger.getEmail());
-          rmContext.rideCallback({ type: "create", ride: ride });
-        }
+    passengerCallback({
+      type: "delete",
+      passenger: passenger,
+    });
+    for (let ride of rideCollection.values()) {
+      if (ride.getPassengerList().has(passenger.getEmail())) {
+        ride.getPassengerList().delete(passenger.getEmail());
+        rideCallback({ type: "create", ride: ride });
       }
-      data.addPassenger(passenger);
-      rmContext.rideCallback({ type: "create", ride: data });
     }
+    data.addPassenger(passenger);
+    rideCallback({ type: "create", ride: data });
   };
 
   const toggleDriverDetail = () => {
@@ -366,8 +455,8 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
         (invalid.length > 0
           ? "bg-red-500"
           : isOver && canDrop
-          ? "bg-amber-300"
-          : "bg-neutral-500")
+            ? "bg-amber-300"
+            : "bg-neutral-500")
       }
       ref={dropRef}
     >
@@ -499,6 +588,7 @@ export const RideManager = ({
       for (let ridepassenger of ride.passengers.values())
         rpDispatch({ type: "delete", passenger: ridepassenger });
     }
+    console.log("rides actually updated!");
   }, [originRides]);
 
   const refreshRides = () => {
@@ -607,31 +697,28 @@ export const RideManager = ({
     );
   };
 
+  const rmContextValues = useMemo(
+    () => ({
+      passengerCollection: originPassengers,
+      passengerList: rpList,
+      rideCollection: originRides,
+      passengerCallback: rpDispatch,
+      rideCallback: rideCallback,
+    }),
+    [originPassengers, rpList, originRides, rpDispatch, rideCallback]
+  );
+
   return (
-    <RideManagerContext.Provider
-      value={{
-        passengerCollection: originPassengers,
-        passengerList: rpList,
-        rideCollection: originRides,
-        passengerCallback: rpDispatch,
-        rideCallback: rideCallback,
-      }}
-    >
+    <RideManagerContext.Provider value={rmContextValues}>
       <DndProvider backend={HTML5Backend}>
         <CustomDragLayer />
         <div className="flex flex-row w-full justify-evenly">
           <div className="p-2 rounded-md border border-neutral-500">
             <h2>Ride Manager</h2>
-            <button
-              className="m-1 p-1 rounded-full border"
-              onClick={refreshRides}
-            >
+            <button className="px-2 rounded-full border" onClick={refreshRides}>
               Refresh
             </button>
-            <button
-              className="m-1 p-1 rounded-full border"
-              onClick={clearRides}
-            >
+            <button className="px-2 rounded-full border" onClick={clearRides}>
               Clear All Rides
             </button>
             <div className="flex flex-row">
@@ -729,13 +816,7 @@ export const RideManager = ({
                     )}
                   </button>
                 </div>
-                <ul className="m-1 max-h-[70dvh] overflow-auto">
-                  {rpList.map((item) => (
-                    <li key={item.getEmail()}>
-                      <RM_RPComponent data={item} />
-                    </li>
-                  ))}
-                </ul>
+                <RM_RPListComponent />
               </div>
               <div className="p-2 rounded-md border border-orange-500 bg-orange-50 dark:bg-orange-950">
                 <div className="flex flex-row place-content-between">
