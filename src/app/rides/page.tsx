@@ -55,6 +55,7 @@ export default function Page() {
   };
 
   const loadSheet = async () => {
+    clearPeople();
     const f = selectedFile
       ? selectedFile
       : await fetch("/placeholdersheet.xlsx");
@@ -181,20 +182,20 @@ export default function Page() {
       }
     }
   };
-  const saveSheet = useCallback(() => {
+  const saveSheet = () => {
     const wb = utils.book_new();
     let passengerJSON = [];
     for (let passenger of passengerCollection.values()) {
       passengerJSON.push({
         "Email Address": passenger.getEmail(),
-        Name: passenger.name,
+        Name: passenger.getName(),
         "Phone Number": passenger.getPhone(),
-        Rides: passenger.rides.toLocaleString(),
-        Address: passenger.address,
-        College: passenger.college,
-        Year: passenger.year,
-        "Backup Rides": passenger.backup?.toLocaleString(),
-        Notes: passenger.notes,
+        Rides: passenger.getRides().toLocaleString(),
+        Address: passenger.getAddress(),
+        College: passenger.getCollege(),
+        Year: passenger.getYear(),
+        "Backup Rides": passenger.getBackup().toLocaleString(),
+        Notes: passenger.getNotes(),
       });
     }
     const ws_p = utils.json_to_sheet(passengerJSON);
@@ -203,13 +204,13 @@ export default function Page() {
     for (let driver of driverCollection.values()) {
       driverJSON.push({
         "Email Address": driver.getEmail(),
-        Name: driver.name,
+        Name: driver.getName(),
         "Phone Number": driver.getPhone(),
-        Seats: driver.seats,
-        College: driver.college,
-        Rides: driver.rides.toLocaleString(),
-        Address: driver.address,
-        Notes: driver.notes,
+        Seats: driver.getSeats(),
+        College: driver.getCollege(),
+        Rides: driver.getRides().toLocaleString(),
+        Address: driver.getAddress(),
+        Notes: driver.getNotes(),
       });
     }
     const ws_d = utils.json_to_sheet(driverJSON);
@@ -218,7 +219,7 @@ export default function Page() {
       let rideJSON = [];
       for (let ride of rideCollection.values()) {
         const passengers: string[] = [];
-        Array.from(ride.getPassengerList().values()).forEach((x) =>
+        Array.from(ride.getPassengers().values()).forEach((x) =>
           passengers.push(x.getName() + "(" + x.getEmail() + ")")
         );
         rideJSON.push({
@@ -237,7 +238,7 @@ export default function Page() {
       wb,
       (saveSheetName.length > 1 ? saveSheetName : "savedsheet") + ".xlsx"
     );
-  }, [passengerCollection, driverCollection, rideCollection, saveSheetName]);
+  };
   const toggleDisplay = () => {
     setRMdisplay(!rmDisplay);
   };

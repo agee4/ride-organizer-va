@@ -53,7 +53,7 @@ const PM_PassengerComponent = ({
         <>
           <div className="flex flex-row place-content-between">
             {(!display || display.includes(PassengerDisplay.NAME)) && (
-              <h3 className="m-1 text-lg font-bold">{data.name}</h3>
+              <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
             )}
             <button className="m-1 text-lg font-bold" onClick={toggleEditMode}>
               &hellip;
@@ -65,15 +65,15 @@ const PM_PassengerComponent = ({
               display.includes(PassengerDisplay.COLLEGE)) && (
               <li>
                 {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-                  <CollegeTag data={data.college as College} />
+                  <CollegeTag data={data.getCollege()} />
                 )}
                 {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-                  <span>{data.address}</span>
+                  <span>{data.getAddress()}</span>
                 )}
               </li>
             )}
             <ul className="flex flex-row flex-wrap">
-              {data.rides.map((item, index) => (
+              {data.getRides().map((item, index) => (
                 <li
                   className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                   key={index}
@@ -81,8 +81,8 @@ const PM_PassengerComponent = ({
                   {item}
                 </li>
               ))}
-              {data.backup &&
-                data.backup.map((item, index) => (
+              {data.getBackup() &&
+                data.getBackup().map((item, index) => (
                   <li
                     className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                     key={index}
@@ -93,15 +93,15 @@ const PM_PassengerComponent = ({
             </ul>
             {(!display || display.includes(PassengerDisplay.YEAR)) && (
               <li>
-                <YearTag data={data.year} />
+                <YearTag data={data.getYear()} />
               </li>
             )}
             {(!display || display.includes(PassengerDisplay.NOTES)) &&
-              data.notes && (
+              data.getNotes() && (
                 <ul className="mt-1">
                   <li>
                     <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                      {data.notes}
+                      {data.getNotes()}
                     </span>
                   </li>
                 </ul>
@@ -140,7 +140,7 @@ const PM_PassengerComponent = ({
             <select
               className="rounded-sm border"
               name="college"
-              defaultValue={data.college}
+              defaultValue={data.getCollege()}
               /* onChange={updateForm} */
             >
               <option className="dark:text-black">-college-</option>
@@ -154,7 +154,7 @@ const PM_PassengerComponent = ({
               className="w-[142px] rounded-sm border"
               type="text"
               name="address"
-              defaultValue={data.address}
+              defaultValue={data.getAddress()}
               placeholder="Address"
               required
               minLength={1}
@@ -240,7 +240,7 @@ const PM_PassengerComponent = ({
           <select
             className="rounded-sm border"
             name="year"
-            defaultValue={data.year}
+            defaultValue={data.getYear()}
             /* onChange={updateForm} */
           >
             <option className="dark:text-black">-year-</option>
@@ -254,7 +254,7 @@ const PM_PassengerComponent = ({
             className="rounded-sm border"
             type="text"
             name="notes"
-            defaultValue={data.notes}
+            defaultValue={data.getNotes()}
             placeholder="Notes"
             /* onChange={updateForm} */
           />
@@ -301,7 +301,7 @@ const PM_DriverComponent = ({
         <>
           <div className="flex flex-row place-content-between">
             {(!display || display.includes(DriverDisplay.NAME)) && (
-              <h3 className="m-1 text-lg font-bold">{data.name}</h3>
+              <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
             )}
             <button className="m-1 text-lg font-bold" onClick={toggleEditMode}>
               &hellip;
@@ -309,22 +309,22 @@ const PM_DriverComponent = ({
           </div>
           <ul className="m-1">
             {(!display || display.includes(DriverDisplay.SEATS)) && (
-              <li>Seats: {data.seats}</li>
+              <li>Seats: {data.getSeats()}</li>
             )}
             {(!display ||
               display.includes(DriverDisplay.ADDRESS) ||
               display.includes(DriverDisplay.COLLEGE)) && (
               <li>
                 {(!display || display.includes(DriverDisplay.COLLEGE)) && (
-                  <CollegeTag data={data.college as College} />
+                  <CollegeTag data={data.getCollege()} />
                 )}
                 {(!display || display.includes(DriverDisplay.ADDRESS)) && (
-                  <span>{data.address}</span>
+                  <span>{data.getAddress()}</span>
                 )}
               </li>
             )}
             <ul className="flex flex-row flex-wrap">
-              {data.rides.map((item, index) => (
+              {data.getRides().map((item, index) => (
                 <li
                   className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                   key={index}
@@ -334,11 +334,11 @@ const PM_DriverComponent = ({
               ))}
             </ul>
             {(!display || display.includes(DriverDisplay.NOTES)) &&
-              data.notes && (
+              data.getNotes() && (
                 <ul className="mt-1">
                   <li>
                     <span className=":dark:bg-orange-600 rounded-md bg-orange-400 p-1">
-                      {data.notes}
+                      {data.getNotes()}
                     </span>
                   </li>
                 </ul>
@@ -384,7 +384,7 @@ const PM_DriverComponent = ({
             <select
               className="rounded-sm border"
               name="college"
-              defaultValue={data.college}
+              defaultValue={data.getCollege()}
               /* onChange={updateForm} */
             >
               <option className="dark:text-black">-college-</option>
@@ -398,7 +398,7 @@ const PM_DriverComponent = ({
               className="w-[142px] rounded-sm border"
               type="text"
               name="address"
-              defaultValue={data.address}
+              defaultValue={data.getAddress()}
               placeholder="Address"
               required
               minLength={1}
@@ -438,7 +438,7 @@ const PM_DriverComponent = ({
             className="rounded-sm border"
             type="text"
             name="notes"
-            defaultValue={data.notes}
+            defaultValue={data.getNotes()}
             placeholder="Notes"
             /* onChange={updateForm} */
           />

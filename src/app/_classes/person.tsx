@@ -18,11 +18,11 @@ export enum College {
 export class Person {
   private email: string;
   private phone?: string;
-  public name: string;
-  public rides: RideTimes[];
-  public address: string;
-  public college: College;
-  public notes?: string;
+  private name: string;
+  private rides: RideTimes[];
+  private address: string;
+  private college: College;
+  private notes?: string;
 
   constructor(
     email: string,
@@ -59,6 +59,10 @@ export class Person {
     return this.name;
   }
 
+  getRides(): RideTimes[] {
+    return this.rides;
+  }
+
   getAddress(): string {
     return this.address;
   }
@@ -68,7 +72,12 @@ export class Person {
     return this.address;
   }
 
-  getCollege(): string {
+  getCollege(): College {
+    return this.college;
+  }
+
+  setCollege(updatedcollege: string): string {
+    this.college = updatedcollege as College;
     return this.college;
   }
 

@@ -4,7 +4,7 @@ import { ReactElement } from "react";
 import { College, CollegeTag, Person, RideTimes } from "./person";
 
 export class Driver extends Person {
-  public seats: number;
+  private seats: number;
 
   constructor({
     email,
@@ -33,6 +33,11 @@ export class Driver extends Person {
     return this.seats;
   }
 
+  setSeats(updatedseats: number): number {
+    this.seats = updatedseats;
+    return this.seats;
+  }
+
   display(show?: DriverDisplay[]): ReactElement {
     return <DriverComponent data={this} display={show} />;
   }
@@ -55,7 +60,7 @@ const DriverComponent = ({ data, display }: DriverProps) => {
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-orange-300 p-2 dark:bg-orange-700">
       {(!display || display.includes(DriverDisplay.NAME)) && (
-        <h3 className="m-1 text-lg font-bold">{data.name}</h3>
+        <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
       )}
       <ul className="m-1">
         {(!display ||
@@ -63,18 +68,18 @@ const DriverComponent = ({ data, display }: DriverProps) => {
           display.includes(DriverDisplay.COLLEGE)) && (
           <li>
             {(!display || display.includes(DriverDisplay.COLLEGE)) && (
-              <CollegeTag data={data.college as College} />
+              <CollegeTag data={data.getCollege()} />
             )}
             {(!display || display.includes(DriverDisplay.ADDRESS)) && (
-              <span>{data.address}</span>
+              <span>{data.getAddress()}</span>
             )}
           </li>
         )}
         {(!display || display.includes(DriverDisplay.SEATS)) && (
-          <li>Seats: {data.seats}</li>
+          <li>Seats: {data.getSeats()}</li>
         )}
         <ul className="flex flex-row flex-wrap">
-          {data.rides.map((item, index) => (
+          {data.getRides().map((item, index) => (
             <li
               className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
               key={index}
@@ -83,11 +88,11 @@ const DriverComponent = ({ data, display }: DriverProps) => {
             </li>
           ))}
         </ul>
-        {(!display || display.includes(DriverDisplay.NOTES)) && data.notes && (
+        {(!display || display.includes(DriverDisplay.NOTES)) && data.getNotes() && (
           <ul className="mt-1">
             <li>
               <span className=":dark:bg-orange-600 rounded-md bg-orange-400 p-1">
-                {data.notes}
+                {data.getNotes()}
               </span>
             </li>
           </ul>
@@ -109,38 +114,38 @@ export enum DriverSort {
 export const sortDrivers = (list: Driver[], sort?: DriverSort): Driver[] => {
   switch (sort) {
     case DriverSort.ADDRESS:
-      list.sort((a, b) => a.address.localeCompare(b.address));
+      list.sort((a, b) => a.getAddress().localeCompare(b.getAddress()));
       break;
     case DriverSort.FIRST:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.FIRST) -
-          +a.rides.includes(RideTimes.FIRST)
+          +b.getRides().includes(RideTimes.FIRST) -
+          +a.getRides().includes(RideTimes.FIRST)
       );
       break;
     case DriverSort.SECOND:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.SECOND) -
-          +a.rides.includes(RideTimes.SECOND)
+          +b.getRides().includes(RideTimes.SECOND) -
+          +a.getRides().includes(RideTimes.SECOND)
       );
       break;
     case DriverSort.THIRD:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.THIRD) -
-          +a.rides.includes(RideTimes.THIRD)
+          +b.getRides().includes(RideTimes.THIRD) -
+          +a.getRides().includes(RideTimes.THIRD)
       );
       break;
     case DriverSort.FRIDAY:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.FRIDAY) -
-          +a.rides.includes(RideTimes.FRIDAY)
+          +b.getRides().includes(RideTimes.FRIDAY) -
+          +a.getRides().includes(RideTimes.FRIDAY)
       );
       break;
     case DriverSort.NAME:
-      list.sort((a, b) => a.name.localeCompare(b.name));
+      list.sort((a, b) => a.getName().localeCompare(b.getName()));
       break;
     default:
   }
@@ -157,10 +162,10 @@ export const filterDrivers = (
       for (let f of filter) {
         if (Object.values(RideTimes).includes(f as RideTimes)) {
           newlist = [...newlist].filter((x) =>
-            x.rides.includes(f as RideTimes)
+            x.getRides().includes(f as RideTimes)
           );
         } else if (Object.values(College).includes(f as College)) {
-          newlist = [...newlist].filter((x) => x.college === f);
+          newlist = [...newlist].filter((x) => x.getCollege() === f);
         }
       }
       return newlist;

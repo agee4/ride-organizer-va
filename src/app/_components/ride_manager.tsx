@@ -4,10 +4,8 @@ import {
   ActionDispatch,
   ChangeEvent,
   createContext,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useReducer,
   useRef,
   useState,
@@ -86,7 +84,7 @@ const RM_RPComponent = ({
     >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
-          <h3 className="m-1 text-lg font-bold">{data.name}</h3>
+          <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
         )}
         <button className="m-1 text-lg font-bold" onClick={toggleDetail}>
           {showDetail ? <span>&and;</span> : <span>&or;</span>}
@@ -99,15 +97,15 @@ const RM_RPComponent = ({
             display.includes(PassengerDisplay.COLLEGE)) && (
             <li>
               {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-                <CollegeTag data={data.college as College} />
+                <CollegeTag data={data.getCollege() as College} />
               )}
               {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-                <span>{data.address}</span>
+                <span>{data.getAddress()}</span>
               )}
             </li>
           )}
           <ul className="flex flex-row flex-wrap">
-            {data.rides.map((item, index) => (
+            {data.getRides().map((item, index) => (
               <li
                 className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                 key={index}
@@ -115,8 +113,8 @@ const RM_RPComponent = ({
                 {item}
               </li>
             ))}
-            {data.backup &&
-              data.backup.map((item, index) => (
+            {data.getBackup() &&
+              data.getBackup().map((item, index) => (
                 <li
                   className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                   key={index}
@@ -127,15 +125,15 @@ const RM_RPComponent = ({
           </ul>
           {(!display || display.includes(PassengerDisplay.YEAR)) && (
             <li>
-              <YearTag data={data.year} />
+              <YearTag data={data.getYear()} />
             </li>
           )}
           {(!display || display.includes(PassengerDisplay.NOTES)) &&
-            data.notes && (
+            data.getNotes() && (
               <ul className="mt-1">
                 <li>
                   <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                    {data.notes}
+                    {data.getNotes()}
                   </span>
                 </li>
               </ul>
@@ -170,35 +168,25 @@ const RM_RPListComponent = () => {
     () => ({
       accept: TestType.TEST,
       drop: (item, monitor) => {
-        console.log("drop");
-        addDragItem(item);
+        let dragpassenger = passengerCollection.get(item.email);
+        if (!!dragpassenger) {
+          for (let ride of rideCollection.values()) {
+            if (ride.getPassengers().has(dragpassenger.getEmail())) {
+              ride.getPassengers().delete(dragpassenger.getEmail());
+              rideCallback({ type: "create", ride: ride });
+            }
+          }
+          passengerCallback({
+            type: "create",
+            passenger: dragpassenger,
+          });
+        }
       },
       collect: (monitor) => ({
         isOver: monitor.isOver(),
         canDrop: monitor.canDrop(),
       }),
     }),
-    []
-  );
-
-  const addDragItem = useCallback(
-    (item: DragItem) => {
-      console.log(passengerCollection);
-      let dragpassenger = passengerCollection.get(item.email);
-      if (!!dragpassenger) {
-        for (let ride of rideCollection.values()) {
-          if (ride.getPassengerList().has(dragpassenger.getEmail())) {
-            let test = ride.getCopy();
-            test.getPassengerList().delete(dragpassenger.getEmail());
-            rideCallback({ type: "create", ride: test });
-          }
-        }
-        passengerCallback({
-          type: "create",
-          passenger: dragpassenger,
-        });
-      }
-    },
     [passengerCollection, rideCollection]
   );
 
@@ -259,12 +247,10 @@ const RM_PassengerComponent = ({
       isDragging: monitor.isDragging(),
     }),
   }));
-  drag(dragRef);
-  dragPreview(dragPreviewRef);
 
   const removePassenger = () => {
     passengerCallback({ type: "create", passenger: data });
-    ride.passengers.delete(data.getEmail());
+    ride.getPassengers().delete(data.getEmail());
     rideCallback({ type: "create", ride: ride });
   };
 
@@ -272,6 +258,8 @@ const RM_PassengerComponent = ({
     setShowDetail(!showDetail);
   };
 
+  drag(dragRef);
+  dragPreview(dragPreviewRef);
   let invalid = "";
   if (
     data.getCollege() != ride.getDriver().getCollege() &&
@@ -282,24 +270,28 @@ const RM_PassengerComponent = ({
   else if (
     ride
       .getDriver()
-      .rides.filter((x) => data.rides.includes(x) || data.backup?.includes(x))
-      .length <= 0
+      .getRides()
+      .filter(
+        (x) => data.getRides().includes(x) || data.getBackup().includes(x)
+      ).length <= 0
   )
     invalid = "NO RIDE OVERLAP";
 
   return (
     <div
       className={
-        "my-1 max-w-[496px] rounded-md bg-red-500 p-2 " +
+        "my-1 max-w-[496px] rounded-md p-2 " +
         (isDragging && "opacity-50") +
-        (invalid.length <= 0 && " bg-cyan-200 dark:bg-cyan-800")
+        (invalid.length <= 0
+          ? " bg-cyan-200 dark:bg-cyan-800"
+          : " bg-red-400 dark:bg-red-600")
       }
       ref={dragRef}
       onClick={toggleDetail}
     >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
-          <h3 className="m-1 text-lg font-bold">{data.name}</h3>
+          <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
         )}
         <button className="m-1 text-lg font-bold" onClick={removePassenger}>
           &times;
@@ -312,15 +304,15 @@ const RM_PassengerComponent = ({
             display.includes(PassengerDisplay.COLLEGE)) && (
             <li>
               {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-                <CollegeTag data={data.college as College} />
+                <CollegeTag data={data.getCollege() as College} />
               )}
               {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-                <span>{data.address}</span>
+                <span>{data.getAddress()}</span>
               )}
             </li>
           )}
           <ul className="flex flex-row flex-wrap">
-            {data.rides.map((item, index) => (
+            {data.getRides().map((item, index) => (
               <li
                 className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
                 key={index}
@@ -328,8 +320,8 @@ const RM_PassengerComponent = ({
                 {item}
               </li>
             ))}
-            {data.backup &&
-              data.backup.map((item, index) => (
+            {data.getBackup() &&
+              data.getBackup().map((item, index) => (
                 <li
                   className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                   key={index}
@@ -339,14 +331,14 @@ const RM_PassengerComponent = ({
               ))}
           </ul>
           {(!display || display.includes(PassengerDisplay.YEAR)) && (
-            <li>Year: {data.year}</li>
+            <li>Year: {data.getYear()}</li>
           )}
           {(!display || display.includes(PassengerDisplay.NOTES)) &&
-            data.notes && (
+            data.getNotes() && (
               <ul className="mt-1">
                 <li>
                   <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                    {data.notes}
+                    {data.getNotes()}
                   </span>
                 </li>
               </ul>
@@ -371,8 +363,10 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
     rideCollection,
     rideCallback,
   } = rmContext;
+
   const dropRef = useRef<HTMLDivElement>(null);
   const [showDriverDetail, setShowDriverDetail] = useState<boolean>(true);
+  const [showInvalid, setShowInvalid] = useState<boolean>(true);
   const [showPassengers, setShowPassengers] = useState<boolean>(true);
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
@@ -392,7 +386,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
         canDrop: monitor.canDrop(),
       }),
     }),
-    []
+    [passengerCollection]
   );
 
   const addPassengerButton = () => {
@@ -408,12 +402,13 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
       passenger: passenger,
     });
     for (let ride of rideCollection.values()) {
-      if (ride.getPassengerList().has(passenger.getEmail())) {
-        ride.getPassengerList().delete(passenger.getEmail());
+      if (ride.getPassengers().has(passenger.getEmail())) {
+        ride.getPassengers().delete(passenger.getEmail());
         rideCallback({ type: "create", ride: ride });
       }
     }
     data.addPassenger(passenger);
+    console.log(data);
     rideCallback({ type: "create", ride: data });
   };
 
@@ -423,69 +418,70 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
   const togglePassengers = () => {
     setShowPassengers(!showPassengers);
   };
+  const toggleInvalid = () => {
+    setShowInvalid(!showInvalid);
+  };
 
   drop(dropRef);
-  let invalid = "";
-  const seatsleft = data.driver.seats - data.passengers.size;
-  if (data.driver.seats - data.passengers.size < 0) {
-    invalid = "TOO MANY PASSENGERS!";
-  } else {
-    for (let passenger of data.getPassengerList().values()) {
-      if (
-        passenger.getCollege() != data.getDriver().getCollege() &&
-        passenger.getCollege() != College.OTHER &&
-        data.getDriver().getCollege() != College.OTHER
-      )
-        invalid = "WRONG COLLEGE";
-      else if (
-        data
-          .getDriver()
-          .rides.filter(
-            (x) => passenger.rides.includes(x) || passenger.backup?.includes(x)
-          ).length <= 0
-      )
-        invalid = "NO RIDE OVERLAP";
-    }
-  }
+  const seatsleft = data.getDriver().getSeats() - data.getPassengers().size;
+  let valid = data.valid();
 
   return (
     <div
-      className={
-        "my-1 rounded-md p-2 " +
-        (invalid.length > 0
-          ? "bg-red-500"
-          : isOver && canDrop
-            ? "bg-amber-300"
-            : "bg-neutral-500")
-      }
+      className="my-1 rounded-md bg-orange-300 p-2 dark:bg-orange-700"
       ref={dropRef}
     >
       <div className="flex flex-row place-content-between">
-        <h3 className="m-1 text-lg font-bold">{data.driver.name}</h3>
+        <h3 className="m-1 text-lg font-bold">{data.getDriver().getName()}</h3>
         <button className="m-1 text-lg font-bold" onClick={toggleDriverDetail}>
           {showDriverDetail ? <span>&and;</span> : <span>&or;</span>}
         </button>
       </div>
-      <ul className="m-1">
-        {showDriverDetail &&
-          data.driver.display([
+      {showDriverDetail &&
+        data
+          .getDriver()
+          .display([
             DriverDisplay.ADDRESS,
             DriverDisplay.COLLEGE,
             DriverDisplay.NOTES,
           ])}
+      <div
+        className={
+          "rounded-md " +
+          (!valid
+            ? "bg-red-500"
+            : isOver && canDrop
+              ? "bg-amber-300"
+              : "bg-neutral-500")
+        }
+      >
         <ul className="m-1">
           <li className="text-center">
             <button
               className="rounded-md bg-neutral-300 p-1 dark:bg-neutral-700"
               onClick={togglePassengers}
             >
-              Seats Left: {seatsleft}
+              Seats Left: {seatsleft}/{data.getDriver().getSeats()}
             </button>
           </li>
-          {invalid.length > 0 && <li className="text-center">{invalid}</li>}
+          {!valid &&
+            (showInvalid ? (
+              <li className="text-center">
+                <button className="rounded-md" onClick={toggleInvalid}>
+                  {data.getInvalid().length} WARNING
+                  {data.getInvalid().length != 1 && "S"}
+                </button>
+              </li>
+            ) : (
+              <ul className="text-center" onClick={toggleInvalid}>
+                {data.getInvalid().map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            ))}
           {showPassengers && (
             <>
-              {Array.from(data.passengers).map(([key, value]) => (
+              {Array.from(data.getPassengers()).map(([key, value]) => (
                 <li key={key}>
                   <RM_PassengerComponent
                     data={value}
@@ -512,7 +508,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
             </>
           )}
         </ul>
-      </ul>
+      </div>
     </div>
   );
 };
@@ -585,10 +581,9 @@ export const RideManager = ({
   }, [rpCollection, originRides, rideSort, rideReverse, rideFilter]);
   useEffect(() => {
     for (let ride of originRides.values()) {
-      for (let ridepassenger of ride.passengers.values())
+      for (let ridepassenger of ride.getPassengers().values())
         rpDispatch({ type: "delete", passenger: ridepassenger });
     }
-    console.log("rides actually updated!");
   }, [originRides]);
 
   const refreshRides = () => {
@@ -598,9 +593,9 @@ export const RideManager = ({
         rpDispatch({ type: "delete", passenger: passenger });
     }
     for (let ride of originRides.values()) {
-      for (let ridepassenger of ride.passengers.values()) {
+      for (let ridepassenger of ride.getPassengers().values()) {
         if (!originPassengers.has(ridepassenger.getEmail()))
-          ride.passengers.delete(ridepassenger.getEmail());
+          ride.getPassengers().delete(ridepassenger.getEmail());
       }
     }
     /* add new passengers */
@@ -610,7 +605,7 @@ export const RideManager = ({
         let exists = false;
         for (let ride of originRides.values()) {
           /**check if passenger in a ride */
-          if (ride.passengers.has(passenger.getEmail())) {
+          if (ride.getPassengers().has(passenger.getEmail())) {
             exists = true;
             break;
           }
@@ -620,8 +615,8 @@ export const RideManager = ({
     }
     /* remove rides and move their passengers back into the unassigned list */
     for (let ride of originRides.values()) {
-      if (!originDrivers.has(ride.driver.getEmail())) {
-        for (let passenger of ride.passengers.values()) {
+      if (!originDrivers.has(ride.getDriver().getEmail())) {
+        for (let passenger of ride.getPassengers().values()) {
           if (originPassengers.has(passenger.getEmail()))
             rpDispatch({ type: "create", passenger: passenger });
         }
@@ -644,10 +639,14 @@ export const RideManager = ({
   };
   const clearRides = () => {
     for (let ride of rideList) {
-      for (let passenger of ride.getPassengerList().values()) {
+      for (let passenger of ride.getPassengers().values()) {
         rpDispatch({ type: "create", passenger: passenger });
       }
-      ride.passengers.clear();
+      ride.getPassengers().clear();
+      rideCallback({
+        type: "create",
+        ride: ride,
+      });
     }
   };
 
@@ -697,19 +696,16 @@ export const RideManager = ({
     );
   };
 
-  const rmContextValues = useMemo(
-    () => ({
-      passengerCollection: originPassengers,
-      passengerList: rpList,
-      rideCollection: originRides,
-      passengerCallback: rpDispatch,
-      rideCallback: rideCallback,
-    }),
-    [originPassengers, rpList, originRides, rpDispatch, rideCallback]
-  );
-
   return (
-    <RideManagerContext.Provider value={rmContextValues}>
+    <RideManagerContext.Provider
+      value={{
+        passengerCollection: originPassengers,
+        passengerList: rpList,
+        rideCollection: originRides,
+        passengerCallback: rpDispatch,
+        rideCallback: rideCallback,
+      }}
+    >
       <DndProvider backend={HTML5Backend}>
         <CustomDragLayer />
         <div className="flex w-full flex-row justify-evenly">
@@ -772,22 +768,14 @@ export const RideManager = ({
                     >
                       <optgroup label="Ride Times">
                         {Object.values(RideTimes).map((option) => (
-                          <option
-                            className="dark:text-black"
-                            key={option}
-                            value={option}
-                          >
+                          <option key={option} value={option}>
                             {option}
                           </option>
                         ))}
                       </optgroup>
                       <optgroup label="Colleges">
                         {Object.values(College).map((option) => (
-                          <option
-                            className="dark:text-black"
-                            key={option}
-                            value={option}
-                          >
+                          <option key={option} value={option}>
                             {option}
                           </option>
                         ))}
@@ -869,22 +857,14 @@ export const RideManager = ({
                     >
                       <optgroup label="Ride Times">
                         {Object.values(RideTimes).map((option) => (
-                          <option
-                            className="dark:text-black"
-                            key={option}
-                            value={option}
-                          >
+                          <option key={option} value={option}>
                             {option}
                           </option>
                         ))}
                       </optgroup>
                       <optgroup label="Colleges">
                         {Object.values(College).map((option) => (
-                          <option
-                            className="dark:text-black"
-                            key={option}
-                            value={option}
-                          >
+                          <option key={option} value={option}>
                             {option}
                           </option>
                         ))}

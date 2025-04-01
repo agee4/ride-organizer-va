@@ -6,9 +6,9 @@ import { Passenger, PassengerDisplay } from "./passenger";
 import { College, RideTimes } from "./person";
 
 export class Ride {
-  public driver: Driver;
-  public passengers: Map<string, Passenger>;
-  public valid: boolean;
+  private driver: Driver;
+  private passengers: Map<string, Passenger>;
+  private invalid: string[] = [];
 
   constructor({
     driver,
@@ -19,7 +19,6 @@ export class Ride {
   }) {
     this.driver = driver;
     this.passengers = passengers;
-    this.valid = driver.seats >= passengers.size;
   }
 
   getCopy(): Ride {
@@ -32,21 +31,46 @@ export class Ride {
     return this.driver;
   }
 
-  getPassengerList(): Map<string, Passenger> {
+  getPassengers(): Map<string, Passenger> {
     return this.passengers;
   }
 
   addPassenger(passenger: Passenger): boolean {
-    if (this.passengers.size <= this.driver.seats) {
-      this.passengers.set(passenger.getEmail(), passenger);
-      return true;
-    } else {
-      return false;
-    }
+    this.passengers.set(passenger.getEmail(), passenger);
+    return true;
   }
 
   display(): ReactElement {
     return <RideComponent data={this} />;
+  }
+
+  valid(): boolean {
+    this.invalid = [];
+    if (this.driver.getSeats() - this.passengers.size < 0)
+      this.invalid.push("TOO MANY PASSENGERS!");
+    for (let passenger of this.getPassengers().values()) {
+      if (
+        passenger.getCollege() != this.getDriver().getCollege() &&
+        passenger.getCollege() != College.OTHER &&
+        this.getDriver().getCollege() != College.OTHER
+      )
+        this.invalid.push(passenger.getName() + " ATTENDS A DIFFERENT COLLEGE");
+      if (
+        this.getDriver()
+          .getRides()
+          .filter(
+            (x) =>
+              passenger.getRides().includes(x) ||
+              passenger.getBackup().includes(x)
+          ).length <= 0
+      )
+        this.invalid.push(passenger.getName() + " HAS NO RIDE OVERLAP");
+    }
+    return this.invalid.length == 0;
+  }
+
+  getInvalid(): string[] {
+    return this.invalid;
   }
 }
 
@@ -55,7 +79,7 @@ interface RideProps {
 }
 
 const RideComponent = ({ data }: RideProps) => {
-  const seatsleft = data.driver.seats - data.passengers.size;
+  const seatsleft = data.getDriver().getSeats() - data.getPassengers().size;
   let valid = seatsleft >= 0;
   return (
     <div
@@ -63,17 +87,19 @@ const RideComponent = ({ data }: RideProps) => {
         "my-1 rounded-md p-2 " + (valid ? "bg-neutral-500" : "bg-red-500")
       }
     >
-      <h3 className="m-1 text-lg font-bold">{data.driver.name}</h3>
+      <h3 className="m-1 text-lg font-bold">{data.getDriver().getName()}</h3>
       <ul className="m-1">
-        {data.driver.display([
-          DriverDisplay.ADDRESS,
-          DriverDisplay.COLLEGE,
-          DriverDisplay.NOTES,
-        ])}
+        {data
+          .getDriver()
+          .display([
+            DriverDisplay.ADDRESS,
+            DriverDisplay.COLLEGE,
+            DriverDisplay.NOTES,
+          ])}
         <ul className="m-1">
           <li className="text-center">Seats Left: {seatsleft}</li>
           {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
-          {Array.from(data.passengers).map(([key, value]) => (
+          {Array.from(data.getPassengers()).map(([key, value]) => (
             <li key={key}>
               {value.display([
                 PassengerDisplay.NAME,
@@ -110,45 +136,49 @@ export const sortRides = (
 ): Ride[] => {
   switch (sort) {
     case RideSort.NAME:
-      list.sort((a, b) => a.driver.name.localeCompare(b.driver.name));
+      list.sort((a, b) =>
+        a.getDriver().getName().localeCompare(b.getDriver().getName())
+      );
       break;
     case RideSort.ADDRESS:
-      list.sort((a, b) => a.driver.address.localeCompare(b.driver.address));
+      list.sort((a, b) =>
+        a.getDriver().getAddress().localeCompare(b.getDriver().getAddress())
+      );
       break;
     case RideSort.SEATS:
       list.sort(
         (a, b) =>
-          b.driver.seats -
-          b.passengers.size -
-          (a.driver.seats - a.passengers.size)
+          b.getDriver().getSeats() -
+          b.getPassengers().size -
+          (a.getDriver().getSeats() - a.getPassengers().size)
       );
       break;
     case RideSort.FIRST:
       list.sort(
         (a, b) =>
-          +b.driver.rides.includes(RideTimes.FIRST) -
-          +a.driver.rides.includes(RideTimes.FIRST)
+          +b.getDriver().getRides().includes(RideTimes.FIRST) -
+          +a.getDriver().getRides().includes(RideTimes.FIRST)
       );
       break;
     case RideSort.SECOND:
       list.sort(
         (a, b) =>
-          +b.driver.rides.includes(RideTimes.SECOND) -
-          +a.driver.rides.includes(RideTimes.SECOND)
+          +b.getDriver().getRides().includes(RideTimes.SECOND) -
+          +a.getDriver().getRides().includes(RideTimes.SECOND)
       );
       break;
     case RideSort.THIRD:
       list.sort(
         (a, b) =>
-          +b.driver.rides.includes(RideTimes.THIRD) -
-          +a.driver.rides.includes(RideTimes.THIRD)
+          +b.getDriver().getRides().includes(RideTimes.THIRD) -
+          +a.getDriver().getRides().includes(RideTimes.THIRD)
       );
       break;
     case RideSort.FRIDAY:
       list.sort(
         (a, b) =>
-          +b.driver.rides.includes(RideTimes.FRIDAY) -
-          +a.driver.rides.includes(RideTimes.FRIDAY)
+          +b.getDriver().getRides().includes(RideTimes.FRIDAY) -
+          +a.getDriver().getRides().includes(RideTimes.FRIDAY)
       );
       break;
     default:
@@ -166,10 +196,15 @@ export const filterRides = (
       for (let f of filter) {
         if (Object.values(RideTimes).includes(f as RideTimes)) {
           newlist = [...newlist].filter((x) =>
-            x.driver.rides.includes(f as RideTimes)
+            x
+              .getDriver()
+              .getRides()
+              .includes(f as RideTimes)
           );
         } else if (Object.values(College).includes(f as College)) {
-          newlist = [...newlist].filter((x) => x.driver.college === f);
+          newlist = [...newlist].filter(
+            (x) => x.getDriver().getCollege() === f
+          );
         }
       }
       return newlist;
@@ -191,12 +226,12 @@ export const rideReducer = (
     case "create": {
       return new Map([
         ...rideCollection.entries(),
-        [action.ride.driver.getEmail(), action.ride],
+        [action.ride.getDriver().getEmail(), action.ride],
       ]);
     }
     case "delete": {
       let newCollection = new Map([...rideCollection.entries()]);
-      newCollection.delete(action.ride.driver.getEmail());
+      newCollection.delete(action.ride.getDriver().getEmail());
       return newCollection;
     }
     case "set": {

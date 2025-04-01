@@ -36,8 +36,8 @@ export const YearTag = ({ data }: { data: Year }) => {
 };
 
 export class Passenger extends Person {
-  public year: Year;
-  public backup?: RideTimes[];
+  private year: Year;
+  private backup?: RideTimes[];
 
   constructor({
     email,
@@ -69,6 +69,15 @@ export class Passenger extends Person {
     return this.year;
   }
 
+  setYear(updatedYear: Year): Year {
+    this.year = updatedYear;
+    return this.year;
+  }
+
+  getBackup(): RideTimes[] {
+    return (this.backup || []);
+  }
+
   display(show?: PassengerDisplay[]): ReactElement {
     return <PassengerComponent data={this} display={show} />;
   }
@@ -91,7 +100,7 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
       {(!display || display.includes(PassengerDisplay.NAME)) && (
-        <h3 className="m-1 text-lg font-bold">{data.name}</h3>
+        <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
       )}
       <ul className="m-1">
         {(!display ||
@@ -99,20 +108,20 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
           display.includes(PassengerDisplay.COLLEGE)) && (
           <li>
             {(!display || display.includes(PassengerDisplay.COLLEGE)) && (
-              <CollegeTag data={data.college as College} />
+              <CollegeTag data={data.getCollege()} />
             )}
             {(!display || display.includes(PassengerDisplay.ADDRESS)) && (
-              <span>{data.address}</span>
+              <span>{data.getAddress()}</span>
             )}
           </li>
         )}
         {(!display || display.includes(PassengerDisplay.YEAR)) && (
           <li>
-            <YearTag data={data.year} />
+            <YearTag data={data.getYear()} />
           </li>
         )}
         <ul className="flex flex-row flex-wrap">
-          {data.rides.map((item, index) => (
+          {data.getRides().map((item, index) => (
             <li
               className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
               key={index}
@@ -120,8 +129,8 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
               {item}
             </li>
           ))}
-          {data.backup &&
-            data.backup.map((item, index) => (
+          {data.getBackup() &&
+            data.getBackup().map((item, index) => (
               <li
                 className="mr-1 rounded-md bg-neutral-400 p-1 dark:bg-neutral-600"
                 key={index}
@@ -131,11 +140,11 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
             ))}
         </ul>
         {(!display || display.includes(PassengerDisplay.NOTES)) &&
-          data.notes && (
+          data.getNotes() && (
             <ul className="mt-1">
               <li>
                 <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                  {data.notes}
+                  {data.getNotes()}
                 </span>
               </li>
             </ul>
@@ -160,44 +169,44 @@ export const sortPassengers = (
 ): Passenger[] => {
   switch (sort) {
     case PassengerSort.ADDRESS:
-      list.sort((a, b) => a.address.localeCompare(b.address));
+      list.sort((a, b) => a.getAddress().localeCompare(b.getAddress()));
       break;
     case PassengerSort.FIRST:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.FIRST) * 2 -
-          +a.rides.includes(RideTimes.FIRST) * 2 +
-          (b.backup ? +b.backup.includes(RideTimes.FIRST) : 0) -
-          (a.backup ? +a.backup.includes(RideTimes.FIRST) : 0)
+          +b.getRides().includes(RideTimes.FIRST) * 2 -
+          +a.getRides().includes(RideTimes.FIRST) * 2 +
+          (b.getBackup() ? +b.getBackup().includes(RideTimes.FIRST) : 0) -
+          (a.getBackup() ? +a.getBackup().includes(RideTimes.FIRST) : 0)
       );
       break;
     case PassengerSort.SECOND:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.SECOND) * 2 -
-          +a.rides.includes(RideTimes.SECOND) * 2 +
-          (b.backup ? +b.backup.includes(RideTimes.SECOND) : 0) -
-          (a.backup ? +a.backup.includes(RideTimes.SECOND) : 0)
+          +b.getRides().includes(RideTimes.SECOND) * 2 -
+          +a.getRides().includes(RideTimes.SECOND) * 2 +
+          (b.getBackup() ? +b.getBackup().includes(RideTimes.SECOND) : 0) -
+          (a.getBackup() ? +a.getBackup().includes(RideTimes.SECOND) : 0)
       );
       break;
     case PassengerSort.THIRD:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.THIRD) * 2 -
-          +a.rides.includes(RideTimes.THIRD) * 2 +
-          (b.backup ? +b.backup.includes(RideTimes.THIRD) : 0) -
-          (a.backup ? +a.backup.includes(RideTimes.THIRD) : 0)
+          +b.getRides().includes(RideTimes.THIRD) * 2 -
+          +a.getRides().includes(RideTimes.THIRD) * 2 +
+          (b.getBackup() ? +b.getBackup().includes(RideTimes.THIRD) : 0) -
+          (a.getBackup() ? +a.getBackup().includes(RideTimes.THIRD) : 0)
       );
       break;
     case PassengerSort.FRIDAY:
       list.sort(
         (a, b) =>
-          +b.rides.includes(RideTimes.FRIDAY) -
-          +a.rides.includes(RideTimes.FRIDAY)
+          +b.getRides().includes(RideTimes.FRIDAY) -
+          +a.getRides().includes(RideTimes.FRIDAY)
       );
       break;
     case PassengerSort.NAME:
-      list.sort((a, b) => a.name.localeCompare(b.name));
+      list.sort((a, b) => a.getName().localeCompare(b.getName()));
       break;
     default:
   }
@@ -215,11 +224,11 @@ export const filterPassengers = (
         if (Object.values(RideTimes).includes(f as RideTimes)) {
           newlist = [...newlist].filter(
             (x) =>
-              x.rides.includes(f as RideTimes) ||
-              x.backup?.includes(f as RideTimes)
+              x.getRides().includes(f as RideTimes) ||
+              x.getBackup().includes(f as RideTimes)
           );
         } else if (Object.values(College).includes(f as College)) {
-          newlist = [...newlist].filter((x) => x.college === f);
+          newlist = [...newlist].filter((x) => x.getCollege() === f);
         }
       }
       return newlist;
