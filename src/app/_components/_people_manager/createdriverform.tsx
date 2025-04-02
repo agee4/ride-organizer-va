@@ -5,8 +5,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { College, RideTimes } from "../_classes/person";
-import { Driver, DriverReducerAction, NewDriverData } from "../_classes/driver";
+import { College, RideTimes } from "../../_classes/person";
+import { Driver, DriverReducerAction, NewDriverData } from "../../_classes/driver";
 
 interface CreateDriverFormProps {
   driverCallback: ActionDispatch<[action: DriverReducerAction]>;

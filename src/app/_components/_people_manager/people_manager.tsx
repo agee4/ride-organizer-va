@@ -1,7 +1,7 @@
 // people_manager.tsx
 
 import { ActionDispatch, ChangeEvent, useEffect, useState } from "react";
-import { College, CollegeTag, RideTimes } from "../_classes/person";
+import { College, CollegeTag, RideTimes } from "../../_classes/person";
 import {
   Driver,
   DriverDisplay,
@@ -9,7 +9,7 @@ import {
   DriverSort,
   NewDriverData,
   sortDrivers,
-} from "../_classes/driver";
+} from "../../_classes/driver";
 import {
   NewPassengerData,
   Passenger,
@@ -19,7 +19,7 @@ import {
   sortPassengers,
   Year,
   YearTag,
-} from "../_classes/passenger";
+} from "../../_classes/passenger";
 import { CreatePassengerForm } from "./createpassengerform";
 import { CreateDriverForm } from "./createdriverform";
 

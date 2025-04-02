@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Driver, DriverDisplay } from "../_classes/driver";
+import { Driver, DriverDisplay } from "../../_classes/driver";
 import {
   filterPassengers,
   Passenger,
@@ -20,7 +20,7 @@ import {
   PassengerSort,
   sortPassengers,
   YearTag,
-} from "../_classes/passenger";
+} from "../../_classes/passenger";
 import {
   filterRides,
   Ride,
@@ -28,8 +28,8 @@ import {
   RideReducerAction,
   RideSort,
   sortRides,
-} from "../_classes/ride";
-import { College, CollegeTag, RideTimes } from "../_classes/person";
+} from "../../_classes/ride";
+import { College, CollegeTag, RideTimes } from "../../_classes/person";
 import {
   DndProvider,
   DropTargetMonitor,
@@ -38,7 +38,7 @@ import {
   useDrop,
 } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { TestType } from "../_classes/ItemTypes";
+import { TestType } from "../../_classes/ItemTypes";
 
 interface DragItem {
   email: string;

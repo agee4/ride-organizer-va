@@ -10,8 +10,8 @@ import {
   Passenger,
   PassengerReducerAction,
   Year,
-} from "../_classes/passenger";
-import { College, RideTimes } from "../_classes/person";
+} from "../../_classes/passenger";
+import { College, RideTimes } from "../../_classes/person";
 
 interface CreatePassengerFormProps {
   passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;

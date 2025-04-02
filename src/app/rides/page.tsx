@@ -5,8 +5,8 @@ import { read, utils, writeFile } from "xlsx";
 import { College, RideTimes } from "../_classes/person";
 import { Passenger, passengerReducer, Year } from "../_classes/passenger";
 import { Driver, driverReducer } from "../_classes/driver";
-import { RideManager } from "../_components/ride_manager";
-import { PeopleManager } from "../_components/people_manager";
+import { RideManager } from "../_components/_ride_manager/ride_manager";
+import { PeopleManager } from "../_components/_people_manager/people_manager";
 import { Ride, rideReducer } from "../_classes/ride";
 
 export default function Page() {
