@@ -75,7 +75,7 @@ export class Passenger extends Person {
   }
 
   getBackup(): RideTimes[] {
-    return (this.backup || []);
+    return this.backup || [];
   }
 
   display(show?: PassengerDisplay[]): ReactElement {
@@ -141,18 +141,30 @@ export const PassengerComponent = ({ data, display }: PassengerProps) => {
         </ul>
         {(!display || display.includes(PassengerDisplay.NOTES)) &&
           data.getNotes() && (
-            <ul className="mt-1">
-              <li>
-                <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                  {data.getNotes()}
-                </span>
-              </li>
-            </ul>
+            <textarea
+              className="mt-1 rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+              defaultValue={data.getNotes()}
+            />
           )}
       </ul>
     </div>
   );
 };
+
+export interface NewPassengerData {
+  email: string;
+  name: string;
+  address: string;
+  college?: College;
+  service?: RideTimes;
+  friday?: boolean;
+  backupfirst?: boolean;
+  backupsecond?: boolean;
+  backupthird?: boolean;
+  year?: Year;
+  phone?: string;
+  notes?: string;
+}
 
 export enum PassengerSort {
   NAME = "name",

@@ -6,19 +6,7 @@ import {
   useState,
 } from "react";
 import { College, RideTimes } from "../_classes/person";
-import { Driver, DriverReducerAction } from "../_classes/driver";
-
-interface NewDriverData {
-  email: string;
-  name: string;
-  address: string;
-  college?: College;
-  seats: number;
-  service?: RideTimes;
-  friday?: RideTimes;
-  phone?: string;
-  notes?: string;
-}
+import { Driver, DriverReducerAction, NewDriverData } from "../_classes/driver";
 
 interface CreateDriverFormProps {
   driverCallback: ActionDispatch<[action: DriverReducerAction]>;
@@ -37,7 +25,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
   const [Friday, setFriday] = useState<boolean>(false);
 
   const updateForm = (
-    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
+    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target;
     setNewDriverData({ ...newDriverData, [name]: value });
@@ -189,9 +177,8 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
         placeholder="Phone #"
         onChange={updateForm}
       />
-      <input
+      <textarea
         className="rounded-sm border"
-        type="text"
         name="notes"
         value={newDriverData.notes}
         placeholder="Notes"

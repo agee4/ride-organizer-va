@@ -51,9 +51,11 @@ const RM_RPComponent = ({
   data: Passenger;
   display?: PassengerDisplay[];
 }) => {
-  const dragRef = useRef<HTMLDivElement>(null);
-  const dragPreviewRef = useRef<HTMLDivElement>(null);
   const [showDetail, setShowDetail] = useState<boolean>(true);
+  const toggleDetail = () => {
+    setShowDetail(!showDetail);
+  };
+
   const [{ isDragging }, drag, dragPreview] = useDrag<
     DragItem,
     void,
@@ -65,11 +67,8 @@ const RM_RPComponent = ({
       isDragging: monitor.isDragging(),
     }),
   }));
-
-  const toggleDetail = () => {
-    setShowDetail(!showDetail);
-  };
-
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragPreviewRef = useRef<HTMLDivElement>(null);
   drag(dragRef);
   dragPreview(dragPreviewRef);
 
@@ -132,9 +131,10 @@ const RM_RPComponent = ({
             data.getNotes() && (
               <ul className="mt-1">
                 <li>
-                  <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                    {data.getNotes()}
-                  </span>
+                  <textarea
+                    className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                    defaultValue={data.getNotes()}
+                  />
                 </li>
               </ul>
             )}
@@ -158,7 +158,6 @@ const RM_RPListComponent = () => {
     rideCollection,
     rideCallback,
   } = rmContext;
-  const dropRef = useRef<HTMLDivElement>(null);
 
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
@@ -189,7 +188,7 @@ const RM_RPListComponent = () => {
     }),
     [passengerCollection, rideCollection]
   );
-
+  const dropRef = useRef<HTMLDivElement>(null);
   drop(dropRef);
 
   return (
@@ -233,9 +232,12 @@ const RM_PassengerComponent = ({
     );
   }
   const { passengerCallback, rideCallback } = rmContext;
-  const dragRef = useRef<HTMLDivElement>(null);
-  const dragPreviewRef = useRef<HTMLDivElement>(null);
+
   const [showDetail, setShowDetail] = useState<boolean>(true);
+  const toggleDetail = () => {
+    setShowDetail(!showDetail);
+  };
+
   const [{ isDragging }, drag, dragPreview] = useDrag<
     DragItem,
     void,
@@ -247,6 +249,10 @@ const RM_PassengerComponent = ({
       isDragging: monitor.isDragging(),
     }),
   }));
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragPreviewRef = useRef<HTMLDivElement>(null);
+  drag(dragRef);
+  dragPreview(dragPreviewRef);
 
   const removePassenger = () => {
     passengerCallback({ type: "create", passenger: data });
@@ -254,35 +260,12 @@ const RM_PassengerComponent = ({
     rideCallback({ type: "create", ride: ride });
   };
 
-  const toggleDetail = () => {
-    setShowDetail(!showDetail);
-  };
-
-  drag(dragRef);
-  dragPreview(dragPreviewRef);
-  let invalid = "";
-  if (
-    data.getCollege() != ride.getDriver().getCollege() &&
-    data.getCollege() != College.OTHER &&
-    ride.getDriver().getCollege() != College.OTHER
-  )
-    invalid = "WRONG COLLEGE";
-  else if (
-    ride
-      .getDriver()
-      .getRides()
-      .filter(
-        (x) => data.getRides().includes(x) || data.getBackup().includes(x)
-      ).length <= 0
-  )
-    invalid = "NO RIDE OVERLAP";
-
   return (
     <div
       className={
         "my-1 max-w-[496px] rounded-md p-2 " +
         (isDragging && "opacity-50") +
-        (invalid.length <= 0
+        (ride.validate(data)
           ? " bg-cyan-200 dark:bg-cyan-800"
           : " bg-red-400 dark:bg-red-600")
       }
@@ -337,9 +320,10 @@ const RM_PassengerComponent = ({
             data.getNotes() && (
               <ul className="mt-1">
                 <li>
-                  <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                    {data.getNotes()}
-                  </span>
+                  <textarea
+                    className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                    defaultValue={data.getNotes()}
+                  />
                 </li>
               </ul>
             )}
@@ -364,10 +348,15 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
     rideCallback,
   } = rmContext;
 
-  const dropRef = useRef<HTMLDivElement>(null);
   const [showDriverDetail, setShowDriverDetail] = useState<boolean>(true);
-  const [showInvalid, setShowInvalid] = useState<boolean>(true);
+  const toggleDriverDetail = () => {
+    setShowDriverDetail(!showDriverDetail);
+  };
   const [showPassengers, setShowPassengers] = useState<boolean>(true);
+  const togglePassengers = () => {
+    setShowPassengers(!showPassengers);
+  };
+
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
     void,
@@ -388,8 +377,11 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
     }),
     [passengerCollection]
   );
+  const dropRef = useRef<HTMLDivElement>(null);
+  drop(dropRef);
 
-  const addPassengerButton = () => {
+  const addPassengerListShift = () => {
+    /**get passenger from top of unassigned list */
     const nextpassenger = [...passengerList].shift();
     if (!!nextpassenger) {
       addPassengerHelper(nextpassenger);
@@ -397,34 +389,25 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
   };
 
   const addPassengerHelper = (passenger: Passenger) => {
+    /**remove passenger from unassigned (if possible) */
     passengerCallback({
       type: "delete",
       passenger: passenger,
     });
+    /**remove passenger from previous rides (if possible) */
     for (let ride of rideCollection.values()) {
       if (ride.getPassengers().has(passenger.getEmail())) {
         ride.getPassengers().delete(passenger.getEmail());
         rideCallback({ type: "create", ride: ride });
       }
     }
+    /**add passenger to ride */
     data.addPassenger(passenger);
-    console.log(data);
     rideCallback({ type: "create", ride: data });
   };
 
-  const toggleDriverDetail = () => {
-    setShowDriverDetail(!showDriverDetail);
-  };
-  const togglePassengers = () => {
-    setShowPassengers(!showPassengers);
-  };
-  const toggleInvalid = () => {
-    setShowInvalid(!showInvalid);
-  };
-
-  drop(dropRef);
   const seatsleft = data.getDriver().getSeats() - data.getPassengers().size;
-  let valid = data.valid();
+  const valid = data.updateValid();
 
   return (
     <div
@@ -437,14 +420,37 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
           {showDriverDetail ? <span>&and;</span> : <span>&or;</span>}
         </button>
       </div>
-      {showDriverDetail &&
-        data
-          .getDriver()
-          .display([
-            DriverDisplay.ADDRESS,
-            DriverDisplay.COLLEGE,
-            DriverDisplay.NOTES,
-          ])}
+      {showDriverDetail && (
+        <ul className="m-1">
+          <li>
+            <CollegeTag data={data.getDriver().getCollege()} />
+            <span>{data.getDriver().getAddress()}</span>
+          </li>
+          <ul className="flex flex-row flex-wrap">
+            {data
+              .getDriver()
+              .getRides()
+              .map((item, index) => (
+                <li
+                  className="mr-1 rounded-md bg-neutral-200 p-1 dark:bg-neutral-800"
+                  key={index}
+                >
+                  {item}
+                </li>
+              ))}
+          </ul>
+          {data.getDriver().getNotes() && (
+            <ul className="mt-1">
+              <li>
+                <textarea
+                  className="rounded-md bg-orange-400 p-1 dark:bg-orange-600"
+                  defaultValue={data.getDriver().getNotes()}
+                />
+              </li>
+            </ul>
+          )}
+        </ul>
+      )}
       <div
         className={
           "rounded-md " +
@@ -464,21 +470,19 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
               Seats Left: {seatsleft}/{data.getDriver().getSeats()}
             </button>
           </li>
-          {!valid &&
-            (showInvalid ? (
-              <li className="text-center">
-                <button className="rounded-md" onClick={toggleInvalid}>
-                  {data.getInvalid().length} WARNING
-                  {data.getInvalid().length != 1 && "S"}
-                </button>
-              </li>
-            ) : (
-              <ul className="text-center" onClick={toggleInvalid}>
+          {!valid && (
+            <details className="text-center">
+              <summary>
+                {data.getInvalid().length} WARNING
+                {data.getInvalid().length != 1 && "S"}!
+              </summary>
+              <ul className="text-center">
                 {data.getInvalid().map((item, index) => (
                   <li key={index}>{item}</li>
                 ))}
               </ul>
-            ))}
+            </details>
+          )}
           {showPassengers && (
             <>
               {Array.from(data.getPassengers()).map(([key, value]) => (
@@ -499,7 +503,7 @@ const RM_RideComponent = ({ data }: { data: Ride }) => {
                 <li key={index}>
                   <button
                     className="my-1 w-full rounded-md bg-white dark:bg-black"
-                    onClick={addPassengerButton}
+                    onClick={addPassengerListShift}
                   >
                     +
                   </button>
@@ -538,17 +542,61 @@ export const RideManager = ({
   );
   const [rpList, setRPList] = useState<Passenger[]>([]);
   const [rpSort, setRPSort] = useState<PassengerSort>();
+  const updateRPSort = (event: ChangeEvent<HTMLSelectElement>) => {
+    setRPSort(
+      Object.values(PassengerSort).includes(event.target.value as PassengerSort)
+        ? (event.target.value as PassengerSort)
+        : undefined
+    );
+  };
   const [rpReverse, setRPReverse] = useState<boolean>(false);
+  const toggleRPReverse = () => {
+    setRPReverse(!rpReverse);
+  };
   const [showRPFilter, setShowRPFilter] = useState<boolean>(false);
+  const toggleShowRPFilter = () => {
+    setShowRPFilter(!showRPFilter);
+  };
   const [rpFilter, setRPFilter] = useState<(RideTimes | College)[]>([]);
+  const updateRPFilter = (event: ChangeEvent<HTMLSelectElement>) => {
+    setRPFilter(
+      [...event.target.selectedOptions].map((o) =>
+        Object.values(RideTimes).includes(o.value as RideTimes)
+          ? (o.value as RideTimes)
+          : (o.value as College)
+      )
+    );
+  };
 
   const [rideList, setRideList] = useState<Ride[]>([]);
   const [rideSort, setRideSort] = useState<RideSort>();
+  const updateRideSort = (event: ChangeEvent<HTMLSelectElement>) => {
+    setRideSort(
+      Object.values(RideSort).includes(event.target.value as RideSort)
+        ? (event.target.value as RideSort)
+        : undefined
+    );
+  };
   const [rideReverse, setRideReverse] = useState<boolean>(false);
+  const toggleRideReverse = () => {
+    setRideReverse(!rideReverse);
+  };
   const [showRideFilter, setShowRideFilter] = useState<boolean>(false);
+  const toggleShowRideFilter = () => {
+    setShowRideFilter(!showRideFilter);
+  };
   const [rideFilter, setRideFilter] = useState<(RideTimes | College)[]>([]);
+  const updateRideFilter = (event: ChangeEvent<HTMLSelectElement>) => {
+    setRideFilter(
+      [...event.target.selectedOptions].map((o) =>
+        Object.values(RideTimes).includes(o.value as RideTimes)
+          ? (o.value as RideTimes)
+          : (o.value as College)
+      )
+    );
+  };
 
-  /**add/remove people from manager states based on origin */
+  /**add/remove people from manager states, based on origin */
   useEffect(() => {
     refreshRides();
   }, [originPassengers, originDrivers]);
@@ -566,6 +614,7 @@ export const RideManager = ({
           )
     );
   }, [rpCollection, rpSort, rpReverse, rpFilter]);
+  /**sort and filter rides */
   useEffect(() => {
     setRideList(
       rideReverse
@@ -578,16 +627,10 @@ export const RideManager = ({
             rideSort
           )
     );
-  }, [rpCollection, originRides, rideSort, rideReverse, rideFilter]);
-  useEffect(() => {
-    for (let ride of originRides.values()) {
-      for (let ridepassenger of ride.getPassengers().values())
-        rpDispatch({ type: "delete", passenger: ridepassenger });
-    }
-  }, [originRides]);
+  }, [originRides, rideSort, rideReverse, rideFilter]);
 
   const refreshRides = () => {
-    /* remove passengers, even if assigned a ride */
+    /**remove passengers, even if assigned a ride */
     for (let passenger of rpCollection.values()) {
       if (!originPassengers.has(passenger.getEmail()))
         rpDispatch({ type: "delete", passenger: passenger });
@@ -598,24 +641,26 @@ export const RideManager = ({
           ride.getPassengers().delete(ridepassenger.getEmail());
       }
     }
-    /* add new passengers */
+    /**add new passengers */
     for (let passenger of originPassengers.values()) {
+      /**check if passenger in unassigned */
       if (!rpCollection.has(passenger.getEmail())) {
-        /**check if passenger already in rpCollection */
+        /**check if passenger in a ride */
         let exists = false;
         for (let ride of originRides.values()) {
-          /**check if passenger in a ride */
           if (ride.getPassengers().has(passenger.getEmail())) {
             exists = true;
             break;
           }
         }
+        /**if passenger not in a ride & not in unassigned, add to unassigned */
         if (!exists) rpDispatch({ type: "create", passenger: passenger });
       }
     }
-    /* remove rides and move their passengers back into the unassigned list */
+    /**remove rides */
     for (let ride of originRides.values()) {
       if (!originDrivers.has(ride.getDriver().getEmail())) {
+        /**move removed ride's passengers into the unassigned */
         for (let passenger of ride.getPassengers().values()) {
           if (originPassengers.has(passenger.getEmail()))
             rpDispatch({ type: "create", passenger: passenger });
@@ -624,7 +669,7 @@ export const RideManager = ({
       }
     }
 
-    /* add new rides */
+    /**add new rides */
     for (let driver of originDrivers.values()) {
       if (!originRides.has(driver.getEmail())) {
         rideCallback({
@@ -648,52 +693,6 @@ export const RideManager = ({
         ride: ride,
       });
     }
-  };
-
-  const updateRPSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRPSort(
-      Object.values(PassengerSort).includes(event.target.value as PassengerSort)
-        ? (event.target.value as PassengerSort)
-        : undefined
-    );
-  };
-  const toggleRPReverse = () => {
-    setRPReverse(!rpReverse);
-  };
-  const toggleShowRPFilter = () => {
-    setShowRPFilter(!showRPFilter);
-  };
-  const updateRPFilter = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRPFilter(
-      [...event.target.selectedOptions].map((o) =>
-        Object.values(RideTimes).includes(o.value as RideTimes)
-          ? (o.value as RideTimes)
-          : (o.value as College)
-      )
-    );
-  };
-
-  const updateRideSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRideSort(
-      Object.values(RideSort).includes(event.target.value as RideSort)
-        ? (event.target.value as RideSort)
-        : undefined
-    );
-  };
-  const toggleRideReverse = () => {
-    setRideReverse(!rideReverse);
-  };
-  const toggleShowRideFilter = () => {
-    setShowRideFilter(!showRideFilter);
-  };
-  const updateRideFilter = (event: ChangeEvent<HTMLSelectElement>) => {
-    setRideFilter(
-      [...event.target.selectedOptions].map((o) =>
-        Object.values(RideTimes).includes(o.value as RideTimes)
-          ? (o.value as RideTimes)
-          : (o.value as College)
-      )
-    );
   };
 
   return (

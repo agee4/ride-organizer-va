@@ -7,9 +7,11 @@ import {
   DriverDisplay,
   DriverReducerAction,
   DriverSort,
+  NewDriverData,
   sortDrivers,
 } from "../_classes/driver";
 import {
+  NewPassengerData,
   Passenger,
   PassengerDisplay,
   PassengerReducerAction,
@@ -31,20 +33,131 @@ const PM_PassengerComponent = ({
   passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
 }) => {
   const [editMode, setEditMode] = useState<boolean>(false);
+  const [newPassengerData, setNewPassengerData] = useState<NewPassengerData>({
+    email: data.getEmail(),
+    name: data.getName(),
+    address: data.getAddress(),
+    college: data.getCollege(),
+    service: data
+      .getRides()
+      .filter((x) => x != RideTimes.FRIDAY)
+      .at(0),
+    friday: data.getRides().includes(RideTimes.FRIDAY),
+    backupfirst: data.getBackup().includes(RideTimes.FIRST),
+    backupsecond: data.getBackup().includes(RideTimes.SECOND),
+    backupthird: data.getBackup().includes(RideTimes.THIRD),
+    year: data.getYear(),
+    phone: data.getPhone(),
+    notes: data.getNotes(),
+  });
+  const [Friday, setFriday] = useState<boolean>(
+    data.getRides().includes(RideTimes.FRIDAY)
+  );
+  const [backupFirst, setBackupFirst] = useState<boolean>(
+    data.getBackup().includes(RideTimes.FIRST)
+  );
+  const [backupSecond, setBackupSecond] = useState<boolean>(
+    data.getBackup().includes(RideTimes.SECOND)
+  );
+  const [backupThird, setBackupThird] = useState<boolean>(
+    data.getBackup().includes(RideTimes.THIRD)
+  );
+
   const deletePassenger = () => {
     passengerCallback({
       type: "delete",
       passenger: data,
     });
   };
+  const updateData = (
+    event:
+      | ChangeEvent<HTMLInputElement>
+      | ChangeEvent<HTMLSelectElement>
+      | ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target;
+    setNewPassengerData({ ...newPassengerData, [name]: value });
+  };
   const updatePassenger = () => {
+    const newPassengerRides = [];
+    if (newPassengerData.friday) newPassengerRides.push(RideTimes.FRIDAY);
+    if (
+      newPassengerData.service &&
+      Object.values(RideTimes).includes(newPassengerData.service as RideTimes)
+    )
+      newPassengerRides.push(newPassengerData.service);
+    const newPassengerBackup = [];
+    if (newPassengerData.backupfirst) newPassengerBackup.push(RideTimes.FIRST);
+    if (newPassengerData.backupsecond)
+      newPassengerBackup.push(RideTimes.SECOND);
+    if (newPassengerData.backupthird) newPassengerBackup.push(RideTimes.THIRD);
     passengerCallback({
       type: "create",
-      passenger: data,
+      passenger: new Passenger({
+        email: newPassengerData.email,
+        name: newPassengerData.name,
+        rides: newPassengerRides,
+        address: newPassengerData.address,
+        college:
+          newPassengerData.college &&
+          Object.values(College).includes(newPassengerData.college as College)
+            ? newPassengerData.college
+            : College.OTHER,
+        year:
+          newPassengerData.year &&
+          Object.values(Year).includes(newPassengerData.year as Year)
+            ? newPassengerData.year
+            : Year.OTHER,
+        backup: newPassengerBackup,
+        phone: newPassengerData.phone,
+        notes: newPassengerData.notes,
+      }),
     });
+    setFriday(newPassengerData.friday || false);
+    setBackupFirst(newPassengerData.backupfirst || false);
+    setBackupSecond(newPassengerData.backupsecond || false);
+    setBackupThird(newPassengerData.backupthird || false);
+    setNewPassengerData({
+      email: data.getEmail(),
+      name: data.getName(),
+      address: data.getAddress(),
+      college: data.getCollege(),
+      service: newPassengerData.service,
+      friday: newPassengerData.friday,
+      backupfirst: newPassengerData.backupfirst,
+      backupsecond: newPassengerData.backupsecond,
+      backupthird: newPassengerData.backupthird,
+      year: data.getYear(),
+      phone: data.getPhone(),
+      notes: data.getNotes(),
+    });
+    setEditMode(false);
   };
   const toggleEditMode = () => {
     setEditMode(!editMode);
+    if (!editMode) {
+      setNewPassengerData({
+        email: data.getEmail(),
+        name: data.getName(),
+        address: data.getAddress(),
+        college: data.getCollege(),
+        service: data
+          .getRides()
+          .filter((x) => x != RideTimes.FRIDAY)
+          .at(0),
+        friday: data.getRides().includes(RideTimes.FRIDAY),
+        backupfirst: data.getBackup().includes(RideTimes.FIRST),
+        backupsecond: data.getBackup().includes(RideTimes.SECOND),
+        backupthird: data.getBackup().includes(RideTimes.THIRD),
+        year: data.getYear(),
+        phone: data.getPhone(),
+        notes: data.getNotes(),
+      });
+      setFriday(data.getRides().includes(RideTimes.FRIDAY));
+      setBackupFirst(data.getBackup().includes(RideTimes.FIRST));
+      setBackupSecond(data.getBackup().includes(RideTimes.SECOND));
+      setBackupThird(data.getBackup().includes(RideTimes.THIRD));
+    }
   };
 
   return (
@@ -98,13 +211,10 @@ const PM_PassengerComponent = ({
             )}
             {(!display || display.includes(PassengerDisplay.NOTES)) &&
               data.getNotes() && (
-                <ul className="mt-1">
-                  <li>
-                    <span className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600">
-                      {data.getNotes()}
-                    </span>
-                  </li>
-                </ul>
+                <textarea
+                  className="mt-1 rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                  defaultValue={data.getNotes()}
+                />
               )}
           </ul>
         </>
@@ -115,33 +225,22 @@ const PM_PassengerComponent = ({
               className="rounded-sm border"
               type="text"
               name="name"
-              defaultValue={data.getName()}
+              value={newPassengerData.name}
               placeholder="Name"
               required
               minLength={1}
-              /* onChange={updatePassenger} */
+              onChange={updateData}
             />
-            <div>
-              <button
-                className="m-1 text-lg font-bold"
-                onClick={deletePassenger}
-              >
-                &times;
-              </button>
-              <button
-                className="m-1 text-lg font-bold"
-                onClick={toggleEditMode}
-              >
-                &hellip;
-              </button>
-            </div>
+            <button className="m-1 text-lg font-bold" onClick={toggleEditMode}>
+              &hellip;
+            </button>
           </div>
           <div className="block">
             <select
               className="rounded-sm border"
               name="college"
-              defaultValue={data.getCollege()}
-              /* onChange={updateForm} */
+              value={newPassengerData.college}
+              onChange={updateData}
             >
               <option className="dark:text-black">-college-</option>
               {Object.values(College).map((option) => (
@@ -154,19 +253,19 @@ const PM_PassengerComponent = ({
               className="w-[142px] rounded-sm border"
               type="text"
               name="address"
-              defaultValue={data.getAddress()}
+              defaultValue={newPassengerData.address}
               placeholder="Address"
               required
               minLength={1}
-              /* onChange={updateForm} */
+              onChange={updateData}
             />
           </div>
           <div className="block">
             <select
               className="rounded-sm border"
               name="service"
-              defaultValue={"rideSelect"}
-              /* onChange={updateForm} */
+              defaultValue={newPassengerData.service}
+              onChange={updateData}
             >
               <option className="dark:text-black">-main ride-</option>
               {Object.values(RideTimes)
@@ -185,7 +284,14 @@ const PM_PassengerComponent = ({
               <input
                 type="checkbox"
                 name="friday"
-                /* onChange={(e) => setFriday(e.target.checked)} */
+                checked={Friday}
+                onChange={(e) => {
+                  setFriday(e.target.checked);
+                  setNewPassengerData({
+                    ...newPassengerData,
+                    [e.target.name]: e.target.checked,
+                  });
+                }}
               />
               Friday
             </label>
@@ -196,14 +302,14 @@ const PM_PassengerComponent = ({
               <input
                 type="checkbox"
                 name="backupfirst"
-                /* checked={backupFirst}
-            onChange={(e) => {
-              setBackupFirst(e.target.checked);
-              setNewPassengerData({
-                ...newPassengerData,
-                [e.target.name]: e.target.checked,
-              });
-            }} */
+                checked={backupFirst}
+                onChange={(e) => {
+                  setBackupFirst(e.target.checked);
+                  setNewPassengerData({
+                    ...newPassengerData,
+                    [e.target.name]: e.target.checked,
+                  });
+                }}
               />
               First
             </label>
@@ -211,13 +317,14 @@ const PM_PassengerComponent = ({
               <input
                 type="checkbox"
                 name="backupsecond"
-                /* checked={backupSecond}
-            onChange={(e) => {setBackupSecond(e.target.checked);
-              setNewPassengerData({
-                ...newPassengerData,
-                [e.target.name]: e.target.checked,
-              });
-            }} */
+                checked={backupSecond}
+                onChange={(e) => {
+                  setBackupSecond(e.target.checked);
+                  setNewPassengerData({
+                    ...newPassengerData,
+                    [e.target.name]: e.target.checked,
+                  });
+                }}
               />
               Second
             </label>
@@ -225,14 +332,14 @@ const PM_PassengerComponent = ({
               <input
                 type="checkbox"
                 name="backupthird"
-                /* checked={backupThird}
-            onChange={(e) => {
-              setBackupThird(e.target.checked);
-              setNewPassengerData({
-                ...newPassengerData,
-                [e.target.name]: e.target.checked,
-              });
-            }} */
+                checked={backupThird}
+                onChange={(e) => {
+                  setBackupThird(e.target.checked);
+                  setNewPassengerData({
+                    ...newPassengerData,
+                    [e.target.name]: e.target.checked,
+                  });
+                }}
               />
               Third
             </label>
@@ -240,8 +347,8 @@ const PM_PassengerComponent = ({
           <select
             className="rounded-sm border"
             name="year"
-            defaultValue={data.getYear()}
-            /* onChange={updateForm} */
+            defaultValue={newPassengerData.year}
+            onChange={updateData}
           >
             <option className="dark:text-black">-year-</option>
             {Object.values(Year).map((option) => (
@@ -250,14 +357,29 @@ const PM_PassengerComponent = ({
               </option>
             ))}
           </select>
-          <input
-            className="rounded-sm border"
-            type="text"
-            name="notes"
-            defaultValue={data.getNotes()}
-            placeholder="Notes"
-            /* onChange={updateForm} */
-          />
+          <div>
+            <textarea
+              className="rounded-sm border"
+              name="notes"
+              value={newPassengerData.notes}
+              placeholder="Notes"
+              onChange={updateData}
+            />
+          </div>
+          <div className="flex flex-row place-content-evenly">
+            <button
+              className="m-1 rounded-full border px-2 text-lg font-bold"
+              onClick={deletePassenger}
+            >
+              &times; DELETE
+            </button>
+            <button
+              className="m-1 rounded-full border px-2 text-lg font-bold"
+              onClick={updatePassenger}
+            >
+              SAVE
+            </button>
+          </div>
         </>
       )}
     </div>
@@ -274,24 +396,96 @@ const PM_DriverComponent = ({
   driverCallback: ActionDispatch<[action: DriverReducerAction]>;
 }) => {
   const [editMode, setEditMode] = useState<boolean>(false);
-  const [nametest, setnametest] = useState<string>(data.getName());
-  const [seattest, setseattest] = useState<number>(data.getSeats());
+  const [newDriverData, setNewDriverData] = useState<NewDriverData>({
+    email: data.getEmail(),
+    name: data.getName(),
+    seats: data.getSeats(),
+    address: data.getAddress(),
+    college: data.getCollege(),
+    service: data
+      .getRides()
+      .filter((x) => x != RideTimes.FRIDAY)
+      .at(0),
+    friday: data.getRides().includes(RideTimes.FRIDAY),
+    phone: data.getPhone(),
+    notes: data.getNotes(),
+  });
+  const [Friday, setFriday] = useState<boolean>(
+    data.getRides().includes(RideTimes.FRIDAY)
+  );
+
   const deleteDriver = () => {
     driverCallback({
       type: "delete",
       driver: data,
     });
   };
+  const updateData = (
+    event:
+      | ChangeEvent<HTMLInputElement>
+      | ChangeEvent<HTMLSelectElement>
+      | ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target;
+    setNewDriverData({ ...newDriverData, [name]: value });
+  };
+  const updateDriver = () => {
+    const newDriverRides = [];
+    if (newDriverData.friday) newDriverRides.push(RideTimes.FRIDAY);
+    if (
+      newDriverData.service &&
+      Object.values(RideTimes).includes(newDriverData.service as RideTimes)
+    )
+      newDriverRides.push(newDriverData.service);
+    driverCallback({
+      type: "create",
+      driver: new Driver({
+        email: newDriverData.email,
+        name: newDriverData.name,
+        rides: newDriverRides,
+        seats: newDriverData.seats,
+        address: newDriverData.address,
+        college:
+          newDriverData.college &&
+          Object.values(College).includes(newDriverData.college as College)
+            ? newDriverData.college
+            : College.OTHER,
+        phone: newDriverData.phone,
+        notes: newDriverData.notes,
+      }),
+    });
+    setFriday(newDriverData.friday || false);
+    setNewDriverData({
+      email: data.getEmail(),
+      name: data.getName(),
+      seats: data.getSeats(),
+      address: data.getAddress(),
+      college: data.getCollege(),
+      service: newDriverData.service,
+      friday: newDriverData.friday,
+      phone: data.getPhone(),
+      notes: data.getNotes(),
+    });
+    setEditMode(false);
+  };
   const toggleEditMode = () => {
     setEditMode(!editMode);
-  };
-  const updateDriver = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    switch (name) {
-      case "name":
-        setnametest(value);
-        break;
-      /* case "seats": setseattest(value); break; */
+    if (!editMode) {
+      setNewDriverData({
+        email: data.getEmail(),
+        name: data.getName(),
+        seats: data.getSeats(),
+        address: data.getAddress(),
+        college: data.getCollege(),
+        service: data
+          .getRides()
+          .filter((x) => x != RideTimes.FRIDAY)
+          .at(0),
+        friday: data.getRides().includes(RideTimes.FRIDAY),
+        phone: data.getPhone(),
+        notes: data.getNotes(),
+      });
+      setFriday(data.getRides().includes(RideTimes.FRIDAY));
     }
   };
 
@@ -335,13 +529,10 @@ const PM_DriverComponent = ({
             </ul>
             {(!display || display.includes(DriverDisplay.NOTES)) &&
               data.getNotes() && (
-                <ul className="mt-1">
-                  <li>
-                    <span className=":dark:bg-orange-600 rounded-md bg-orange-400 p-1">
-                      {data.getNotes()}
-                    </span>
-                  </li>
-                </ul>
+                <textarea
+                  className="mt-1 rounded-md bg-orange-400 p-1 dark:bg-orange-600"
+                  defaultValue={data.getNotes()}
+                />
               )}
           </ul>
         </>
@@ -352,40 +543,32 @@ const PM_DriverComponent = ({
               className="rounded-sm border"
               type="text"
               name="name"
-              value={nametest}
+              value={newDriverData.name}
               placeholder="Name"
               required
               minLength={1}
-              onChange={updateDriver}
+              onChange={updateData}
             />
-            <div>
-              <button className="m-1 text-lg font-bold" onClick={deleteDriver}>
-                &times;
-              </button>
-              <button
-                className="m-1 text-lg font-bold"
-                onClick={toggleEditMode}
-              >
-                &hellip;
-              </button>
-            </div>
+            <button className="m-1 text-lg font-bold" onClick={toggleEditMode}>
+              &hellip;
+            </button>
           </div>
           <input
             className="rounded-sm border"
             type="number"
             name="seats"
-            value={seattest}
+            value={newDriverData.seats}
             min="1"
             placeholder="Seats"
             required
-            onChange={updateDriver}
+            onChange={updateData}
           />
           <div className="block">
             <select
               className="rounded-sm border"
               name="college"
-              defaultValue={data.getCollege()}
-              /* onChange={updateForm} */
+              value={newDriverData.college}
+              onChange={updateData}
             >
               <option className="dark:text-black">-college-</option>
               {Object.values(College).map((option) => (
@@ -398,19 +581,19 @@ const PM_DriverComponent = ({
               className="w-[142px] rounded-sm border"
               type="text"
               name="address"
-              defaultValue={data.getAddress()}
+              defaultValue={newDriverData.address}
               placeholder="Address"
               required
               minLength={1}
-              /* onChange={updateForm} */
+              onChange={updateData}
             />
           </div>
           <div className="block">
             <select
               className="rounded-sm border"
               name="service"
-              defaultValue={"rideSelect"}
-              /* onChange={updateForm} */
+              defaultValue={newDriverData.service}
+              onChange={updateData}
             >
               <option className="dark:text-black">-main ride-</option>
               {Object.values(RideTimes)
@@ -429,19 +612,39 @@ const PM_DriverComponent = ({
               <input
                 type="checkbox"
                 name="friday"
-                /* onChange={(e) => setFriday(e.target.checked)} */
+                checked={Friday}
+                onChange={(e) => {
+                  setFriday(e.target.checked);
+                  setNewDriverData({
+                    ...newDriverData,
+                    [e.target.name]: e.target.checked,
+                  });
+                }}
               />
               Friday
             </label>
           </div>
-          <input
+          <textarea
             className="rounded-sm border"
-            type="text"
             name="notes"
-            defaultValue={data.getNotes()}
+            value={newDriverData.notes}
             placeholder="Notes"
-            /* onChange={updateForm} */
+            onChange={updateData}
           />
+          <div className="flex flex-row place-content-evenly">
+            <button
+              className="m-1 rounded-full border px-2 text-lg font-bold"
+              onClick={deleteDriver}
+            >
+              &times; DELETE
+            </button>
+            <button
+              className="m-1 rounded-full border px-2 text-lg font-bold"
+              onClick={updateDriver}
+            >
+              SAVE
+            </button>
+          </div>
         </>
       )}
     </div>

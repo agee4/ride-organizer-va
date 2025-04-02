@@ -44,7 +44,27 @@ export class Ride {
     return <RideComponent data={this} />;
   }
 
-  valid(): boolean {
+  validate(passenger: Passenger): boolean {
+    if (
+      passenger.getCollege() != this.getDriver().getCollege() &&
+      passenger.getCollege() != College.OTHER &&
+      this.getDriver().getCollege() != College.OTHER
+    )
+      return false;
+    if (
+      this.getDriver()
+        .getRides()
+        .filter(
+          (x) =>
+            passenger.getRides().includes(x) ||
+            passenger.getBackup().includes(x)
+        ).length <= 0
+    )
+      return false;
+    return true;
+  }
+
+  updateValid(): boolean {
     this.invalid = [];
     if (this.driver.getSeats() - this.passengers.size < 0)
       this.invalid.push("TOO MANY PASSENGERS!");

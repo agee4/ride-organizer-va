@@ -5,23 +5,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { Passenger, PassengerReducerAction, Year } from "../_classes/passenger";
+import {
+  NewPassengerData,
+  Passenger,
+  PassengerReducerAction,
+  Year,
+} from "../_classes/passenger";
 import { College, RideTimes } from "../_classes/person";
-
-interface NewPassengerData {
-  email: string;
-  name: string;
-  address: string;
-  college?: College;
-  service?: RideTimes;
-  friday?: boolean;
-  backupfirst?: boolean;
-  backupsecond?: boolean;
-  backupthird?: boolean;
-  year?: Year;
-  phone?: string;
-  notes?: string;
-}
 
 interface CreatePassengerFormProps {
   passengerCallback: ActionDispatch<[action: PassengerReducerAction]>;
@@ -44,7 +34,7 @@ export const CreatePassengerForm = ({
   const [backupThird, setBackupThird] = useState<boolean>(false);
 
   const updateForm = (
-    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
+    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target;
     setNewPassengerData({ ...newPassengerData, [name]: value });
@@ -58,56 +48,52 @@ export const CreatePassengerForm = ({
       newPassengerData.address.localeCompare("") == 0
     )
       return;
-    else {
-      const newPassengerRides = [];
-      if (newPassengerData.friday) newPassengerRides.push(RideTimes.FRIDAY);
-      if (
-        newPassengerData.service &&
-        Object.values(RideTimes).includes(newPassengerData.service as RideTimes)
-      )
-        newPassengerRides.push(newPassengerData.service);
-      const newPassengerBackup = [];
-      if (newPassengerData.backupfirst)
-        newPassengerBackup.push(RideTimes.FIRST);
-      if (newPassengerData.backupsecond)
-        newPassengerBackup.push(RideTimes.SECOND);
-      if (newPassengerData.backupthird)
-        newPassengerBackup.push(RideTimes.THIRD);
-      passengerCallback({
-        type: "create",
-        passenger: new Passenger({
-          email: newPassengerData.email,
-          name: newPassengerData.name,
-          rides: newPassengerRides,
-          address: newPassengerData.address,
-          college:
-            newPassengerData.college &&
-            Object.values(College).includes(newPassengerData.college as College)
-              ? newPassengerData.college
-              : College.OTHER,
-          year:
-            newPassengerData.year &&
-            Object.values(Year).includes(newPassengerData.year as Year)
-              ? newPassengerData.year
-              : Year.OTHER,
-          backup: newPassengerBackup,
-          phone: newPassengerData.phone,
-          notes: newPassengerData.notes,
-        }),
-      });
-      setNewPassengerData({
-        email: "",
-        name: "",
-        address: "",
-        phone: "",
-        notes: "",
-      });
-      formRef.current?.reset();
-      setFriday(false);
-      setBackupFirst(false);
-      setBackupSecond(false);
-      setBackupThird(false);
-    }
+    const newPassengerRides = [];
+    if (newPassengerData.friday) newPassengerRides.push(RideTimes.FRIDAY);
+    if (
+      newPassengerData.service &&
+      Object.values(RideTimes).includes(newPassengerData.service as RideTimes)
+    )
+      newPassengerRides.push(newPassengerData.service);
+    const newPassengerBackup = [];
+    if (newPassengerData.backupfirst) newPassengerBackup.push(RideTimes.FIRST);
+    if (newPassengerData.backupsecond)
+      newPassengerBackup.push(RideTimes.SECOND);
+    if (newPassengerData.backupthird) newPassengerBackup.push(RideTimes.THIRD);
+    passengerCallback({
+      type: "create",
+      passenger: new Passenger({
+        email: newPassengerData.email,
+        name: newPassengerData.name,
+        rides: newPassengerRides,
+        address: newPassengerData.address,
+        college:
+          newPassengerData.college &&
+          Object.values(College).includes(newPassengerData.college as College)
+            ? newPassengerData.college
+            : College.OTHER,
+        year:
+          newPassengerData.year &&
+          Object.values(Year).includes(newPassengerData.year as Year)
+            ? newPassengerData.year
+            : Year.OTHER,
+        backup: newPassengerBackup,
+        phone: newPassengerData.phone,
+        notes: newPassengerData.notes,
+      }),
+    });
+    setNewPassengerData({
+      email: "",
+      name: "",
+      address: "",
+      phone: "",
+      notes: "",
+    });
+    formRef.current?.reset();
+    setFriday(false);
+    setBackupFirst(false);
+    setBackupSecond(false);
+    setBackupThird(false);
   };
   return (
     <form
@@ -264,9 +250,8 @@ export const CreatePassengerForm = ({
           ))}
         </select>
       </div>
-      <input
+      <textarea
         className="rounded-sm border"
-        type="text"
         name="notes"
         value={newPassengerData.notes}
         placeholder="Notes"

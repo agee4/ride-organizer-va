@@ -88,19 +88,33 @@ const DriverComponent = ({ data, display }: DriverProps) => {
             </li>
           ))}
         </ul>
-        {(!display || display.includes(DriverDisplay.NOTES)) && data.getNotes() && (
-          <ul className="mt-1">
-            <li>
-              <span className=":dark:bg-orange-600 rounded-md bg-orange-400 p-1">
-                {data.getNotes()}
-              </span>
-            </li>
-          </ul>
-        )}
+        {(!display || display.includes(DriverDisplay.NOTES)) &&
+          data.getNotes() && (
+            <ul className="mt-1">
+              <li>
+                <textarea
+                  className="rounded-md bg-orange-400 p-1 dark:bg-orange-600"
+                  defaultValue={data.getNotes()}
+                />
+              </li>
+            </ul>
+          )}
       </ul>
     </div>
   );
 };
+
+export interface NewDriverData {
+  email: string;
+  name: string;
+  address: string;
+  college?: College;
+  seats: number;
+  service?: RideTimes;
+  friday?: boolean;
+  phone?: string;
+  notes?: string;
+}
 
 export enum DriverSort {
   NAME = "name",
