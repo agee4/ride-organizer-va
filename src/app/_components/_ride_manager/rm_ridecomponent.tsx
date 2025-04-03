@@ -152,12 +152,12 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
     void,
-    { canDrop: Boolean; isOver: boolean }
+    { canDrop: boolean; isOver: boolean }
   >(
     () => ({
       accept: TestType.TEST,
-      drop: (item, monitor) => {
-        let dragpassenger = unassignedCollection.get(item.email);
+      drop: (item) => {
+        const dragpassenger = unassignedCollection.get(item.email);
         if (!!dragpassenger) {
           addPassengerHelper(dragpassenger);
         }
@@ -187,7 +187,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
       passenger: passenger,
     });
     /**remove passenger from previous rides (if possible) */
-    for (let ride of rideCollection.values()) {
+    for (const ride of rideCollection.values()) {
       if (ride.getPassengers().has(passenger.getEmail())) {
         ride.getPassengers().delete(passenger.getEmail());
         rideCallback({ type: "create", ride: ride });

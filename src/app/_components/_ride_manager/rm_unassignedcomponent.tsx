@@ -126,14 +126,14 @@ export const RM_UnassignedListComponent = () => {
   const [{ canDrop, isOver }, drop] = useDrop<
     DragItem,
     void,
-    { canDrop: Boolean; isOver: boolean }
+    { canDrop: boolean; isOver: boolean }
   >(
     () => ({
       accept: TestType.TEST,
-      drop: (item, monitor) => {
-        let dragpassenger = unassignedCollection.get(item.email);
+      drop: (item) => {
+        const dragpassenger = unassignedCollection.get(item.email);
         if (!!dragpassenger) {
-          for (let ride of rideCollection.values()) {
+          for (const ride of rideCollection.values()) {
             if (ride.getPassengers().has(dragpassenger.getEmail())) {
               ride.getPassengers().delete(dragpassenger.getEmail());
               rideCallback({ type: "create", ride: ride });

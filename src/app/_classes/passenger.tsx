@@ -232,7 +232,7 @@ export const filterPassengers = (
   if (filter) {
     if (filter.length > 0) {
       let newlist = [...list];
-      for (let f of filter) {
+      for (const f of filter) {
         if (Object.values(RideTimes).includes(f as RideTimes)) {
           newlist = [...newlist].filter(
             (x) =>
@@ -266,7 +266,7 @@ export const passengerReducer = (
       );
     }
     case "delete": {
-      let newCollection = new Map([...passengerCollection.entries()]);
+      const newCollection = new Map([...passengerCollection.entries()]);
       newCollection.delete(action.passenger.getEmail());
       return newCollection;
     }

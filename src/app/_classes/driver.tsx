@@ -173,7 +173,7 @@ export const filterDrivers = (
   if (filter) {
     if (filter.length > 0) {
       let newlist = [...list];
-      for (let f of filter) {
+      for (const f of filter) {
         if (Object.values(RideTimes).includes(f as RideTimes)) {
           newlist = [...newlist].filter((x) =>
             x.getRides().includes(f as RideTimes)
@@ -205,7 +205,7 @@ export const driverReducer = (
       );
     }
     case "delete": {
-      let newCollection = new Map([...driverCollection.entries()]);
+      const newCollection = new Map([...driverCollection.entries()]);
       newCollection.delete(action.driver.getEmail());
       return newCollection;
     }

@@ -1,6 +1,6 @@
 // ride.tsx
 
-import { ReactElement } from "react";
+import { ReactElement, useState } from "react";
 import { Driver, DriverDisplay } from "./driver";
 import { Passenger, PassengerDisplay } from "./passenger";
 import { College, RideTimes } from "./person";
@@ -68,7 +68,7 @@ export class Ride {
     this.invalid = [];
     if (this.driver.getSeats() - this.passengers.size < 0)
       this.invalid.push("TOO MANY PASSENGERS!");
-    for (let passenger of this.getPassengers().values()) {
+    for (const passenger of this.getPassengers().values()) {
       if (
         passenger.getCollege() != this.getDriver().getCollege() &&
         passenger.getCollege() != College.OTHER &&
@@ -99,15 +99,25 @@ interface RideProps {
 }
 
 const RideComponent = ({ data }: RideProps) => {
+  const [showDriverDetail, setShowDriverDetail] = useState<boolean>(true);
+  const toggleDriverDetail = () => {
+    setShowDriverDetail(!showDriverDetail);
+  };
+  const [showPassengers, setShowPassengers] = useState<boolean>(true);
+  const togglePassengers = () => {
+    setShowPassengers(!showPassengers);
+  };
+
   const seatsleft = data.getDriver().getSeats() - data.getPassengers().size;
-  let valid = seatsleft >= 0;
+  const valid = data.updateValid();
   return (
-    <div
-      className={
-        "my-1 rounded-md p-2 " + (valid ? "bg-neutral-500" : "bg-red-500")
-      }
-    >
-      <h3 className="m-1 text-lg font-bold">{data.getDriver().getName()}</h3>
+    <div className="my-1 rounded-md bg-orange-300 p-2 dark:bg-orange-700">
+      <div className="flex flex-row place-content-between">
+        <h3 className="m-1 text-lg font-bold">{data.getDriver().getName()}</h3>
+        <button className="m-1 text-lg font-bold" onClick={toggleDriverDetail}>
+          {showDriverDetail ? <span>&and;</span> : <span>&or;</span>}
+        </button>
+      </div>
       <ul className="m-1">
         {data
           .getDriver()
@@ -116,25 +126,52 @@ const RideComponent = ({ data }: RideProps) => {
             DriverDisplay.COLLEGE,
             DriverDisplay.NOTES,
           ])}
-        <ul className="m-1">
-          <li className="text-center">Seats Left: {seatsleft}</li>
-          {!valid && <li className="text-center">"TOO MANY PASSENGERS!"</li>}
-          {Array.from(data.getPassengers()).map(([key, value]) => (
-            <li key={key}>
-              {value.display([
-                PassengerDisplay.NAME,
-                PassengerDisplay.ADDRESS,
-                PassengerDisplay.COLLEGE,
-                PassengerDisplay.NOTES,
-              ])}
+        <div
+          className={"rounded-md " + (!valid ? "bg-red-500" : "bg-neutral-500")}
+        >
+          <ul className="m-1">
+            <li className="text-center">
+              <button
+                className="rounded-md bg-neutral-300 p-1 dark:bg-neutral-700"
+                onClick={togglePassengers}
+              >
+                Seats Left: {seatsleft}/{data.getDriver().getSeats()}
+              </button>
             </li>
-          ))}
-          {Array.from({ length: seatsleft }, (_, index) => (
-            <li key={index}>
-              <div className="my-1 w-full rounded-md bg-white p-2 dark:bg-black"></div>
-            </li>
-          ))}
-        </ul>
+            {!valid && (
+              <details className="text-center">
+                <summary>
+                  {data.getInvalid().length} WARNING
+                  {data.getInvalid().length != 1 && "S"}!
+                </summary>
+                <ul className="text-center">
+                  {data.getInvalid().map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+            {showPassengers && (
+              <>
+                {Array.from(data.getPassengers()).map(([key, value]) => (
+                  <li key={key}>
+                    {value.display([
+                      PassengerDisplay.NAME,
+                      PassengerDisplay.ADDRESS,
+                      PassengerDisplay.COLLEGE,
+                      PassengerDisplay.NOTES,
+                    ])}
+                  </li>
+                ))}
+                {Array.from({ length: seatsleft }, (_, index) => (
+                  <li key={index}>
+                    <div className="my-1 w-full rounded-md bg-white p-2 dark:bg-black"></div>
+                  </li>
+                ))}
+              </>
+            )}
+          </ul>
+        </div>
       </ul>
     </div>
   );
@@ -213,7 +250,7 @@ export const filterRides = (
   if (filter) {
     if (filter.length > 0) {
       let newlist = [...list];
-      for (let f of filter) {
+      for (const f of filter) {
         if (Object.values(RideTimes).includes(f as RideTimes)) {
           newlist = [...newlist].filter((x) =>
             x
@@ -250,7 +287,7 @@ export const rideReducer = (
       ]);
     }
     case "delete": {
-      let newCollection = new Map([...rideCollection.entries()]);
+      const newCollection = new Map([...rideCollection.entries()]);
       newCollection.delete(action.ride.getDriver().getEmail());
       return newCollection;
     }

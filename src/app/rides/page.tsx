@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useCallback, useReducer, useRef, useState } from "react";
+import { ChangeEvent, useReducer, useRef, useState } from "react";
 import { read, utils, writeFile } from "xlsx";
 import { College, RideTimes } from "../_classes/person";
 import { Passenger, passengerReducer, Year } from "../_classes/passenger";
@@ -62,22 +62,20 @@ export default function Page() {
     const ab = await f.arrayBuffer();
 
     const wb = read(ab);
-    let passengertemp = new Map<string, Passenger>();
-    let drivertemp = new Map<string, Driver>();
+    const passengertemp = new Map<string, Passenger>();
+    const drivertemp = new Map<string, Driver>();
 
-    for (let wsn of wb.SheetNames) {
+    for (const wsn of wb.SheetNames) {
       const ws = wb.Sheets[wsn];
       const data: any[] = utils.sheet_to_json(ws);
       if (wsn.toLocaleLowerCase().trim().includes("passenger")) {
         let mainrideneeds = [];
         let backuprideneeds = [];
-        for (let x of data) {
+        for (const x of data) {
           mainrideneeds = [];
           backuprideneeds = [];
-          let test = "test";
-          test.toLocaleLowerCase().trim().includes("friday");
           if (x.Rides)
-            for (let ride of x.Rides.split(",")) {
+            for (const ride of x.Rides.split(",")) {
               if (ride.toLocaleLowerCase().trim().includes("friday")) {
                 mainrideneeds.push(RideTimes.FRIDAY);
               } else if (ride.toLocaleLowerCase().trim().includes("first")) {
@@ -89,7 +87,7 @@ export default function Page() {
               }
             }
           if (x["Backup Rides"])
-            for (let ride of x["Backup Rides"].split(", ")) {
+            for (const ride of x["Backup Rides"].split(", ")) {
               if (ride.toLocaleLowerCase().trim().includes("first")) {
                 backuprideneeds.push(RideTimes.FIRST);
               } else if (ride.toLocaleLowerCase().trim().includes("second")) {
@@ -118,9 +116,9 @@ export default function Page() {
         });
       } else if (wsn.toLocaleLowerCase().trim().includes("driver")) {
         let rides = [];
-        for (let x of data) {
+        for (const x of data) {
           rides = [];
-          for (let ride of x.Rides.split(",")) {
+          for (const ride of x.Rides.split(",")) {
             if (ride.toLocaleLowerCase().trim().includes("friday")) {
               rides.push(RideTimes.FRIDAY);
             } else if (ride.toLocaleLowerCase().trim().includes("first")) {
@@ -149,22 +147,22 @@ export default function Page() {
         });
       }
     }
-    for (let wsn of wb.SheetNames) {
-      const ws = wb.Sheets[wsn];
-      const data: any[] = utils.sheet_to_json(ws);
+    for (const wsn of wb.SheetNames) {
       if (wsn.toLocaleLowerCase().trim().includes("ride")) {
-        for (let x of data) {
-          let rdriver = drivertemp.get(
+        const ws = wb.Sheets[wsn];
+        const data: any[] = utils.sheet_to_json(ws);
+        for (const x of data) {
+          const rdriver = drivertemp.get(
             x.Driver.slice(x.Driver.indexOf("(") + 1, x.Driver.indexOf(")"))
           );
-          let rpassengers = new Map<string, Passenger>();
+          const rpassengers = new Map<string, Passenger>();
           if (x.Passengers) {
-            for (let rpassengerstring of x.Passengers.split(",")) {
-              let rpassengeremail = rpassengerstring.slice(
+            for (const rpassengerstring of x.Passengers.split(",")) {
+              const rpassengeremail = rpassengerstring.slice(
                 rpassengerstring.indexOf("(") + 1,
                 rpassengerstring.indexOf(")")
               );
-              let rpassenger = passengertemp.get(rpassengeremail);
+              const rpassenger = passengertemp.get(rpassengeremail);
               if (rpassenger) {
                 rpassengers.set(rpassengeremail, rpassenger);
               }
@@ -184,8 +182,8 @@ export default function Page() {
   };
   const saveSheet = () => {
     const wb = utils.book_new();
-    let passengerJSON = [];
-    for (let passenger of passengerCollection.values()) {
+    const passengerJSON = [];
+    for (const passenger of passengerCollection.values()) {
       passengerJSON.push({
         "Email Address": passenger.getEmail(),
         Name: passenger.getName(),
@@ -200,8 +198,8 @@ export default function Page() {
     }
     const ws_p = utils.json_to_sheet(passengerJSON);
     utils.book_append_sheet(wb, ws_p, "Passengers");
-    let driverJSON = [];
-    for (let driver of driverCollection.values()) {
+    const driverJSON = [];
+    for (const driver of driverCollection.values()) {
       driverJSON.push({
         "Email Address": driver.getEmail(),
         Name: driver.getName(),
@@ -216,8 +214,8 @@ export default function Page() {
     const ws_d = utils.json_to_sheet(driverJSON);
     utils.book_append_sheet(wb, ws_d, "Drivers");
     if (rideCollection.size > 0) {
-      let rideJSON = [];
-      for (let ride of rideCollection.values()) {
+      const rideJSON = [];
+      for (const ride of rideCollection.values()) {
         const passengers: string[] = [];
         Array.from(ride.getPassengers().values()).forEach((x) =>
           passengers.push(x.getName() + "(" + x.getEmail() + ")")

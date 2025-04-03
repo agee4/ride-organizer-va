@@ -1,4 +1,5 @@
-import Image from "next/image";
+/* import Image from "next/image"; */
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -7,6 +8,7 @@ export default function Home() {
         <h1 className="font-[family-name:var(--font-geist-mono)] text-5xl font-bold">
           Ride Organizer v2.A
         </h1>
+        <p>Head to <Link href="/rides">Rides</Link> to begin organizing</p>
       </main>
     </div>
   );

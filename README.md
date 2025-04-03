@@ -1,3 +1,22 @@
+# Ride Organizer v.A
+Ride Organizer v.A is a ride-assigning tool application meant to help organize a large group of passengers into rides, based on location and availability. It is a spiritual successor to [RidesProject](https://github.com/ConnorJLee/RidesProject) and a counterpart to [RidesProjectV2](https://github.com/kafong03/RidesProjectV2), built from the ground up using NextJS!
+
+### Current Features
+- Spreadsheet Reading and Writing (Google Form Sheet Format Style)
+- Manually Add Passengers/Drivers
+- Drag & Drop Passenger to Ride
+- Shallow Ride Compatability Checking and Warning
+- List Sorting and Filtering
+
+### WIP/Future Features
+- Manually Updating Passengers/Drivers
+- Google Suite Integration
+- Multiple Passenger Dragging & Dropping
+- More Flexible Spreadsheet Reading/Writing
+- In-app data saving
+
+## Pregenerated NextJS Doc/Info
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -14,7 +33,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:4000](http://localhost:4000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

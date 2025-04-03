@@ -10,7 +10,6 @@ import {
 import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   DndProvider,
-  DropTargetMonitor,
   useDragLayer,
 } from "react-dnd";
 import { College, RideTimes } from "../../_classes/person";
@@ -112,9 +111,63 @@ export const RideManager = ({
   };
 
   /**add/remove people from manager states, based on origin */
+
+  const refreshRides = () => {
+    /**remove passengers, even if assigned a ride */
+    for (const unassigned of unassignedCollection.values()) {
+      if (!originPassengers.has(unassigned.getEmail()))
+        unassignedDispatch({ type: "delete", passenger: unassigned });
+    }
+    for (const ride of originRides.values()) {
+      for (const ridepassenger of ride.getPassengers().values()) {
+        if (!originPassengers.has(ridepassenger.getEmail()))
+          ride.getPassengers().delete(ridepassenger.getEmail());
+      }
+    }
+    /**add new passengers */
+    for (const passenger of originPassengers.values()) {
+      /**check if passenger in unassigned */
+      if (!unassignedCollection.has(passenger.getEmail())) {
+        /**check if passenger in a ride */
+        let exists = false;
+        for (const ride of originRides.values()) {
+          if (ride.getPassengers().has(passenger.getEmail())) {
+            exists = true;
+            break;
+          }
+        }
+        /**if passenger not in a ride & not in unassigned, add to unassigned */
+        if (!exists) unassignedDispatch({ type: "create", passenger: passenger });
+      }
+    }
+    /**remove rides */
+    for (const ride of originRides.values()) {
+      if (!originDrivers.has(ride.getDriver().getEmail())) {
+        /**move removed ride's passengers into the unassigned */
+        for (const passenger of ride.getPassengers().values()) {
+          if (originPassengers.has(passenger.getEmail()))
+            unassignedDispatch({ type: "create", passenger: passenger });
+        }
+        rideCallback({ type: "delete", ride: ride });
+      }
+    }
+
+    /**add new rides */
+    for (const driver of originDrivers.values()) {
+      if (!originRides.has(driver.getEmail())) {
+        rideCallback({
+          type: "create",
+          ride: new Ride({
+            driver: driver,
+            passengers: new Map<string, Passenger>(),
+          }),
+        });
+      }
+    }
+  };
   useEffect(() => {
     refreshRides();
-  }, [originPassengers, originDrivers]);
+  }, [originPassengers, originDrivers, refreshRides]);
   /**sort and filter unassigned passengers */
   useEffect(() => {
     setUnassignedList(
@@ -143,63 +196,9 @@ export const RideManager = ({
           )
     );
   }, [originRides, rideSort, rideReverse, rideFilter]);
-
-  const refreshRides = () => {
-    /**remove passengers, even if assigned a ride */
-    for (let passenger of unassignedCollection.values()) {
-      if (!originPassengers.has(passenger.getEmail()))
-        unassignedDispatch({ type: "delete", passenger: passenger });
-    }
-    for (let ride of originRides.values()) {
-      for (let ridepassenger of ride.getPassengers().values()) {
-        if (!originPassengers.has(ridepassenger.getEmail()))
-          ride.getPassengers().delete(ridepassenger.getEmail());
-      }
-    }
-    /**add new passengers */
-    for (let passenger of originPassengers.values()) {
-      /**check if passenger in unassigned */
-      if (!unassignedCollection.has(passenger.getEmail())) {
-        /**check if passenger in a ride */
-        let exists = false;
-        for (let ride of originRides.values()) {
-          if (ride.getPassengers().has(passenger.getEmail())) {
-            exists = true;
-            break;
-          }
-        }
-        /**if passenger not in a ride & not in unassigned, add to unassigned */
-        if (!exists) unassignedDispatch({ type: "create", passenger: passenger });
-      }
-    }
-    /**remove rides */
-    for (let ride of originRides.values()) {
-      if (!originDrivers.has(ride.getDriver().getEmail())) {
-        /**move removed ride's passengers into the unassigned */
-        for (let passenger of ride.getPassengers().values()) {
-          if (originPassengers.has(passenger.getEmail()))
-            unassignedDispatch({ type: "create", passenger: passenger });
-        }
-        rideCallback({ type: "delete", ride: ride });
-      }
-    }
-
-    /**add new rides */
-    for (let driver of originDrivers.values()) {
-      if (!originRides.has(driver.getEmail())) {
-        rideCallback({
-          type: "create",
-          ride: new Ride({
-            driver: driver,
-            passengers: new Map<string, Passenger>(),
-          }),
-        });
-      }
-    }
-  };
   const clearRides = () => {
-    for (let ride of rideList) {
-      for (let passenger of ride.getPassengers().values()) {
+    for (const ride of rideList) {
+      for (const passenger of ride.getPassengers().values()) {
         unassignedDispatch({ type: "create", passenger: passenger });
       }
       ride.getPassengers().clear();
