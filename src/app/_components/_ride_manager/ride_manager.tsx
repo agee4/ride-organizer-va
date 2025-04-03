@@ -3,7 +3,6 @@
 import {
   ActionDispatch,
   ChangeEvent,
-  useCallback,
   useEffect,
   useReducer,
   useState,
@@ -165,7 +164,7 @@ export const RideManager = ({
         });
       }
     }
-  }, [originPassengers, originDrivers]);
+  }, [originPassengers, originDrivers, originRides, rideCallback, unassignedCollection]);
   /**sort and filter unassigned passengers */
   useEffect(() => {
     setUnassignedList(
