@@ -3,15 +3,13 @@
 import {
   ActionDispatch,
   ChangeEvent,
+  useCallback,
   useEffect,
   useReducer,
   useState,
 } from "react";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import {
-  DndProvider,
-  useDragLayer,
-} from "react-dnd";
+import { DndProvider, useDragLayer } from "react-dnd";
 import { College, RideTimes } from "../../_classes/person";
 import { Driver } from "../../_classes/driver";
 import {
@@ -67,11 +65,14 @@ export const RideManager = ({
   const toggleUnassignedReverse = () => {
     setUnassignedReverse(!unassignedReverse);
   };
-  const [showUnassignedFilter, setShowUnassignedFilter] = useState<boolean>(false);
+  const [showUnassignedFilter, setShowUnassignedFilter] =
+    useState<boolean>(false);
   const toggleShowUnassignedFilter = () => {
     setShowUnassignedFilter(!showUnassignedFilter);
   };
-  const [unassignedFilter, setUnassignedFilter] = useState<(RideTimes | College)[]>([]);
+  const [unassignedFilter, setUnassignedFilter] = useState<
+    (RideTimes | College)[]
+  >([]);
   const updateUnassignedFilter = (event: ChangeEvent<HTMLSelectElement>) => {
     setUnassignedFilter(
       [...event.target.selectedOptions].map((o) =>
@@ -111,8 +112,7 @@ export const RideManager = ({
   };
 
   /**add/remove people from manager states, based on origin */
-
-  const refreshRides = () => {
+  useEffect(() => {
     /**remove passengers, even if assigned a ride */
     for (const unassigned of unassignedCollection.values()) {
       if (!originPassengers.has(unassigned.getEmail()))
@@ -137,7 +137,8 @@ export const RideManager = ({
           }
         }
         /**if passenger not in a ride & not in unassigned, add to unassigned */
-        if (!exists) unassignedDispatch({ type: "create", passenger: passenger });
+        if (!exists)
+          unassignedDispatch({ type: "create", passenger: passenger });
       }
     }
     /**remove rides */
@@ -164,24 +165,32 @@ export const RideManager = ({
         });
       }
     }
-  };
-  useEffect(() => {
-    refreshRides();
-  }, [originPassengers, originDrivers, refreshRides]);
+  }, [originPassengers, originDrivers]);
   /**sort and filter unassigned passengers */
   useEffect(() => {
     setUnassignedList(
       unassignedReverse
         ? sortPassengers(
-            filterPassengers([...unassignedCollection.values()], unassignedFilter),
+            filterPassengers(
+              [...unassignedCollection.values()],
+              unassignedFilter
+            ),
             unassignedSort
           ).reverse()
         : sortPassengers(
-            filterPassengers([...unassignedCollection.values()], unassignedFilter),
+            filterPassengers(
+              [...unassignedCollection.values()],
+              unassignedFilter
+            ),
             unassignedSort
           )
     );
-  }, [unassignedCollection, unassignedSort, unassignedReverse, unassignedFilter]);
+  }, [
+    unassignedCollection,
+    unassignedSort,
+    unassignedReverse,
+    unassignedFilter,
+  ]);
   /**sort and filter rides */
   useEffect(() => {
     setRideList(
@@ -224,9 +233,6 @@ export const RideManager = ({
         <div className="flex w-full flex-row justify-evenly">
           <div className="rounded-md border border-neutral-500 p-2">
             <h2>Ride Manager</h2>
-            <button className="rounded-full border px-2" onClick={refreshRides}>
-              Refresh
-            </button>
             <button className="rounded-full border px-2" onClick={clearRides}>
               Clear All Rides
             </button>
@@ -234,12 +240,14 @@ export const RideManager = ({
               <div className="rounded-md border border-cyan-500 bg-cyan-50 p-2 dark:bg-cyan-950">
                 <div className="flex flex-row place-content-between">
                   <span className="rounded-full bg-cyan-500 px-1">
-                    {unassignedList.length}/{unassignedCollection.size}/{originPassengers.size}
+                    {unassignedList.length}/{unassignedCollection.size}/
+                    {originPassengers.size}
                   </span>
                   <div className="flex flex-row">
                     <select
                       className={
-                        "rounded-sm border " + (!unassignedSort && "text-neutral-500")
+                        "rounded-sm border " +
+                        (!unassignedSort && "text-neutral-500")
                       }
                       defaultValue={unassignedSort}
                       onChange={updateUnassignedSort}
@@ -265,7 +273,11 @@ export const RideManager = ({
                       className="ml-1 font-bold text-neutral-500"
                       onClick={toggleUnassignedReverse}
                     >
-                      {unassignedReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+                      {unassignedReverse ? (
+                        <span>&uarr;</span>
+                      ) : (
+                        <span>&darr;</span>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -273,7 +285,8 @@ export const RideManager = ({
                   {showUnassignedFilter ? (
                     <select
                       className={
-                        "rounded-sm border " + (!unassignedFilter && "text-neutral-500")
+                        "rounded-sm border " +
+                        (!unassignedFilter && "text-neutral-500")
                       }
                       defaultValue={unassignedFilter}
                       onChange={updateUnassignedFilter}
@@ -303,7 +316,9 @@ export const RideManager = ({
                       }
                       onClick={toggleShowUnassignedFilter}
                     >
-                      {unassignedFilter.length < 1 ? "-Filter-" : unassignedFilter}
+                      {unassignedFilter.length < 1
+                        ? "-Filter-"
+                        : unassignedFilter}
                     </p>
                   )}
                   <button
