@@ -38,6 +38,21 @@ export class Driver extends Person {
     return this.seats;
   }
 
+  equals(other: Driver): boolean {
+    if (
+      this.getEmail() != other.getEmail() ||
+      this.getName() != other.getName() ||
+      this.getRides() != other.getRides() ||
+      this.getAddress() != other.getAddress() ||
+      this.getCollege() != other.getCollege() ||
+      this.getSeats() != other.getSeats() ||
+      this.getPhone() != other.getPhone() ||
+      this.getNotes() != other.getNotes()
+    )
+      return false;
+    else return true;
+  }
+
   display(show?: DriverDisplay[]): ReactElement {
     return <DriverComponent data={this} display={show} />;
   }

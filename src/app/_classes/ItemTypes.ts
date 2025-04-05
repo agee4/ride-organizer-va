@@ -1,7 +1,7 @@
-export enum TestType {
-  TEST = "TEST",
+export enum DNDType {
+  PASSENGER = "Passenger",
 }
 
-export interface DragItem {
+export interface PassengerDragItem {
   email: string;
 }

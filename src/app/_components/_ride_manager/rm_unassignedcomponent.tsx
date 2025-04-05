@@ -5,7 +5,7 @@ import { useDrag, useDrop } from "react-dnd";
 import { RideManagerContext } from "./rmcontext";
 import { College, CollegeTag } from "@/app/_classes/person";
 import { Passenger, PassengerDisplay, YearTag } from "@/app/_classes/passenger";
-import { DragItem, TestType } from "@/app/_classes/ItemTypes";
+import { PassengerDragItem, DNDType } from "@/app/_classes/ItemTypes";
 
 
 const RM_UnassignedComponent = ({
@@ -21,11 +21,11 @@ const RM_UnassignedComponent = ({
   };
 
   const [{ isDragging }, drag, dragPreview] = useDrag<
-    DragItem,
+    PassengerDragItem,
     void,
     { isDragging: boolean }
   >(() => ({
-    type: TestType.TEST,
+    type: DNDType.PASSENGER,
     item: { email: data.getEmail() },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
@@ -124,12 +124,12 @@ export const RM_UnassignedListComponent = () => {
   } = rmContext;
 
   const [{ canDrop, isOver }, drop] = useDrop<
-    DragItem,
+    PassengerDragItem,
     void,
     { canDrop: boolean; isOver: boolean }
   >(
     () => ({
-      accept: TestType.TEST,
+      accept: DNDType.PASSENGER,
       drop: (item) => {
         const dragpassenger = unassignedCollection.get(item.email);
         if (!!dragpassenger) {

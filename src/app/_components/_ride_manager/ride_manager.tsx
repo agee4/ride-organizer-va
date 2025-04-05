@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { DndProvider, useDragLayer } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import { College, RideTimes } from "../../_classes/person";
 import { Driver } from "../../_classes/driver";
 import {
@@ -28,13 +28,7 @@ import {
 import { RideManagerContext } from "./rmcontext";
 import { RM_RideComponent } from "./rm_ridecomponent";
 import { RM_UnassignedListComponent } from "./rm_unassignedcomponent";
-
-const CustomDragLayer = () => {
-  const {} = useDragLayer((monitor) => ({
-    item: monitor.getItem(),
-  }));
-  return <div></div>;
-};
+import { PassengerDragLayer } from "./passengerdraglayer";
 
 export const RideManager = ({
   originPassengers,
@@ -125,20 +119,29 @@ export const RideManager = ({
     }
     /**add new passengers */
     for (const passenger of originPassengers.values()) {
-      /**check if passenger in unassigned */
+      /**check if passenger not in unassigned */
       if (!unassignedCollection.has(passenger.getEmail())) {
-        /**check if passenger in a ride */
+        /**check if passenger not in a ride */
         let exists = false;
         for (const ride of originRides.values()) {
           if (ride.getPassengers().has(passenger.getEmail())) {
             exists = true;
+            /**update passenger if necessary */
+            if (
+              !ride.getPassengers().get(passenger.getEmail())?.equals(passenger)
+            )
+              ride.getPassengers().set(passenger.getEmail(), passenger);
             break;
           }
         }
         /**if passenger not in a ride & not in unassigned, add to unassigned */
         if (!exists)
           unassignedDispatch({ type: "create", passenger: passenger });
-      }
+      } else if (
+        /**update passenger if necessary */
+        !unassignedCollection.get(passenger.getEmail())?.equals(passenger)
+      )
+        unassignedDispatch({ type: "create", passenger: passenger });
     }
     /**remove rides */
     for (const ride of originRides.values()) {
@@ -162,9 +165,27 @@ export const RideManager = ({
             passengers: new Map<string, Passenger>(),
           }),
         });
+      } else if (
+        !originRides.get(driver.getEmail())?.getDriver().equals(driver)
+      ) {
+        rideCallback({
+          type: "create",
+          ride: new Ride({
+            driver: driver,
+            passengers:
+              originRides.get(driver.getEmail())?.getPassengers() ||
+              new Map<string, Passenger>(),
+          }),
+        });
       }
     }
-  }, [originPassengers, originDrivers, originRides, rideCallback, unassignedCollection]);
+  }, [
+    originPassengers,
+    originDrivers,
+    originRides,
+    rideCallback,
+    unassignedCollection,
+  ]);
   /**sort and filter unassigned passengers */
   useEffect(() => {
     setUnassignedList(
@@ -228,7 +249,7 @@ export const RideManager = ({
       }}
     >
       <DndProvider backend={HTML5Backend}>
-        <CustomDragLayer />
+        <PassengerDragLayer />
         <div className="flex w-full flex-row justify-evenly">
           <div className="rounded-md border border-neutral-500 p-2">
             <h2>Ride Manager</h2>

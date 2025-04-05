@@ -78,6 +78,22 @@ export class Passenger extends Person {
     return this.backup || [];
   }
 
+  equals(other: Passenger): boolean {
+    if (
+      this.getEmail() != other.getEmail() ||
+      this.getName() != other.getName() ||
+      this.getRides() != other.getRides() ||
+      this.getAddress() != other.getAddress() ||
+      this.getCollege() != other.getCollege() ||
+      this.getYear() != other.getYear() ||
+      this.getBackup() != other.getBackup() ||
+      this.getPhone() != other.getPhone() ||
+      this.getNotes() != other.getNotes()
+    )
+      return false;
+    else return true;
+  }
+
   display(show?: PassengerDisplay[]): ReactElement {
     return <PassengerComponent data={this} display={show} />;
   }
