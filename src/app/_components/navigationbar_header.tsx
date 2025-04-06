@@ -10,7 +10,7 @@ export default function NavBar() {
         Home
       </Link>
       <menu className="flex items-center gap-4 font-[family-name:var(--font-geist-mono)]">
-        <Link href="/login">Login</Link>
+        {/* <Link href="/login">Login</Link> */}
         <Link href="/rides">Rides</Link>
         <Link href="/contact">Contact</Link>
       </menu>

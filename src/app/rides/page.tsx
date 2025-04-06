@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useReducer, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useReducer, useRef, useState } from "react";
 import { read, utils, writeFile } from "xlsx";
 import { College, RideTimes } from "../_classes/person";
 import { Passenger, passengerReducer, Year } from "../_classes/passenger";
@@ -12,7 +12,17 @@ import { Ride, rideReducer } from "../_classes/ride";
 export default function Page() {
   const fileSelectorRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
   const [saveSheetName, setSaveSheetName] = useState<string>("ridesheet");
+  const updateSaveSheetName = (event: ChangeEvent<HTMLInputElement>) => {
+    setSaveSheetName(event.target.value);
+  };
 
   const [passengerCollection, passengerDispatch] = useReducer(
     passengerReducer,
@@ -28,13 +38,8 @@ export default function Page() {
   );
 
   const [rmDisplay, setRMdisplay] = useState(false);
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setSelectedFile(event.target.files[0]);
-    } else {
-      setSelectedFile(null);
-    }
+  const toggleDisplay = () => {
+    setRMdisplay(!rmDisplay);
   };
 
   const clearFile = () => {
@@ -48,10 +53,6 @@ export default function Page() {
       passengers: new Map<string, Passenger>(),
     });
     driverDispatch({ type: "set", drivers: new Map<string, Driver>() });
-  };
-
-  const updateSaveSheetName = (event: ChangeEvent<HTMLInputElement>) => {
-    setSaveSheetName(event.target.value);
   };
 
   const loadSheet = async () => {
@@ -156,17 +157,18 @@ export default function Page() {
             x.Driver.slice(x.Driver.indexOf("(") + 1, x.Driver.indexOf(")"))
           );
           const rpassengers = new Map<string, Passenger>();
-          if (x.Passengers) {
-            for (const rpassengerstring of x.Passengers.split(",")) {
-              const rpassengeremail = rpassengerstring.slice(
-                rpassengerstring.indexOf("(") + 1,
-                rpassengerstring.indexOf(")")
-              );
-              const rpassenger = passengertemp.get(rpassengeremail);
-              if (rpassenger) {
-                rpassengers.set(rpassengeremail, rpassenger);
+          for (const k in x) {
+            if (k.toLocaleLowerCase().trim().includes("passenger"))
+              for (const rpassengerstring of x[k].split(",")) {
+                const rpassengeremail = rpassengerstring.slice(
+                  rpassengerstring.indexOf("(") + 1,
+                  rpassengerstring.indexOf(")")
+                );
+                const rpassenger = passengertemp.get(rpassengeremail);
+                if (rpassenger) {
+                  rpassengers.set(rpassengeremail, rpassenger);
+                }
               }
-            }
           }
           if (rdriver && true)
             rideDispatch({
@@ -216,18 +218,15 @@ export default function Page() {
     if (rideCollection.size > 0) {
       const rideJSON = [];
       for (const ride of rideCollection.values()) {
-        const passengers: string[] = [];
-        Array.from(ride.getPassengers().values()).forEach((x) =>
-          passengers.push(x.getName() + "(" + x.getEmail() + ")")
+        const rideRecord: Record<string, string | number> = {};
+        rideRecord["Driver"] =
+          ride.getDriver().getName() + "(" + ride.getDriver().getEmail() + ")";
+        Array.from(ride.getPassengers().values()).forEach(
+          (value, index) =>
+            (rideRecord["Passenger " + (index + 1)] =
+              value.getName() + "(" + value.getEmail() + ")")
         );
-        rideJSON.push({
-          Driver:
-            ride.getDriver().getName() +
-            "(" +
-            ride.getDriver().getEmail() +
-            ")",
-          Passengers: passengers.toLocaleString(),
-        });
+        rideJSON.push(rideRecord);
       }
       const ws_r = utils.json_to_sheet(rideJSON);
       utils.book_append_sheet(wb, ws_r, "Rides");
@@ -237,9 +236,92 @@ export default function Page() {
       (saveSheetName.length > 1 ? saveSheetName : "savedsheet") + ".xlsx"
     );
   };
-  const toggleDisplay = () => {
-    setRMdisplay(!rmDisplay);
-  };
+
+  useEffect(() => {
+    const storedPassengersString = localStorage.getItem("passengers");
+    const storedPassengerCollection = new Map<string, Passenger>();
+    if (storedPassengersString) {
+      const storedPassengerJSON = JSON.parse(storedPassengersString);
+      for (const x in storedPassengerJSON) {
+        storedPassengerCollection.set(
+          x,
+          new Passenger({
+            email: storedPassengerJSON[x]["email"],
+            name: storedPassengerJSON[x]["name"],
+            rides: storedPassengerJSON[x]["rides"],
+            address: storedPassengerJSON[x]["address"],
+            college: storedPassengerJSON[x]["college"],
+            year: storedPassengerJSON[x]["year"],
+            backup: storedPassengerJSON[x]["backup"],
+            phone: storedPassengerJSON[x]["phone"],
+            notes: storedPassengerJSON[x]["notes"],
+          })
+        );
+      }
+      passengerDispatch({ type: "set", passengers: storedPassengerCollection });
+    }
+    const storedDriversString = localStorage.getItem("drivers");
+    const storedDriverCollection = new Map<string, Driver>();
+    if (storedDriversString) {
+      const storedDriverJSON = JSON.parse(storedDriversString);
+      for (const x in storedDriverJSON) {
+        storedDriverCollection.set(
+          x,
+          new Driver({
+            email: storedDriverJSON[x]["email"],
+            name: storedDriverJSON[x]["name"],
+            seats: storedDriverJSON[x]["seats"],
+            rides: storedDriverJSON[x]["rides"],
+            address: storedDriverJSON[x]["address"],
+            college: storedDriverJSON[x]["college"],
+            phone: storedDriverJSON[x]["phone"],
+            notes: storedDriverJSON[x]["notes"],
+          })
+        );
+      }
+      driverDispatch({ type: "set", drivers: storedDriverCollection });
+    }
+    const storedRidesString = localStorage.getItem("rides");
+    if (storedRidesString) {
+      const storedRidesJSON = JSON.parse(storedRidesString);
+      const storedRidesCollection = new Map<string, Ride>();
+      for (const driverEmail in storedRidesJSON) {
+        const assignedPassengerCollection = new Map<string, Passenger>();
+        for (const passengerEmail of storedRidesJSON[driverEmail]) {
+          const rp = storedPassengerCollection.get(passengerEmail);
+          if (rp) assignedPassengerCollection.set(passengerEmail, rp);
+        }
+        const d = storedDriverCollection.get(driverEmail);
+        if (d)
+          storedRidesCollection.set(
+            driverEmail,
+            new Ride({
+              driver: d,
+              passengers: assignedPassengerCollection,
+            })
+          );
+      }
+      rideDispatch({ type: "set", rides: storedRidesCollection });
+    }
+  }, []);
+
+  useEffect(() => {
+    const storage: Record<string, Passenger> = {};
+    for (const [key, value] of passengerCollection) storage[key] = value;
+    localStorage.setItem("passengers", JSON.stringify(storage));
+  }, [passengerCollection]);
+  useEffect(() => {
+    const storage: Record<string, Driver> = {};
+    for (const [key, value] of driverCollection) storage[key] = value;
+    localStorage.setItem("drivers", JSON.stringify(storage));
+  }, [driverCollection]);
+  useEffect(() => {
+    const storage: Record<string, string[]> = {};
+    for (const [key, value] of rideCollection) {
+      storage[key] = Array.from(value.getPassengers().keys());
+    }
+    localStorage.setItem("rides", JSON.stringify(storage));
+  }, [rideCollection]);
 
   return (
     <div className="grid min-h-[calc(100vh-132px)] grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">

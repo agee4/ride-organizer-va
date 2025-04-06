@@ -7,6 +7,7 @@ import { Passenger, PassengerDisplay } from "@/app/_classes/passenger";
 import { Ride } from "@/app/_classes/ride";
 import { RideManagerContext } from "./rmcontext";
 import { PassengerDragItem, DNDType } from "@/app/_classes/ItemTypes";
+import { getEmptyImage } from "react-dnd-html5-backend";
 
 const RM_PassengerComponent = ({
   data,
@@ -42,9 +43,8 @@ const RM_PassengerComponent = ({
     }),
   }));
   const dragRef = useRef<HTMLDivElement>(null);
-  const dragPreviewRef = useRef<HTMLDivElement>(null);
   drag(dragRef);
-  dragPreview(dragPreviewRef);
+  dragPreview(getEmptyImage());
 
   const removePassenger = () => {
     passengerCallback({ type: "create", passenger: data });

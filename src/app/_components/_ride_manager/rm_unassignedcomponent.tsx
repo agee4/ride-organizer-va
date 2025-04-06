@@ -6,7 +6,7 @@ import { RideManagerContext } from "./rmcontext";
 import { College, CollegeTag } from "@/app/_classes/person";
 import { Passenger, PassengerDisplay, YearTag } from "@/app/_classes/passenger";
 import { PassengerDragItem, DNDType } from "@/app/_classes/ItemTypes";
-
+import { getEmptyImage } from "react-dnd-html5-backend";
 
 const RM_UnassignedComponent = ({
   data,
@@ -32,9 +32,8 @@ const RM_UnassignedComponent = ({
     }),
   }));
   const dragRef = useRef<HTMLDivElement>(null);
-  const dragPreviewRef = useRef<HTMLDivElement>(null);
   drag(dragRef);
-  dragPreview(dragPreviewRef);
+  dragPreview(getEmptyImage());
 
   return (
     <div
