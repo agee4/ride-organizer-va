@@ -250,205 +250,202 @@ export const RideManager = ({
     >
       <DndProvider backend={HTML5Backend}>
         <PassengerDragLayer />
-        <div className="flex w-full flex-row justify-evenly">
-          <div className="rounded-md border border-neutral-500 p-2">
-            <h2>Ride Manager</h2>
-            <button className="rounded-full border px-2" onClick={clearRides}>
-              Clear All Rides
-            </button>
-            <div className="flex flex-row">
-              <div className="rounded-md border border-cyan-500 bg-cyan-50 p-2 dark:bg-cyan-950">
-                <div className="flex flex-row place-content-between">
-                  <span className="rounded-full bg-cyan-500 px-1">
-                    {unassignedList.length}/{unassignedCollection.size}/
-                    {originPassengers.size}
-                  </span>
-                  <div className="flex flex-row">
-                    <select
-                      className={
-                        "rounded-sm border " +
-                        (!unassignedSort && "text-neutral-500")
-                      }
-                      defaultValue={unassignedSort}
-                      onChange={updateUnassignedSort}
+        <div className="rounded-md border border-neutral-500 p-2">
+          <h2>Ride Manager</h2>
+          <button className="rounded-full border px-2" onClick={clearRides}>
+            Clear All Rides
+          </button>
+          <div className="flex flex-row">
+            <div className="rounded-md border border-cyan-500 bg-cyan-50 p-2 dark:bg-cyan-950">
+              <div className="flex flex-col place-content-between sm:flex-row">
+                <span className="rounded-full bg-cyan-500 px-1 text-center">
+                  {unassignedList.length}/{unassignedCollection.size}/
+                  {originPassengers.size}
+                </span>
+                <div className="flex flex-row place-content-end">
+                  <select
+                    className={
+                      "rounded-sm border " +
+                      (!unassignedSort && "text-neutral-500")
+                    }
+                    defaultValue={unassignedSort}
+                    onChange={updateUnassignedSort}
+                  >
+                    <option
+                      className="dark:text-black"
+                      key={undefined}
+                      value={undefined}
                     >
+                      -Sort-
+                    </option>
+                    {Object.values(PassengerSort).map((option) => (
                       <option
                         className="dark:text-black"
-                        key={undefined}
-                        value={undefined}
+                        key={option}
+                        value={option}
                       >
-                        -Sort-
+                        {option}
                       </option>
-                      {Object.values(PassengerSort).map((option) => (
-                        <option
-                          className="dark:text-black"
-                          key={option}
-                          value={option}
-                        >
+                    ))}
+                  </select>
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={toggleUnassignedReverse}
+                  >
+                    {unassignedReverse ? (
+                      <span>&uarr;</span>
+                    ) : (
+                      <span>&darr;</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-row place-content-end">
+                {showUnassignedFilter ? (
+                  <select
+                    className={
+                      "rounded-sm border " +
+                      (!unassignedFilter && "text-neutral-500")
+                    }
+                    defaultValue={unassignedFilter}
+                    onChange={updateUnassignedFilter}
+                    multiple
+                  >
+                    <optgroup label="Ride Times">
+                      {Object.values(RideTimes).map((option) => (
+                        <option key={option} value={option}>
                           {option}
                         </option>
                       ))}
-                    </select>
-                    <button
-                      className="ml-1 font-bold text-neutral-500"
-                      onClick={toggleUnassignedReverse}
-                    >
-                      {unassignedReverse ? (
-                        <span>&uarr;</span>
-                      ) : (
-                        <span>&darr;</span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-row place-content-end">
-                  {showUnassignedFilter ? (
-                    <select
-                      className={
-                        "rounded-sm border " +
-                        (!unassignedFilter && "text-neutral-500")
-                      }
-                      defaultValue={unassignedFilter}
-                      onChange={updateUnassignedFilter}
-                      multiple
-                    >
-                      <optgroup label="Ride Times">
-                        {Object.values(RideTimes).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Colleges">
-                        {Object.values(College).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                  ) : (
-                    <p
-                      className={
-                        "rounded-sm border " +
-                        (unassignedFilter.length < 1 &&
-                          " border-neutral-500 text-neutral-500")
-                      }
-                      onClick={toggleShowUnassignedFilter}
-                    >
-                      {unassignedFilter.length < 1
-                        ? "-Filter-"
-                        : unassignedFilter}
-                    </p>
-                  )}
-                  <button
-                    className="ml-1 font-bold text-neutral-500"
+                    </optgroup>
+                    <optgroup label="Colleges">
+                      {Object.values(College).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                ) : (
+                  <p
+                    className={
+                      "rounded-sm border " +
+                      (unassignedFilter.length < 1 &&
+                        " border-neutral-500 text-neutral-500")
+                    }
                     onClick={toggleShowUnassignedFilter}
                   >
-                    {showUnassignedFilter ? (
-                      <span>&times;</span>
-                    ) : (
-                      <span>&hellip;</span>
-                    )}
+                    {unassignedFilter.length < 1
+                      ? "-Filter-"
+                      : unassignedFilter}
+                  </p>
+                )}
+                <button
+                  className="ml-1 font-bold text-neutral-500"
+                  onClick={toggleShowUnassignedFilter}
+                >
+                  {showUnassignedFilter ? (
+                    <span>&times;</span>
+                  ) : (
+                    <span>&hellip;</span>
+                  )}
+                </button>
+              </div>
+              <RM_UnassignedListComponent />
+            </div>
+            <div className="rounded-md border border-orange-500 bg-orange-50 p-2 dark:bg-orange-950">
+              <div className="flex flex-col place-content-between sm:flex-row">
+                <span className="rounded-full bg-orange-500 px-1 text-center">
+                  {rideList.length}/{originRides.size}
+                </span>
+                <div className="flex flex-row place-content-end">
+                  <select
+                    className={
+                      "rounded-sm border " + (!rideSort && "text-neutral-500")
+                    }
+                    defaultValue={rideSort}
+                    onChange={updateRideSort}
+                  >
+                    <option
+                      className="dark:text-neutral-500"
+                      key={undefined}
+                      value={undefined}
+                    >
+                      -Sort-
+                    </option>
+                    {Object.values(RideSort).map((option) => (
+                      <option
+                        className="dark:text-black"
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={toggleRideReverse}
+                  >
+                    {rideReverse ? <span>&uarr;</span> : <span>&darr;</span>}
                   </button>
                 </div>
-                <RM_UnassignedListComponent />
               </div>
-              <div className="rounded-md border border-orange-500 bg-orange-50 p-2 dark:bg-orange-950">
-                <div className="flex flex-row place-content-between">
-                  <span className="rounded-full bg-orange-500 px-1">
-                    {rideList.length}/{originRides.size}
-                  </span>
-                  <div className="flex flex-row">
-                    <select
-                      className={
-                        "rounded-sm border " + (!rideSort && "text-neutral-500")
-                      }
-                      defaultValue={rideSort}
-                      onChange={updateRideSort}
-                    >
-                      <option
-                        className="dark:text-neutral-500"
-                        key={undefined}
-                        value={undefined}
-                      >
-                        -Sort-
-                      </option>
-                      {Object.values(RideSort).map((option) => (
-                        <option
-                          className="dark:text-black"
-                          key={option}
-                          value={option}
-                        >
+              <div className="flex flex-row place-content-end">
+                {showRideFilter ? (
+                  <select
+                    className={
+                      "rounded-sm border " + (!rideFilter && "text-neutral-500")
+                    }
+                    value={rideFilter}
+                    onChange={updateRideFilter}
+                    multiple
+                  >
+                    <optgroup label="Ride Times">
+                      {Object.values(RideTimes).map((option) => (
+                        <option key={option} value={option}>
                           {option}
                         </option>
                       ))}
-                    </select>
-                    <button
-                      className="ml-1 font-bold text-neutral-500"
-                      onClick={toggleRideReverse}
-                    >
-                      {rideReverse ? <span>&uarr;</span> : <span>&darr;</span>}
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-row place-content-end">
-                  {showRideFilter ? (
-                    <select
-                      className={
-                        "rounded-sm border " +
-                        (!rideFilter && "text-neutral-500")
-                      }
-                      value={rideFilter}
-                      onChange={updateRideFilter}
-                      multiple
-                    >
-                      <optgroup label="Ride Times">
-                        {Object.values(RideTimes).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Colleges">
-                        {Object.values(College).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                  ) : (
-                    <p
-                      className={
-                        "rounded-sm border " +
-                        (rideFilter.length < 1 &&
-                          " border-neutral-500 text-neutral-500")
-                      }
-                      onClick={toggleShowRideFilter}
-                    >
-                      {rideFilter.length < 1 ? "-Filter-" : rideFilter}
-                    </p>
-                  )}
-                  <button
-                    className="ml-1 font-bold text-neutral-500"
+                    </optgroup>
+                    <optgroup label="Colleges">
+                      {Object.values(College).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                ) : (
+                  <p
+                    className={
+                      "rounded-sm border " +
+                      (rideFilter.length < 1 &&
+                        " border-neutral-500 text-neutral-500")
+                    }
                     onClick={toggleShowRideFilter}
                   >
-                    {showRideFilter ? (
-                      <span>&times;</span>
-                    ) : (
-                      <span>&hellip;</span>
-                    )}
-                  </button>
-                </div>
-                <ul className="m-1 max-h-[70dvh] overflow-auto">
-                  {rideList.map((item) => (
-                    <li key={item.getDriver().getEmail()}>
-                      <RM_RideComponent data={item} />
-                    </li>
-                  ))}
-                </ul>
+                    {rideFilter.length < 1 ? "-Filter-" : rideFilter}
+                  </p>
+                )}
+                <button
+                  className="ml-1 font-bold text-neutral-500"
+                  onClick={toggleShowRideFilter}
+                >
+                  {showRideFilter ? (
+                    <span>&times;</span>
+                  ) : (
+                    <span>&hellip;</span>
+                  )}
+                </button>
               </div>
+              <ul className="m-1 max-h-[70dvh] overflow-auto">
+                {rideList.map((item) => (
+                  <li key={item.getDriver().getEmail()}>
+                    <RM_RideComponent data={item} />
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>

@@ -38,7 +38,7 @@ const RM_UnassignedComponent = ({
   return (
     <div
       className={
-        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800 " +
+        "my-1 max-w-[40vw] rounded-md bg-cyan-200 p-2 sm:max-w-[496px] dark:bg-cyan-800 " +
         (isDragging && "opacity-50")
       }
       ref={dragRef}
@@ -95,7 +95,7 @@ const RM_UnassignedComponent = ({
               <ul className="mt-1">
                 <li>
                   <textarea
-                    className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                    className="w-[30vw] rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                     defaultValue={data.getNotes()}
                   />
                 </li>

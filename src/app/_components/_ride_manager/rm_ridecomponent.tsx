@@ -55,7 +55,7 @@ const RM_PassengerComponent = ({
   return (
     <div
       className={
-        "my-1 max-w-[496px] rounded-md p-2 " +
+        "my-1 max-w-[40vw] rounded-md p-2 sm:max-w-[496px] " +
         (isDragging && "opacity-50") +
         (ride.validate(data)
           ? " bg-cyan-200 dark:bg-cyan-800"
@@ -113,7 +113,7 @@ const RM_PassengerComponent = ({
               <ul className="mt-1">
                 <li>
                   <textarea
-                    className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                    className="w-[38vw] rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                     defaultValue={data.getNotes()}
                   />
                 </li>
@@ -235,7 +235,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
             <ul className="mt-1">
               <li>
                 <textarea
-                  className="rounded-md bg-orange-400 p-1 dark:bg-orange-600"
+                  className="w-[38vw] rounded-md bg-orange-400 p-1 dark:bg-orange-600"
                   defaultValue={data.getDriver().getNotes()}
                 />
               </li>

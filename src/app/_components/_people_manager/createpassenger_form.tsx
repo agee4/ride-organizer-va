@@ -124,7 +124,7 @@ export const CreatePassengerForm = ({
       />
       <div className="block">
         <input
-          className="w-[142px] rounded-sm border"
+          className="w-[140px] rounded-sm border"
           type="text"
           name="address"
           value={newPassengerData.address}
@@ -229,7 +229,7 @@ export const CreatePassengerForm = ({
       </div>
       <div className="block">
         <input
-          className="w-[142px] rounded-sm border"
+          className="w-[127px] rounded-sm border"
           type="text"
           name="phone"
           value={newPassengerData.phone}

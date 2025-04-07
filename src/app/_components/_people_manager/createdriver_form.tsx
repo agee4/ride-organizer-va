@@ -114,7 +114,7 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
       />
       <div className="block">
         <input
-          className="w-[142px] rounded-sm border"
+          className="w-[140px] rounded-sm border"
           type="text"
           name="address"
           value={newDriverData.address}
