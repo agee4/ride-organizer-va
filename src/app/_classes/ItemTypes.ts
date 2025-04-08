@@ -3,5 +3,5 @@ export enum DNDType {
 }
 
 export interface PassengerDragItem {
-  email: string;
+  emails: string[];
 }

@@ -10,9 +10,17 @@ import { getEmptyImage } from "react-dnd-html5-backend";
 
 const RM_UnassignedComponent = ({
   data,
+  index,
+  selectedPassengers,
+  handleSelect,
+  clearSelect,
   display,
 }: {
   data: Passenger;
+  index: number;
+  selectedPassengers: Passenger[];
+  handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
+  clearSelect: () => void;
   display?: PassengerDisplay[];
 }) => {
   const [showDetail, setShowDetail] = useState<boolean>(true);
@@ -24,25 +32,41 @@ const RM_UnassignedComponent = ({
     PassengerDragItem,
     void,
     { isDragging: boolean }
-  >(() => ({
-    type: DNDType.PASSENGER,
-    item: { email: data.getEmail() },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
+  >(
+    () => ({
+      type: DNDType.PASSENGER,
+      item: {
+        emails:
+          selectedPassengers.length > 0
+            ? selectedPassengers.map((passenger) => passenger.getEmail())
+            : [data.getEmail()],
+      },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: () => {
+        clearSelect();
+      },
     }),
-  }));
+    [selectedPassengers]
+  );
   const dragRef = useRef<HTMLDivElement>(null);
   drag(dragRef);
   dragPreview(getEmptyImage());
+
+  const selected = selectedPassengers.find(
+    (p) => data.getEmail() === p.getEmail()
+  );
 
   return (
     <div
       className={
         "my-1 max-w-[40vw] rounded-md bg-cyan-200 p-2 sm:max-w-[496px] dark:bg-cyan-800 " +
-        (isDragging && "opacity-50")
+        (isDragging && "opacity-50") +
+        (selected && " border-4 border-amber-500")
       }
       ref={dragRef}
-      onClick={toggleDetail}
+      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
     >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
@@ -121,6 +145,48 @@ export const RM_UnassignedListComponent = () => {
     rideCollection,
     rideCallback,
   } = rmContext;
+  const [selectedPassengers, setSelectedPassengers] = useState<Passenger[]>([]);
+  const [prevSelectedIndex, setPrevSelectedIndex] = useState<number>(-1);
+  const clearSelect = () => {
+    setSelectedPassengers([]);
+    setPrevSelectedIndex(-1);
+  };
+  const handleSelect = (index: number, shiftKey: boolean, ctrlKey: boolean) => {
+    let newSelectedPassengers = new Array<Passenger>();
+    const newSelection = unassignedList[index];
+    const newPrevSelectedIndex = index;
+    if (shiftKey) {
+      if (prevSelectedIndex >= index) {
+        newSelectedPassengers = [
+          ...selectedPassengers,
+          ...unassignedList.slice(index, prevSelectedIndex),
+        ];
+      } else {
+        newSelectedPassengers = [
+          ...selectedPassengers,
+          ...unassignedList.slice(prevSelectedIndex + 1, index + 1),
+        ];
+      }
+    } else if (ctrlKey) {
+      if (!selectedPassengers.find((p) => p.equals(newSelection)))
+        newSelectedPassengers = [...selectedPassengers, newSelection];
+      else
+        newSelectedPassengers = selectedPassengers.filter(
+          (p) => !p.equals(newSelection)
+        );
+    } else {
+      if (!selectedPassengers.find((p) => p.equals(newSelection)))
+        newSelectedPassengers.push(newSelection);
+    }
+    setSelectedPassengers(
+      unassignedList
+        ? unassignedList.filter((p) =>
+            newSelectedPassengers.find((s) => s.equals(p))
+          )
+        : []
+    );
+    setPrevSelectedIndex(newPrevSelectedIndex);
+  };
 
   const [{ canDrop, isOver }, drop] = useDrop<
     PassengerDragItem,
@@ -130,18 +196,20 @@ export const RM_UnassignedListComponent = () => {
     () => ({
       accept: DNDType.PASSENGER,
       drop: (item) => {
-        const dragpassenger = unassignedCollection.get(item.email);
-        if (!!dragpassenger) {
-          for (const ride of rideCollection.values()) {
-            if (ride.getPassengers().has(dragpassenger.getEmail())) {
-              ride.getPassengers().delete(dragpassenger.getEmail());
-              rideCallback({ type: "create", ride: ride });
+        for (const email of item.emails) {
+          const dragpassenger = unassignedCollection.get(email);
+          if (!!dragpassenger) {
+            for (const ride of rideCollection.values()) {
+              if (ride.getPassengers().has(dragpassenger.getEmail())) {
+                ride.getPassengers().delete(dragpassenger.getEmail());
+                rideCallback({ type: "create", ride: ride });
+              }
             }
+            unassignedCallback({
+              type: "create",
+              passenger: dragpassenger,
+            });
           }
-          unassignedCallback({
-            type: "create",
-            passenger: dragpassenger,
-          });
         }
       },
       collect: (monitor) => ({
@@ -157,16 +225,26 @@ export const RM_UnassignedListComponent = () => {
   return (
     <div
       className={
-        "rounded-md " + (isOver && canDrop ? "bg-amber-300" : "bg-neutral-500")
+        "rounded-md " + (isOver && canDrop ? "bg-amber-500" : "bg-neutral-500")
       }
       ref={dropRef}
     >
       <ul className="m-1 max-h-[70dvh] overflow-auto">
-        {unassignedList.map((item) => (
-          <li key={item.getEmail()}>
-            <RM_UnassignedComponent data={item} />
-          </li>
-        ))}
+        {unassignedList.length > 0 ? (
+          unassignedList.map((item, index) => (
+            <li key={item.getEmail()}>
+              <RM_UnassignedComponent
+                data={item}
+                index={index}
+                selectedPassengers={selectedPassengers}
+                handleSelect={handleSelect}
+                clearSelect={clearSelect}
+              />
+            </li>
+          ))
+        ) : (
+          <li>No Passengers</li>
+        )}
       </ul>
     </div>
   );

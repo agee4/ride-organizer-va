@@ -1,6 +1,6 @@
 // rm_ridecomponent.tsx
 
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { College, CollegeTag } from "@/app/_classes/person";
 import { Passenger, PassengerDisplay } from "@/app/_classes/passenger";
@@ -12,10 +12,18 @@ import { getEmptyImage } from "react-dnd-html5-backend";
 const RM_PassengerComponent = ({
   data,
   ride,
+  index,
+  selectedPassengers,
+  handleSelect,
+  clearSelect,
   display,
 }: {
   data: Passenger;
   ride: Ride;
+  index: number;
+  selectedPassengers: Passenger[];
+  handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
+  clearSelect: () => void;
   display?: PassengerDisplay[];
 }) => {
   const rmContext = useContext(RideManagerContext);
@@ -35,16 +43,31 @@ const RM_PassengerComponent = ({
     PassengerDragItem,
     void,
     { isDragging: boolean }
-  >(() => ({
-    type: DNDType.PASSENGER,
-    item: { email: data.getEmail() },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
+  >(
+    () => ({
+      type: DNDType.PASSENGER,
+      item: {
+        emails:
+          selectedPassengers.length > 0
+            ? selectedPassengers.map((passenger) => passenger.getEmail())
+            : [data.getEmail()],
+      },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: () => {
+        clearSelect();
+      },
     }),
-  }));
+    [selectedPassengers]
+  );
   const dragRef = useRef<HTMLDivElement>(null);
   drag(dragRef);
   dragPreview(getEmptyImage());
+
+  const selected = selectedPassengers.find(
+    (p) => data.getEmail() === p.getEmail()
+  );
 
   const removePassenger = () => {
     passengerCallback({ type: "create", passenger: data });
@@ -57,12 +80,14 @@ const RM_PassengerComponent = ({
       className={
         "my-1 max-w-[40vw] rounded-md p-2 sm:max-w-[496px] " +
         (isDragging && "opacity-50") +
+        (selected && " border-4 border-amber-500") +
         (ride.validate(data)
           ? " bg-cyan-200 dark:bg-cyan-800"
           : " bg-red-400 dark:bg-red-600")
       }
       ref={dragRef}
-      onClick={toggleDetail}
+      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
+      onDoubleClick={toggleDetail}
     >
       <div className="flex flex-row place-content-between">
         {(!display || display.includes(PassengerDisplay.NAME)) && (
@@ -148,6 +173,59 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
   const togglePassengers = () => {
     setShowPassengers(!showPassengers);
   };
+  const [selectedPassengers, setSelectedPassengers] = useState<Passenger[]>([]);
+  const [prevSelectedIndex, setPrevSelectedIndex] = useState<number>(-1);
+  const clearSelect = () => {
+    setSelectedPassengers([]);
+    setPrevSelectedIndex(-1);
+  };
+  const [passengerList, setPassengerList] = useState<Passenger[]>([
+    ...data.getPassengers().values(),
+  ]);
+  useEffect(() => {
+    setPassengerList([
+      ...(rideCollection.get(data.getDriver().getEmail()) || data)
+        .getPassengers()
+        .values(),
+    ]);
+  }, [data, rideCollection]);
+
+  const handleSelect = (index: number, shiftKey: boolean, ctrlKey: boolean) => {
+    let newSelectedPassengers = new Array<Passenger>();
+    const newSelection = passengerList[index];
+    const newPrevSelectedIndex = index;
+    if (shiftKey) {
+      if (prevSelectedIndex >= index) {
+        newSelectedPassengers = [
+          ...selectedPassengers,
+          ...passengerList.slice(index, prevSelectedIndex),
+        ];
+      } else {
+        newSelectedPassengers = [
+          ...selectedPassengers,
+          ...passengerList.slice(prevSelectedIndex + 1, index + 1),
+        ];
+      }
+    } else if (ctrlKey) {
+      if (!selectedPassengers.find((p) => p.equals(newSelection)))
+        newSelectedPassengers = [...selectedPassengers, newSelection];
+      else
+        newSelectedPassengers = selectedPassengers.filter(
+          (p) => !p.equals(newSelection)
+        );
+    } else {
+      if (!selectedPassengers.find((p) => p.equals(newSelection)))
+        newSelectedPassengers.push(newSelection);
+    }
+    setSelectedPassengers(
+      passengerList
+        ? passengerList.filter((p) =>
+            newSelectedPassengers.find((s) => s.equals(p))
+          )
+        : []
+    );
+    setPrevSelectedIndex(newPrevSelectedIndex);
+  };
 
   const [{ canDrop, isOver }, drop] = useDrop<
     PassengerDragItem,
@@ -157,9 +235,11 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
     () => ({
       accept: DNDType.PASSENGER,
       drop: (item) => {
-        const dragpassenger = unassignedCollection.get(item.email);
-        if (!!dragpassenger) {
-          addPassengerHelper(dragpassenger);
+        for (const email of item.emails) {
+          const dragpassenger = unassignedCollection.get(email);
+          if (!!dragpassenger) {
+            addPassengerHelper(dragpassenger);
+          }
         }
       },
       collect: (monitor) => ({
@@ -186,16 +266,18 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
       type: "delete",
       passenger: passenger,
     });
-    /**remove passenger from previous rides (if possible) */
-    for (const ride of rideCollection.values()) {
-      if (ride.getPassengers().has(passenger.getEmail())) {
-        ride.getPassengers().delete(passenger.getEmail());
-        rideCallback({ type: "create", ride: ride });
+    if (!data.getPassengers().has(passenger.getEmail())) {
+      /**remove passenger from previous rides (if possible) */
+      for (const ride of rideCollection.values()) {
+        if (ride.getPassengers().has(passenger.getEmail())) {
+          ride.getPassengers().delete(passenger.getEmail());
+          rideCallback({ type: "create", ride: ride });
+        }
       }
+      /**add passenger to ride */
+      data.addPassenger(passenger);
+      rideCallback({ type: "create", ride: data });
     }
-    /**add passenger to ride */
-    data.addPassenger(passenger);
-    rideCallback({ type: "create", ride: data });
   };
 
   const seatsleft = data.getDriver().getSeats() - data.getPassengers().size;
@@ -249,7 +331,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
           (!valid
             ? "bg-red-500"
             : isOver && canDrop
-              ? "bg-amber-300"
+              ? "bg-amber-500"
               : "bg-neutral-500")
         }
       >
@@ -277,11 +359,15 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
           )}
           {showPassengers && (
             <>
-              {Array.from(data.getPassengers()).map(([key, value]) => (
-                <li key={key}>
+              {passengerList.map((item, index) => (
+                <li key={item.getEmail()}>
                   <RM_PassengerComponent
-                    data={value}
+                    data={item}
                     ride={data}
+                    index={index}
+                    selectedPassengers={selectedPassengers}
+                    handleSelect={handleSelect}
+                    clearSelect={clearSelect}
                     display={[
                       PassengerDisplay.NAME,
                       PassengerDisplay.ADDRESS,

@@ -29,7 +29,7 @@ export const PassengerDragLayer = () => {
   }
 
   const data =
-    unassignedCollection.get(item.email) ||
+    unassignedCollection.get(item.emails[0]) ||
     new Passenger({
       email: "",
       name: "",
@@ -48,7 +48,7 @@ export const PassengerDragLayer = () => {
     PassengerDisplay.NOTES,
   ];
 
-  return (
+  return item.emails.length == 1 ? (
     <div
       className="fixed top-0 left-0 z-50 h-full w-full"
       style={{
@@ -56,7 +56,7 @@ export const PassengerDragLayer = () => {
         transform: `translate(${currentOffset.x}px, ${currentOffset.y}px)`,
       }}
     >
-      <div className="my-1 max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+      <div className="max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
         <div className="flex flex-row place-content-between">
           {(!display || display.includes(PassengerDisplay.NAME)) && (
             <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
@@ -104,13 +104,35 @@ export const PassengerDragLayer = () => {
               <ul className="mt-1">
                 <li>
                   <textarea
-                    className="rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                    className="w-full rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                     defaultValue={data.getNotes()}
                   />
                 </li>
               </ul>
             )}
         </ul>
+      </div>
+    </div>
+  ) : (
+    <div
+      className="fixed top-0 left-0 z-50 h-full w-full"
+      style={{
+        pointerEvents: "none",
+        transform: `translate(${currentOffset.x}px, ${currentOffset.y}px)`,
+      }}
+    >
+      <div className="w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+        <div className="flex flex-row place-content-between">
+          {(!display || display.includes(PassengerDisplay.NAME)) && (
+            <h3 className="m-1 text-lg font-bold">{data.getName()}</h3>
+          )}
+        </div>
+      </div>
+      <div className="fixed top-10 left-2 -z-10 w-[232px] rounded-md bg-cyan-300 pl-2 dark:bg-cyan-900">
+        &hellip;
+      </div>
+      <div className="fixed top-10 left-56 rounded-full bg-amber-500 px-1">
+        {item.emails.length}
       </div>
     </div>
   );
