@@ -153,7 +153,7 @@ export const PM_DriverComponent = ({
             {(!display || display.includes(DriverDisplay.NOTES)) &&
               data.getNotes() && (
                 <textarea
-                  className="mt-1 rounded-md bg-orange-400 p-1 dark:bg-orange-600"
+                  className="mt-1 w-full rounded-md bg-orange-400 p-1 dark:bg-orange-600"
                   defaultValue={data.getNotes()}
                 />
               )}

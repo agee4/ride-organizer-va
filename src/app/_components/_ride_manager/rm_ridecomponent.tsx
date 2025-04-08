@@ -113,7 +113,7 @@ const RM_PassengerComponent = ({
               <ul className="mt-1">
                 <li>
                   <textarea
-                    className="w-[38vw] rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                    className="w-full rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                     defaultValue={data.getNotes()}
                   />
                 </li>
@@ -203,7 +203,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
 
   return (
     <div
-      className="my-1 rounded-md bg-orange-300 p-2 dark:bg-orange-700"
+      className="my-1 max-w-[40vw] rounded-md bg-orange-300 p-2 dark:bg-orange-700"
       ref={dropRef}
     >
       <div className="flex flex-row place-content-between">
@@ -235,7 +235,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
             <ul className="mt-1">
               <li>
                 <textarea
-                  className="w-[38vw] rounded-md bg-orange-400 p-1 dark:bg-orange-600"
+                  className="w-full rounded-md bg-orange-400 p-1 dark:bg-orange-600"
                   defaultValue={data.getDriver().getNotes()}
                 />
               </li>

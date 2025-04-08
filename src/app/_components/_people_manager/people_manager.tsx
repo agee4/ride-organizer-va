@@ -85,7 +85,10 @@ export const PeopleManager = ({
       <h2>People Manager</h2>
       <div className="flex w-full flex-col justify-evenly sm:flex-row">
         <button
-          className="rounded-full border px-2 sm:hidden"
+          className={
+            "rounded-full border px-2 sm:hidden " +
+            (mobileShowDriver ? "bg-cyan-500" : "bg-orange-500")
+          }
           onClick={toggleMobileShowDriver}
         >
           Show {mobileShowDriver ? "Passengers" : "Drivers"}

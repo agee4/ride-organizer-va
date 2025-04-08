@@ -95,7 +95,7 @@ const RM_UnassignedComponent = ({
               <ul className="mt-1">
                 <li>
                   <textarea
-                    className="w-[30vw] rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                    className="w-full rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                     defaultValue={data.getNotes()}
                   />
                 </li>

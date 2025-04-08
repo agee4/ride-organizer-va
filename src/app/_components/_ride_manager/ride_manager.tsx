@@ -17,6 +17,7 @@ import {
   passengerReducer,
   PassengerSort,
   sortPassengers,
+  Year,
 } from "../../_classes/passenger";
 import {
   filterRides,
@@ -311,15 +312,22 @@ export const RideManager = ({
                     onChange={updateUnassignedFilter}
                     multiple
                   >
-                    <optgroup label="Ride Times">
+                    <optgroup label="Ride Time">
                       {Object.values(RideTimes).map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="Colleges">
+                    <optgroup label="College">
                       {Object.values(College).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Year">
+                      {Object.values(Year).map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>

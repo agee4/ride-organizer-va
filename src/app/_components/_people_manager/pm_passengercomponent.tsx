@@ -200,7 +200,7 @@ export const PM_PassengerComponent = ({
             {(!display || display.includes(PassengerDisplay.NOTES)) &&
               data.getNotes() && (
                 <textarea
-                  className="mt-1 rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
+                  className="mt-1 w-full rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                   defaultValue={data.getNotes()}
                 />
               )}

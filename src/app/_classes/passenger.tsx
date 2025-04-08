@@ -185,6 +185,7 @@ export interface NewPassengerData {
 export enum PassengerSort {
   NAME = "name",
   ADDRESS = "address",
+  YEAR = "year",
   FIRST = "first",
   SECOND = "second",
   THIRD = "third",
@@ -198,6 +199,26 @@ export const sortPassengers = (
   switch (sort) {
     case PassengerSort.ADDRESS:
       list.sort((a, b) => a.getAddress().localeCompare(b.getAddress()));
+      break;
+    case PassengerSort.YEAR:
+      list.sort((a, b) => {
+        const yeartoNum = (year: Year): number => {
+          switch (year) {
+            case Year.FRESHMAN:
+              return 4;
+            case Year.SOPHOMORE:
+              return 3;
+            case Year.JUNIOR:
+              return 2;
+            case Year.SENIOR:
+              return 1;
+          }
+          return 0;
+        };
+        const byear = b.getYear();
+        const ayear = a.getYear();
+        return yeartoNum(byear) - yeartoNum(ayear);
+      });
       break;
     case PassengerSort.FIRST:
       list.sort(
@@ -243,7 +264,7 @@ export const sortPassengers = (
 
 export const filterPassengers = (
   list: Passenger[],
-  filter: (RideTimes | College | undefined)[] | undefined
+  filter: (RideTimes | College | Year | undefined)[] | undefined
 ): Passenger[] => {
   if (filter) {
     if (filter.length > 0) {
@@ -257,6 +278,8 @@ export const filterPassengers = (
           );
         } else if (Object.values(College).includes(f as College)) {
           newlist = [...newlist].filter((x) => x.getCollege() === f);
+        } else if (Object.values(Year).includes(f as Year)) {
+          newlist = [...newlist].filter((x) => x.getYear() === f);
         }
       }
       return newlist;
