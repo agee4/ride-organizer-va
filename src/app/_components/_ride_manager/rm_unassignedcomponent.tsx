@@ -121,6 +121,7 @@ const RM_UnassignedComponent = ({
                   <textarea
                     className="w-full rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                     defaultValue={data.getNotes()}
+                    readOnly
                   />
                 </li>
               </ul>
@@ -225,11 +226,11 @@ export const RM_UnassignedListComponent = () => {
   return (
     <div
       className={
-        "rounded-md " + (isOver && canDrop ? "bg-amber-500" : "bg-neutral-500")
+        "rounded-md size-f " + (isOver && canDrop ? "bg-amber-500" : "bg-neutral-500")
       }
       ref={dropRef}
     >
-      <ul className="m-1 max-h-[70dvh] overflow-auto">
+      <ul className="m-1 h-[70svh] overflow-auto">
         {unassignedList.length > 0 ? (
           unassignedList.map((item, index) => (
             <li key={item.getEmail()}>
@@ -243,7 +244,7 @@ export const RM_UnassignedListComponent = () => {
             </li>
           ))
         ) : (
-          <li>No Passengers</li>
+          <li className="text-center">No Passengers</li>
         )}
       </ul>
     </div>

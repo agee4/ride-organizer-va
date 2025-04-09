@@ -155,6 +155,7 @@ export const PM_DriverComponent = ({
                 <textarea
                   className="mt-1 w-full rounded-md bg-orange-400 p-1 dark:bg-orange-600"
                   defaultValue={data.getNotes()}
+                  readOnly
                 />
               )}
           </ul>

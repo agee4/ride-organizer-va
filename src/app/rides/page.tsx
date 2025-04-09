@@ -23,6 +23,7 @@ export default function Page() {
   const updateSaveSheetName = (event: ChangeEvent<HTMLInputElement>) => {
     setSaveSheetName(event.target.value);
   };
+  const [saveErrorGiven, setSaveErrorGiven] = useState<boolean>(false);
 
   const [passengerCollection, passengerDispatch] = useReducer(
     passengerReducer,
@@ -182,6 +183,28 @@ export default function Page() {
       }
     }
   };
+  const checkSaveSheet = () => {
+    const problems = [];
+    for (const ride of rideCollection.values()) {
+      if (!ride.updateValid()) {
+        problems.push(
+          ride.getDriver().getName() +
+            "'s RIDE HAS " +
+            ride.getInvalid().length +
+            " PROBLEM(S)!"
+        );
+        problems.push(ride.getInvalid());
+        problems.push(" ");
+      }
+    }
+    if (problems.length > 0 && !saveErrorGiven) {
+      alert(problems.join("\n"));
+      setSaveErrorGiven(true);
+    } else {
+      saveSheet();
+      setSaveErrorGiven(false);
+    }
+  };
   const saveSheet = () => {
     const wb = utils.book_new();
     const passengerJSON = [];
@@ -321,6 +344,7 @@ export default function Page() {
       storage[key] = Array.from(value.getPassengers().keys());
     }
     localStorage.setItem("rides", JSON.stringify(storage));
+    setSaveErrorGiven(false);
   }, [rideCollection]);
 
   return (
@@ -378,21 +402,21 @@ export default function Page() {
               driverCallback={driverDispatch}
             />
           </div>
-          <div>
-            <div className="flex flex-row">
-              <input
-                className="rounded-sm border"
-                type="text"
-                value={saveSheetName}
-                placeholder="Set Sheet Name"
-                onChange={updateSaveSheetName}
-              />
-              .xlsx
-            </div>
-            <button className="rounded-full border px-2" onClick={saveSheet}>
-              Save Data to Sheet
-            </button>
+        </div>
+        <div>
+          <div className="flex flex-row">
+            <input
+              className="rounded-sm border"
+              type="text"
+              value={saveSheetName}
+              placeholder="Set Sheet Name"
+              onChange={updateSaveSheetName}
+            />
+            .xlsx
           </div>
+          <button className="rounded-full border px-2" onClick={checkSaveSheet}>
+            Save Data to Sheet
+          </button>
         </div>
       </main>
     </div>

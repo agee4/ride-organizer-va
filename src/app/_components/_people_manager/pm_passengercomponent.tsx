@@ -202,6 +202,7 @@ export const PM_PassengerComponent = ({
                 <textarea
                   className="mt-1 w-full rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                   defaultValue={data.getNotes()}
+                  readOnly
                 />
               )}
           </ul>

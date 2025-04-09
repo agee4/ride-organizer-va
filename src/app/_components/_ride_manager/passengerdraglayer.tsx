@@ -106,6 +106,7 @@ export const PassengerDragLayer = () => {
                   <textarea
                     className="w-full rounded-md bg-cyan-400 p-1 dark:bg-cyan-600"
                     defaultValue={data.getNotes()}
+                    readOnly
                   />
                 </li>
               </ul>

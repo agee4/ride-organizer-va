@@ -226,6 +226,7 @@ export const RideManager = ({
           )
     );
   }, [originRides, rideSort, rideReverse, rideFilter]);
+
   const clearRides = () => {
     for (const ride of rideList) {
       for (const passenger of ride.getPassengers().values()) {
@@ -237,6 +238,45 @@ export const RideManager = ({
         ride: ride,
       });
     }
+  };
+  const autoRides = (filter: RideTimes | RideTimes[]) => {
+    const newUnassignedCollection = new Map(unassignedCollection);
+    const newRideCollection = new Map(originRides);
+    const autoRideHelper = (filter: RideTimes, backup?: boolean) => {
+      for (const unassigned of unassignedList.filter((p) =>
+        (backup ? p.getBackup() : p.getRides()).includes(filter)
+      )) {
+        for (const ride of rideList.filter((r) =>
+          r.getDriver().getRides().includes(filter)
+        )) {
+          const currentride = newRideCollection.get(
+            ride.getDriver().getEmail()
+          );
+          if (
+            currentride?.validate(unassigned) &&
+            currentride.getPassengers().size + 1 <=
+              currentride.getDriver().getSeats()
+          ) {
+            ride.addPassenger(unassigned);
+            newRideCollection.set(ride.getDriver().getEmail(), ride);
+            newUnassignedCollection.delete(unassigned.getEmail());
+            break;
+          }
+        }
+      }
+    };
+
+    if (filter instanceof Array) {
+      for (const f of filter) autoRideHelper(f);
+      for (const f of filter) autoRideHelper(f, true);
+    } else autoRideHelper(filter);
+
+    for (const removedpassenger of unassignedList.filter(
+      (p) => !newUnassignedCollection.has(p.getEmail())
+    )) {
+      unassignedDispatch({ type: "delete", passenger: removedpassenger });
+    }
+    rideCallback({ type: "set", rides: newRideCollection });
   };
 
   return (
@@ -253,9 +293,25 @@ export const RideManager = ({
         <PassengerDragLayer />
         <div className="rounded-md border border-neutral-500 p-2">
           <h2>Ride Manager</h2>
-          <button className="rounded-full border px-2" onClick={clearRides}>
-            Clear All Rides
-          </button>
+          <div>
+            <button className="rounded-full border px-2" onClick={clearRides}>
+              Clear Rides
+            </button>
+            <button
+              className="rounded-full border px-2"
+              onClick={() =>
+                autoRides([RideTimes.FIRST, RideTimes.SECOND, RideTimes.THIRD])
+              }
+            >
+              Auto Sunday
+            </button>
+            <button
+              className="rounded-full border px-2"
+              onClick={() => autoRides(RideTimes.FRIDAY)}
+            >
+              Auto Friday
+            </button>
+          </div>
           <div className="flex flex-row">
             <div className="rounded-md border border-cyan-500 bg-cyan-50 p-2 dark:bg-cyan-950">
               <div className="flex flex-col place-content-between sm:flex-row">
@@ -447,7 +503,7 @@ export const RideManager = ({
                   )}
                 </button>
               </div>
-              <ul className="m-1 max-h-[70dvh] overflow-auto">
+              <ul className="m-1 h-[70svh] overflow-auto">
                 {rideList.map((item) => (
                   <li key={item.getDriver().getEmail()}>
                     <RM_RideComponent data={item} />
