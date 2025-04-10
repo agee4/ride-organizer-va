@@ -65,6 +65,34 @@ export class Passenger extends Person {
     this.backup = backup;
   }
 
+  static from(passenger: Passenger) {
+    return new Passenger({
+      email: passenger.getEmail(),
+      name: passenger.getName(),
+      rides: passenger.getRides(),
+      address: passenger.getAddress(),
+      college: passenger.getCollege(),
+      year: passenger.year,
+      backup: passenger.backup,
+      phone: passenger.getPhone(),
+      notes: passenger.getNotes(),
+    });
+  }
+
+  getCopy(): Passenger {
+    return new Passenger({
+      email: this.getEmail(),
+      name: this.getName(),
+      rides: this.getRides(),
+      address: this.getAddress(),
+      college: this.getCollege(),
+      year: this.year,
+      backup: this.backup,
+      phone: this.getPhone(),
+      notes: this.getNotes(),
+    });
+  }
+
   getYear(): Year {
     return this.year;
   }

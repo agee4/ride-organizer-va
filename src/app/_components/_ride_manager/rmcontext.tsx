@@ -10,4 +10,5 @@ export const RideManagerContext = createContext<{
   rideCollection: Map<string, Ride>;
   unassignedCallback: ActionDispatch<[action: PassengerReducerAction]>;
   rideCallback: ActionDispatch<[action: RideReducerAction]>;
+  selectMode: boolean;
 } | null>(null);

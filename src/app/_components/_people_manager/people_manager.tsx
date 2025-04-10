@@ -137,7 +137,7 @@ export const PeopleManager = ({
               </button>
             </div>
           </div>
-          <ul className="max-h-[50dvh] overflow-auto">
+          <ul className="max-h-[50svh] overflow-auto">
             {pmPassengerList.map((item) => (
               <li key={item.getEmail()}>
                 <PM_PassengerComponent
@@ -194,7 +194,7 @@ export const PeopleManager = ({
               </button>
             </div>
           </div>
-          <ul className="max-h-[50dvh] overflow-auto">
+          <ul className="max-h-[50svh] overflow-auto">
             {pmDriverList.map((item) => (
               <li key={item.getEmail()}>
                 <PM_DriverComponent

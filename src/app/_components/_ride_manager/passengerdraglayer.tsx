@@ -132,7 +132,7 @@ export const PassengerDragLayer = () => {
       <div className="fixed top-10 left-2 -z-10 w-[232px] rounded-md bg-cyan-300 pl-2 dark:bg-cyan-900">
         &hellip;
       </div>
-      <div className="fixed top-10 left-56 rounded-full bg-amber-500 px-1">
+      <div className="fixed top-10 left-56 rounded-full bg-amber-500 px-1 dark:text-black">
         {item.emails.length}
       </div>
     </div>

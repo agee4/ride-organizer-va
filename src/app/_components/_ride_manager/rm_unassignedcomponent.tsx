@@ -145,6 +145,7 @@ export const RM_UnassignedListComponent = () => {
     unassignedCallback: unassignedCallback,
     rideCollection,
     rideCallback,
+    selectMode,
   } = rmContext;
   const [selectedPassengers, setSelectedPassengers] = useState<Passenger[]>([]);
   const [prevSelectedIndex, setPrevSelectedIndex] = useState<number>(-1);
@@ -168,7 +169,7 @@ export const RM_UnassignedListComponent = () => {
           ...unassignedList.slice(prevSelectedIndex + 1, index + 1),
         ];
       }
-    } else if (ctrlKey) {
+    } else if (ctrlKey || selectMode) {
       if (!selectedPassengers.find((p) => p.equals(newSelection)))
         newSelectedPassengers = [...selectedPassengers, newSelection];
       else
@@ -226,7 +227,8 @@ export const RM_UnassignedListComponent = () => {
   return (
     <div
       className={
-        "rounded-md size-f " + (isOver && canDrop ? "bg-amber-500" : "bg-neutral-500")
+        "size-f rounded-md " +
+        (isOver && canDrop ? "bg-amber-500" : "bg-neutral-500")
       }
       ref={dropRef}
     >

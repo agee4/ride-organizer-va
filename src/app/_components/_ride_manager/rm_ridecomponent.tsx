@@ -164,6 +164,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
     unassignedCallback: unassignedCallback,
     rideCollection,
     rideCallback,
+    selectMode,
   } = rmContext;
 
   const [showDriverDetail, setShowDriverDetail] = useState<boolean>(true);
@@ -185,9 +186,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
   ]);
   useEffect(() => {
     setPassengerList([
-      ...(rideCollection.get(data.getDriver().getEmail()) || data)
-        .getPassengers()
-        .values(),
+      ...(rideCollection.get(data.getEmail()) || data).getPassengers().values(),
     ]);
   }, [data, rideCollection]);
 
@@ -207,7 +206,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
           ...passengerList.slice(prevSelectedIndex + 1, index + 1),
         ];
       }
-    } else if (ctrlKey) {
+    } else if (ctrlKey || selectMode) {
       if (!selectedPassengers.find((p) => p.equals(newSelection)))
         newSelectedPassengers = [...selectedPassengers, newSelection];
       else
@@ -281,7 +280,6 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
     }
   };
 
-  const seatsleft = data.getDriver().getSeats() - data.getPassengers().size;
   const valid = data.updateValid();
 
   return (
@@ -343,7 +341,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
               className="rounded-md bg-neutral-300 p-1 dark:bg-neutral-700"
               onClick={togglePassengers}
             >
-              Seats Left: {seatsleft}/{data.getDriver().getSeats()}
+              Seats Left: {data.getSeatsLeft()}/{data.getDriver().getSeats()}
             </button>
           </li>
           {!valid && (
@@ -379,7 +377,7 @@ export const RM_RideComponent = ({ data }: { data: Ride }) => {
                   />
                 </li>
               ))}
-              {Array.from({ length: seatsleft }, (_, index) => (
+              {Array.from({ length: data.getSeatsLeft() }, (_, index) => (
                 <li key={index}>
                   <button
                     className="my-1 w-full rounded-md bg-white dark:bg-black"

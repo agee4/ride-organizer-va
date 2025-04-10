@@ -29,6 +29,32 @@ export class Driver extends Person {
     this.seats = seats;
   }
 
+  static from(driver: Driver) {
+    return new Driver({
+      email: driver.getEmail(),
+      name: driver.getName(),
+      rides: driver.getRides(),
+      address: driver.getAddress(),
+      college: driver.getCollege(),
+      seats: driver.seats,
+      phone: driver.getPhone(),
+      notes: driver.getNotes(),
+    });
+  }
+
+  getCopy(): Driver {
+    return new Driver({
+      email: this.getEmail(),
+      name: this.getName(),
+      rides: this.getRides(),
+      address: this.getAddress(),
+      college: this.getCollege(),
+      seats: this.seats,
+      phone: this.getPhone(),
+      notes: this.getNotes(),
+    });
+  }
+
   getSeats(): number {
     return this.seats;
   }

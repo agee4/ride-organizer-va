@@ -105,6 +105,11 @@ export const RideManager = ({
     );
   };
 
+  const [selectMode, setSelectMode] = useState<boolean>(false);
+  const toggleSelect = () => {
+    setSelectMode(!selectMode);
+  };
+
   /**add/remove people from manager states, based on origin */
   useEffect(() => {
     /**remove passengers, even if assigned a ride */
@@ -146,7 +151,7 @@ export const RideManager = ({
     }
     /**remove rides */
     for (const ride of originRides.values()) {
-      if (!originDrivers.has(ride.getDriver().getEmail())) {
+      if (!originDrivers.has(ride.getEmail())) {
         /**move removed ride's passengers into the unassigned */
         for (const passenger of ride.getPassengers().values()) {
           if (originPassengers.has(passenger.getEmail()))
@@ -249,16 +254,13 @@ export const RideManager = ({
         for (const ride of rideList.filter((r) =>
           r.getDriver().getRides().includes(filter)
         )) {
-          const currentride = newRideCollection.get(
-            ride.getDriver().getEmail()
-          );
+          const currentride = newRideCollection.get(ride.getEmail());
           if (
             currentride?.validate(unassigned) &&
-            currentride.getPassengers().size + 1 <=
-              currentride.getDriver().getSeats()
+            currentride.getSeatsLeft() > 0
           ) {
             ride.addPassenger(unassigned);
-            newRideCollection.set(ride.getDriver().getEmail(), ride);
+            newRideCollection.set(ride.getEmail(), ride);
             newUnassignedCollection.delete(unassigned.getEmail());
             break;
           }
@@ -287,12 +289,24 @@ export const RideManager = ({
         rideCollection: originRides,
         unassignedCallback: unassignedDispatch,
         rideCallback: rideCallback,
+        selectMode: selectMode,
       }}
     >
       <DndProvider backend={HTML5Backend}>
         <PassengerDragLayer />
         <div className="rounded-md border border-neutral-500 p-2">
-          <h2>Ride Manager</h2>
+          <div className="flex flex-row place-content-between">
+            <h2>Ride Manager</h2>
+            <button
+              className={
+                "rounded-full border px-2 " +
+                (selectMode && "bg-amber-500 dark:text-black")
+              }
+              onClick={() => toggleSelect()}
+            >
+              Select
+            </button>
+          </div>
           <div>
             <button className="rounded-full border px-2" onClick={clearRides}>
               Clear Rides
@@ -505,7 +519,7 @@ export const RideManager = ({
               </div>
               <ul className="m-1 h-[70svh] overflow-auto">
                 {rideList.map((item) => (
-                  <li key={item.getDriver().getEmail()}>
+                  <li key={item.getEmail()}>
                     <RM_RideComponent data={item} />
                   </li>
                 ))}

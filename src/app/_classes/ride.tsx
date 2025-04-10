@@ -19,6 +19,14 @@ export class Ride {
   }) {
     this.driver = driver;
     this.passengers = passengers;
+    this.updateValid();
+  }
+
+  static from(ride: Ride) {
+    return new Ride({
+      driver: ride.driver,
+      passengers: ride.passengers,
+    });
   }
 
   getCopy(): Ride {
@@ -35,9 +43,21 @@ export class Ride {
     return this.passengers;
   }
 
+  getEmail(): string {
+    return this.driver.getEmail();
+  }
+
   addPassenger(passenger: Passenger): boolean {
     this.passengers.set(passenger.getEmail(), passenger);
     return true;
+  }
+
+  getInvalid(): string[] {
+    return this.invalid;
+  }
+
+  getSeatsLeft(): number {
+    return this.getDriver().getSeats() - this.getPassengers().size;
   }
 
   display(): ReactElement {
@@ -66,7 +86,7 @@ export class Ride {
 
   updateValid(): boolean {
     this.invalid = [];
-    if (this.driver.getSeats() - this.passengers.size < 0)
+    if (this.getSeatsLeft() < 0)
       this.invalid.push("TOO MANY PASSENGERS!");
     for (const passenger of this.getPassengers().values()) {
       if (
@@ -88,10 +108,6 @@ export class Ride {
     }
     return this.invalid.length == 0;
   }
-
-  getInvalid(): string[] {
-    return this.invalid;
-  }
 }
 
 interface RideProps {
@@ -108,7 +124,6 @@ const RideComponent = ({ data }: RideProps) => {
     setShowPassengers(!showPassengers);
   };
 
-  const seatsleft = data.getDriver().getSeats() - data.getPassengers().size;
   const valid = data.updateValid();
   return (
     <div className="my-1 rounded-md bg-orange-300 p-2 dark:bg-orange-700">
@@ -135,7 +150,7 @@ const RideComponent = ({ data }: RideProps) => {
                 className="rounded-md bg-neutral-300 p-1 dark:bg-neutral-700"
                 onClick={togglePassengers}
               >
-                Seats Left: {seatsleft}/{data.getDriver().getSeats()}
+                Seats Left: {data.getSeatsLeft()}/{data.getDriver().getSeats()}
               </button>
             </li>
             {!valid && (
@@ -163,7 +178,7 @@ const RideComponent = ({ data }: RideProps) => {
                     ])}
                   </li>
                 ))}
-                {Array.from({ length: seatsleft }, (_, index) => (
+                {Array.from({ length: data.getSeatsLeft() }, (_, index) => (
                   <li key={index}>
                     <div className="my-1 w-full rounded-md bg-white p-2 dark:bg-black"></div>
                   </li>
@@ -205,9 +220,8 @@ export const sortRides = (
     case RideSort.SEATS:
       list.sort(
         (a, b) =>
-          b.getDriver().getSeats() -
-          b.getPassengers().size -
-          (a.getDriver().getSeats() - a.getPassengers().size)
+          b.getSeatsLeft() -
+          a.getSeatsLeft()
       );
       break;
     case RideSort.FIRST:
