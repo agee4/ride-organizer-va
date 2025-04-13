@@ -82,33 +82,6 @@ class Assignable {
   }
 }
 
-export const assignableReducer = (
-  assignableCollection: Map<string, Assignable>,
-  action:
-    | { type: "create"; value: Assignable }
-    | { type: "delete"; value: Assignable }
-    | { type: "set"; value: Map<string, Assignable> }
-) => {
-  switch (action.type) {
-    case "create": {
-      return new Map([...assignableCollection.entries()]).set(
-        action.value.getID(),
-        action.value
-      );
-    }
-    case "delete": {
-      const newCollection = new Map([...assignableCollection.entries()]);
-      newCollection.delete(action.value.getID());
-      return newCollection;
-    }
-    case "set": {
-      return action.value;
-    }
-    default:
-      throw Error("Unknown action");
-  }
-};
-
 class Group {
   private _id: string;
   private members: Map<string, Assignable>;
@@ -157,37 +130,35 @@ class Group {
   }
 }
 
-export const groupReducer = (
-  groupCollection: Map<string, Group>,
-  action:
-    | { type: "create"; value: Group }
-    | { type: "delete"; value: Group }
-    | { type: "set"; value: Map<string, Group> }
-) => {
-  switch (action.type) {
-    case "create": {
-      return new Map([...groupCollection.entries()]).set(
-        action.value.getID(),
-        action.value
-      );
+type MapReducerAction<T> =
+  | { type: "create"; key: string; value: T }
+  | { type: "delete"; key: string }
+  | { type: "replace"; value: Map<string, T> };
+
+function mapReducer<T>() {
+  return (itemMap: Map<string, T>, action: MapReducerAction<T>) => {
+    switch (action.type) {
+      case "create": {
+        return new Map([...itemMap.entries()]).set(action.key, action.value);
+      }
+      case "delete": {
+        const newCollection = new Map([...itemMap.entries()]);
+        newCollection.delete(action.key);
+        return newCollection;
+      }
+      case "replace": {
+        return action.value;
+      }
+      default:
+        throw Error("Unknown action");
     }
-    case "delete": {
-      const newCollection = new Map([...groupCollection.entries()]);
-      newCollection.delete(action.value.getID());
-      return newCollection;
-    }
-    case "set": {
-      return action.value;
-    }
-    default:
-      throw Error("Unknown action");
-  }
-};
+  };
+}
 
 export default function Page() {
   const formRef = useRef<HTMLFormElement>(null);
   const [assignableCollection, setAssignableCollection] = useReducer(
-    assignableReducer,
+    mapReducer<Assignable>(),
     new Map<string, Assignable>()
   );
   const [newAssignableData, setNewAssignableData] = useState<{
@@ -198,7 +169,7 @@ export default function Page() {
     name: "",
   });
   const [groupCollection, setGroupCollection] = useReducer(
-    groupReducer,
+    mapReducer<Group>(),
     new Map<string, Group>()
   );
   const [newGroupData, setNewGroupData] = useState<{
@@ -222,6 +193,7 @@ export default function Page() {
     };
     setAssignableCollection({
       type: "create",
+      key: newAssignableID,
       value: new Assignable(newAssignable),
     });
     setNewAssignableData({
@@ -236,9 +208,15 @@ export default function Page() {
   };
   const createGroupFromForm = (event: FormEvent) => {
     event.preventDefault();
+    const newGroupID = newGroupData.id;
     setGroupCollection({
       type: "create",
-      value: new Group({ id: newGroupData.id }),
+      key: newGroupID,
+      value: new Group({ id: newGroupID }),
+    });
+    setNewGroupData({
+      id: "",
+      name: "",
     });
     formRef.current?.reset();
   };
@@ -249,76 +227,76 @@ export default function Page() {
         <h1>group organizer test</h1>
         <p>WIP</p>
         <div className="flex flex-row">
-          <form
-            className="my-1 flex flex-col rounded-md border p-2"
-            onSubmit={createAssignableFromForm}
-            ref={formRef}
-          >
-            <label>New Assignable</label>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name="name"
-              value={newAssignableData.name}
-              placeholder="Name"
-              required
-              minLength={1}
-              onChange={updateAssignableForm}
-            />
-            <input
-              className="rounded-sm border"
-              type="text"
-              name="id"
-              value={newAssignableData.id}
-              placeholder="Custom ID"
-              onChange={updateAssignableForm}
-            />
-            <button className="rounded-full border" type="submit">
-              Create Assignable
-            </button>
-          </form>
-          <form
-            className="my-1 flex flex-col rounded-md border p-2"
-            onSubmit={createGroupFromForm}
-            ref={formRef}
-          >
-            <label>New Group</label>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name="id"
-              value={newGroupData.id}
-              placeholder="ID"
-              required
-              minLength={1}
-              onChange={updateGroupForm}
-            />
-            <button className="rounded-full border" type="submit">
-              Create Group
-            </button>
-          </form>
-        </div>
-        <div className="flex flex-row">
-          {assignableCollection && (
-            <>
-              <h1>Assignables</h1>
-              <ul>
-                {[...assignableCollection.values()].map((value) => (
-                  <li key={value.getID()}>{JSON.stringify(value)}</li>
-                ))}
-              </ul>
-            </>
-          )}
-          {groupCollection && (
-            <>
-              <h1>Groups</h1>
-              <ul>
-                {[...groupCollection.values()].map((value) => (
-                  <li key={value.getID()}>{JSON.stringify(value)}</li>
-                ))}
-              </ul>
-            </>
-          )}
+          <div>
+            <form
+              className="my-1 flex flex-col rounded-md border p-2"
+              onSubmit={createAssignableFromForm}
+              ref={formRef}
+            >
+              <label>New Assignable</label>
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="name"
+                value={newAssignableData.name}
+                placeholder="Name"
+                required
+                minLength={1}
+                onChange={updateAssignableForm}
+              />
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="id"
+                value={newAssignableData.id}
+                placeholder="Custom ID"
+                onChange={updateAssignableForm}
+              />
+              <button className="rounded-full border" type="submit">
+                Create Assignable
+              </button>
+            </form>
+            {assignableCollection && (
+              <>
+                <h1 className="text-center">Assignables</h1>
+                <ul>
+                  {[...assignableCollection.values()].map((value) => (
+                    <li key={value.getID()}>{JSON.stringify(value)}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+          <div>
+            <form
+              className="my-1 flex flex-col rounded-md border p-2"
+              onSubmit={createGroupFromForm}
+              ref={formRef}
+            >
+              <label>New Group</label>
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="id"
+                value={newGroupData.id}
+                placeholder="ID"
+                onChange={updateGroupForm}
+              />
+              <button className="rounded-full border" type="submit">
+                Create Group
+              </button>
+            </form>
+            {groupCollection && (
+              <>
+                <h1 className="text-center">Groups</h1>
+                <ul>
+                  {[...groupCollection.values()].map((value) => (
+                    <li key={value.getID()}>{JSON.stringify(value)}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
         </div>
       </main>
     </div>
