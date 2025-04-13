@@ -7,6 +7,7 @@ export default function SiteRef() {
         <Link href="/login">Home</Link>
         {/* <Link href="/login">Login</Link> */}
         <Link href="/rides">Rides</Link>
+        <Link href="/reference">References</Link>
         <Link href="/contact">Contact</Link>
       </menu>
       <p className="text-end text-neutral-500">
