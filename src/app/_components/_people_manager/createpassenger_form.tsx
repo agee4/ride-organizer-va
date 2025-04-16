@@ -34,7 +34,10 @@ export const CreatePassengerForm = ({
   const [backupThird, setBackupThird] = useState<boolean>(false);
 
   const updateForm = (
-    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLTextAreaElement>
+    event:
+      | ChangeEvent<HTMLInputElement>
+      | ChangeEvent<HTMLSelectElement>
+      | ChangeEvent<HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target;
     setNewPassengerData({ ...newPassengerData, [name]: value });
@@ -122,9 +125,9 @@ export const CreatePassengerForm = ({
         minLength={1}
         onChange={updateForm}
       />
-      <div className="block">
+      <div className="whitespace-nowrap">
         <input
-          className="w-[140px] rounded-sm border"
+          className="rounded-sm border"
           type="text"
           name="address"
           value={newPassengerData.address}
@@ -179,7 +182,7 @@ export const CreatePassengerForm = ({
           Friday
         </label>
       </div>
-      <div className="block">
+      <div className="whitespace-nowrap">
         <label>Backup:</label>
         <label>
           <input
@@ -227,9 +230,9 @@ export const CreatePassengerForm = ({
           Third
         </label>
       </div>
-      <div className="block">
+      <div className="whitespace-nowrap">
         <input
-          className="w-[127px] rounded-sm border"
+          className="rounded-sm border"
           type="text"
           name="phone"
           value={newPassengerData.phone}

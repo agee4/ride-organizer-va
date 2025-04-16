@@ -326,9 +326,9 @@ export const RideManager = ({
               Auto Friday
             </button>
           </div>
-          <div className="flex flex-row">
+          <div className="flex flex-row place-content-evenly">
             <div className="rounded-md border border-cyan-500 bg-cyan-50 p-2 dark:bg-cyan-950">
-              <div className="flex flex-col place-content-between sm:flex-row">
+              <div className="flex flex-row place-content-between">
                 <span className="rounded-full bg-cyan-500 px-1 text-center">
                   {unassignedList.length}/{unassignedCollection.size}/
                   {originPassengers.size}
@@ -429,10 +429,10 @@ export const RideManager = ({
                   )}
                 </button>
               </div>
-              <RM_UnassignedListComponent />
+              {unassignedCollection.size > 0 && <RM_UnassignedListComponent />}
             </div>
             <div className="rounded-md border border-orange-500 bg-orange-50 p-2 dark:bg-orange-950">
-              <div className="flex flex-col place-content-between sm:flex-row">
+              <div className="flex flex-row place-content-between">
                 <span className="rounded-full bg-orange-500 px-1 text-center">
                   {rideList.length}/{originRides.size}
                 </span>

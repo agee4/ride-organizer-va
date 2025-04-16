@@ -6,7 +6,11 @@ import {
   useState,
 } from "react";
 import { College, RideTimes } from "../../_classes/person";
-import { Driver, DriverReducerAction, NewDriverData } from "../../_classes/driver";
+import {
+  Driver,
+  DriverReducerAction,
+  NewDriverData,
+} from "../../_classes/driver";
 
 interface CreateDriverFormProps {
   driverCallback: ActionDispatch<[action: DriverReducerAction]>;
@@ -25,7 +29,10 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
   const [Friday, setFriday] = useState<boolean>(false);
 
   const updateForm = (
-    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLTextAreaElement>
+    event:
+      | ChangeEvent<HTMLInputElement>
+      | ChangeEvent<HTMLSelectElement>
+      | ChangeEvent<HTMLTextAreaElement>
   ) => {
     const { name, value } = event.target;
     setNewDriverData({ ...newDriverData, [name]: value });
@@ -102,19 +109,9 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
         minLength={1}
         onChange={updateForm}
       />
-      <input
-        className="rounded-sm border"
-        type="number"
-        name="seats"
-        value={newDriverData.seats}
-        min="1"
-        placeholder="Seats"
-        required
-        onChange={updateForm}
-      />
-      <div className="block">
+      <div className="whitespace-nowrap">
         <input
-          className="w-[140px] rounded-sm border"
+          className="rounded-sm border"
           type="text"
           name="address"
           value={newDriverData.address}
@@ -137,36 +134,52 @@ export const CreateDriverForm = ({ driverCallback }: CreateDriverFormProps) => {
           ))}
         </select>
       </div>
-      <div className="block">
-        <select
-          className="rounded-sm border"
-          name="service"
-          value={newDriverData.service}
-          onChange={updateForm}
-        >
-          <option className="dark:text-black">-main ride-</option>
-          {Object.values(RideTimes)
-            .filter((x) => x != RideTimes.FRIDAY)
-            .map((option) => (
-              <option className="dark:text-black" key={option} value={option}>
-                {option}
-              </option>
-            ))}
-        </select>
+      <div className="flex flex-row place-content-between whitespace-nowrap">
+        <div>
+          <select
+            className="rounded-sm border"
+            name="service"
+            value={newDriverData.service}
+            onChange={updateForm}
+          >
+            <option className="dark:text-black">-main ride-</option>
+            {Object.values(RideTimes)
+              .filter((x) => x != RideTimes.FRIDAY)
+              .map((option) => (
+                <option className="dark:text-black" key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+          </select>
+          <label>
+            <input
+              type="checkbox"
+              name="friday"
+              checked={Friday}
+              onChange={(e) => {
+                setFriday(e.target.checked);
+                setNewDriverData({
+                  ...newDriverData,
+                  [e.target.name]: e.target.checked,
+                });
+              }}
+            />
+            Friday
+          </label>
+        </div>
         <label>
+          Seats:
           <input
-            type="checkbox"
-            name="friday"
-            checked={Friday}
-            onChange={(e) => {
-              setFriday(e.target.checked);
-              setNewDriverData({
-                ...newDriverData,
-                [e.target.name]: e.target.checked,
-              });
-            }}
+            className="rounded-sm border"
+            type="number"
+            name="seats"
+            value={newDriverData.seats}
+            min="1"
+            placeholder="Seats"
+            required
+            size={2}
+            onChange={updateForm}
           />
-          Friday
         </label>
       </div>
       <input

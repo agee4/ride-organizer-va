@@ -1,5 +1,11 @@
 // person.tsx
+// Contains the basic Person class extended by Passenger and Driver, along with other basic enums used by derived classes/objects
 
+/**Enum for standardized ride times:
+ * "Friday" Bible Study at 7pm,
+ * "First" Service on Sunday at 8am,
+ * "Second" Service on Sunday at 9:30am,
+ * "Third" Service on Sunday at 11am */
 export enum RideTimes {
   FRIDAY = "Friday",
   FIRST = "First",
@@ -7,6 +13,7 @@ export enum RideTimes {
   THIRD = "Third",
 }
 
+/**Enum for main colleges */
 export enum College {
   UCI = "UCI",
   CSULB = "CSULB",
@@ -15,6 +22,9 @@ export enum College {
   OTHER = "Other",
 }
 
+/**pseudo-interface class Person, extended by Passenger & Driver
+ * Has universal attributes such as email (ID), name, etc.
+ */
 export class Person {
   private email: string;
   private phone?: string;
@@ -86,6 +96,8 @@ export class Person {
   }
 }
 
+/**JSX component for stylistically displaying College
+ * Used in People/Ride display components */
 export const CollegeTag = ({ data }: { data: College }) => {
   let color;
   switch (data) {
@@ -110,28 +122,54 @@ export const CollegeTag = ({ data }: { data: College }) => {
   );
 };
 
-/* export type ListReducerAction<T> =
+/**ListReducerAction with generic type parameter */
+export type ListReducerAction<T> =
   | { type: "create"; item: T }
   | { type: "delete"; item: T }
   | { type: "set"; list: T[] };
 
-export const listReducer = (
-  list: [],
-  action: { type: "create"; item: Person }
-  | { type: "delete"; item: Person }
-  | { type: "set"; list: Person[] }
-) => {
-  switch (action.type) {
-    case "create": {
-      return [...list, action.item];
+/**Factory function that returns a valid listReducer for lists of type T*/
+export function listReducer<T>() {
+  return (itemList: [], action: ListReducerAction<T>) => {
+    switch (action.type) {
+      case "create": {
+        return [...itemList, action.item];
+      }
+      case "delete": {
+        return [...itemList].filter((x) => x !== action.item);
+      }
+      case "set": {
+        return action.list;
+      }
+      default:
+        throw Error("Unknown action");
     }
-    case "delete": {
-      return [...list].filter((x) => x !== action.item);
+  };
+}
+
+/**MapReducerAction with generic type parameters */
+export type MapReducerAction<k, V> =
+  | { type: "create"; key: k; value: V }
+  | { type: "delete"; key: k }
+  | { type: "replace"; map: Map<k, V> };
+
+/**Factory function that returns a valid mapReducer for maps of key type k and value type V*/
+export function mapReducer<k, V>() {
+  return (itemMap: Map<k, V>, action: MapReducerAction<k, V>) => {
+    switch (action.type) {
+      case "create": {
+        return new Map([...itemMap.entries()]).set(action.key, action.value);
+      }
+      case "delete": {
+        const newCollection = new Map([...itemMap.entries()]);
+        newCollection.delete(action.key);
+        return newCollection;
+      }
+      case "replace": {
+        return action.map;
+      }
+      default:
+        throw Error("Unknown action");
     }
-    case "set": {
-      return action.list;
-    }
-    default:
-      throw Error("Unknown action");
-  }
-}; */
+  };
+}
