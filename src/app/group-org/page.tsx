@@ -11,6 +11,8 @@ import {
   useState,
 } from "react";
 
+type RecursiveMap<K, V> = Map<K, V | RecursiveMap<K, V>>;
+
 class Assignable {
   private _id: string;
   private name: string;
@@ -657,6 +659,36 @@ const AssignableForm = ({
   );
 };
 
+const AssignablePresetForm = ({}) => {
+  const assignablePresetFormRef = useRef(null);
+  const submitForm = (event: FormEvent) => {
+    event.preventDefault();
+  };
+  return (
+    <form
+      className="my-1 flex flex-col rounded-md border p-2"
+      onSubmit={submitForm}
+      ref={assignablePresetFormRef}
+    >
+      <label className="text-center">Assignable Presets</label>
+      <label>
+        ID source:
+        <select className="rounded-sm border">
+          <option className="text-black">ID Field</option>
+          <option className="text-black">Name</option>
+        </select>
+      </label>
+      <label>
+        Uses Leaders?
+        <input type="checkbox" />
+      </label>
+      <button className="rounded-full border" type="submit">
+        Save Assignable Presets
+      </button>
+    </form>
+  );
+};
+
 const GroupForm = ({
   groupCallback,
   assignableCollection,
@@ -856,6 +888,7 @@ export default function Page() {
         <p>WIP</p>
         <div className="flex flex-row">
           <div>
+            <AssignablePresetForm />
             <AssignableForm assignableCallback={addAssignable} />
             {assignableCollection && (
               <>
