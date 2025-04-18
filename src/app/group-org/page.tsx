@@ -268,13 +268,13 @@ const GroupComponent = ({
   );
 };
 
-type MapReducerAction<T> =
-  | { type: "create"; key: string; value: T }
-  | { type: "delete"; key: string }
-  | { type: "replace"; value: Map<string, T> };
+type MapReducerAction<K, V> =
+  | { type: "create"; key: K; value: V }
+  | { type: "delete"; key: K }
+  | { type: "replace"; value: Map<K, V> };
 
-function mapReducer<T>() {
-  return (itemMap: Map<string, T>, action: MapReducerAction<T>) => {
+function mapReducer<K, V>() {
+  return (itemMap: Map<K, V>, action: MapReducerAction<K, V>) => {
     switch (action.type) {
       case "create": {
         return new Map([...itemMap.entries()]).set(action.key, action.value);
@@ -294,8 +294,10 @@ function mapReducer<T>() {
 }
 
 const AssignableForm = ({
+  preset,
   assignableCallback,
 }: {
+  preset: any;
   assignableCallback: (assignable: Assignable) => void;
 }) => {
   const assignableFormRef = useRef<HTMLFormElement>(null);
@@ -358,7 +360,7 @@ const AssignableForm = ({
   };
 
   const [contact, contactDispatch] = useReducer(
-    mapReducer<string>(),
+    mapReducer<string, string>(),
     new Map<string, string>()
   );
   const updateContact = (event: ChangeEvent<HTMLInputElement>) => {
@@ -370,7 +372,7 @@ const AssignableForm = ({
     });
   };
   const [availability, availabilityDispatch] = useReducer(
-    mapReducer<string>(),
+    mapReducer<string, string>(),
     new Map<string, string>()
   );
   const updateAvailability = (event: ChangeEvent<HTMLInputElement>) => {
@@ -382,7 +384,7 @@ const AssignableForm = ({
     });
   };
   const [location, locationDispatch] = useReducer(
-    mapReducer<string>(),
+    mapReducer<string, string>(),
     new Map<string, string>()
   );
   const updateLocation = (event: ChangeEvent<HTMLInputElement>) => {
@@ -394,7 +396,7 @@ const AssignableForm = ({
     });
   };
   const [affinity, affinityDispatch] = useReducer(
-    mapReducer<string>(),
+    mapReducer<string, string>(),
     new Map<string, string>()
   );
   const updateAffinity = (event: ChangeEvent<HTMLInputElement>) => {
@@ -406,7 +408,7 @@ const AssignableForm = ({
     });
   };
   const [miscellaneous, miscellaneousDispatch] = useReducer(
-    mapReducer<string>(),
+    mapReducer<string, string>(),
     new Map<string, string>()
   );
   const updateMiscellaneous = (event: ChangeEvent<HTMLInputElement>) => {
@@ -418,14 +420,43 @@ const AssignableForm = ({
     });
   };
 
+  useEffect(() => {
+    if (preset.presetFields)
+      for (const idk of preset.presetFields) {
+        switch (idk[1][0]) {
+          case "contact":
+            contactDispatch({
+              type: "create",
+              key: idk[0],
+              value: "",
+            });
+            break;
+          default:
+            miscellaneousDispatch({
+              type: "create",
+              key: idk[0],
+              value: "",
+            });
+        }
+      }
+  }, [preset]);
+
   const [isLeader, setIsLeader] = useState<boolean>(false);
 
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
-    const ID = data.id || data.name;
+    const ID = () => {
+      switch (preset.useIDSource) {
+        case "name":
+          return data.name;
+        case "id":
+        default:
+          return data.id;
+      }
+    };
     assignableCallback(
       new Assignable({
-        id: ID,
+        id: ID() || "error",
         name: data.name,
         contact: contact,
         availability: availability,
@@ -460,7 +491,7 @@ const AssignableForm = ({
 
   return (
     <form
-      className="my-1 flex flex-col rounded-md border p-2"
+      className="my-1 flex flex-col"
       onSubmit={submitForm}
       ref={assignableFormRef}
     >
@@ -470,19 +501,23 @@ const AssignableForm = ({
         type="text"
         name="name"
         value={data.name}
-        placeholder="Name"
+        placeholder={"Name" + (preset.useIDSource == "name" ? " (ID)" : "")}
         required
         minLength={1}
         onChange={updateForm}
       />
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="id"
-        value={data.id}
-        placeholder="Custom ID (Optional)"
-        onChange={updateForm}
-      />
+      {preset?.useIDSource == "id" && (
+        <input
+          className="rounded-sm border"
+          type="text"
+          name="id"
+          value={data.id}
+          placeholder="Custom ID"
+          required
+          minLength={1}
+          onChange={updateForm}
+        />
+      )}
       <ul>
         {[...contact.entries()].map(([key, value]) => (
           <li className="whitespace-nowrap" key={key}>
@@ -604,21 +639,207 @@ const AssignableForm = ({
             </button>
           </li>
         ))}
-        <li className="whitespace-nowrap">
+        {preset.allowFieldCreation && (
+          <li className="whitespace-nowrap">
+            <input
+              className="rounded-sm border"
+              type="text"
+              name="newAssignableField"
+              value={fieldName}
+              placeholder="New Field"
+              size={10}
+              onChange={(e) => setFieldName(e.target.value)}
+            />
+            <select
+              className="rounded-sm border"
+              name="fieldtype"
+              value={fieldType}
+              onChange={updateFieldType}
+            >
+              <option className="dark:text-black">---</option>
+              <option className="dark:text-black" value="contact">
+                Contact
+              </option>
+              <option className="dark:text-black" value="availability">
+                Availability
+              </option>
+              <option className="dark:text-black" value="location">
+                Location
+              </option>
+              <option className="dark:text-black" value="affinity">
+                Affinity
+              </option>
+              <option className="dark:text-black">Other</option>
+            </select>
+            <button
+              className="rounded-sm border px-1"
+              type="button"
+              onClick={createField}
+            >
+              +
+            </button>
+          </li>
+        )}
+      </ul>
+      {preset?.useLeader && (
+        <label>
+          Leader
+          <input
+            type="checkbox"
+            checked={isLeader}
+            onChange={(e) => setIsLeader(e.target.checked)}
+          />
+        </label>
+      )}
+      <button className="rounded-full border" type="submit">
+        Create
+      </button>
+    </form>
+  );
+};
+
+const AssignablePresetForm = ({
+  assignablePreset,
+  assignablePresetCallback,
+}: {
+  assignablePreset: any;
+  assignablePresetCallback: any;
+}) => {
+  const assignablePresetFormRef = useRef(null);
+
+  const [idSource, setIDSource] = useState<string>(
+    assignablePreset.useIDSource
+  );
+  const [allowFieldCreation, setAllowFieldCreation] = useState<boolean>(
+    assignablePreset.allowFieldCreation
+  );
+  const [useLeader, setUseLeader] = useState<boolean>(
+    assignablePreset.useLeader
+  );
+
+  const [fieldName, setFieldName] = useState<string>("");
+  const [fieldGroup, setFieldGroup] = useState<string>("");
+  const [fieldType, setFieldType] = useState<string>("string");
+  const [optionalField, setOptionalField] = useState<boolean>(false);
+  const [presetFields, presetFieldsDispatch] = useReducer(
+    mapReducer<string, [string, string]>(),
+    new Map<string, [string, string]>()
+  );
+  const createField = () => {
+    switch (fieldType) {
+      /* case "contact":
+        contactDispatch({
+          type: "create",
+          key: fieldName || "Field " + contact.size.toLocaleString(),
+          value: "",
+        });
+        break;
+      case "availability":
+        availabilityDispatch({
+          type: "create",
+          key: fieldName || "Field " + availability.size.toLocaleString(),
+          value: "",
+        });
+        break;
+      case "location":
+        locationDispatch({
+          type: "create",
+          key: fieldName || "Field " + location.size.toLocaleString(),
+          value: "",
+        });
+        break;
+      case "affinity":
+        affinityDispatch({
+          type: "create",
+          key: fieldName || "Field " + affinity.size.toLocaleString(),
+          value: "",
+        });
+        break; */
+      default:
+        presetFieldsDispatch({
+          type: "create",
+          key: fieldName /* || "Field " + miscellaneous.size.toLocaleString() */,
+          value: [fieldGroup, fieldType],
+        });
+    }
+    setFieldName("");
+  };
+  const submitForm = (event: FormEvent) => {
+    event.preventDefault();
+    assignablePresetCallback({
+      useIDSource: idSource,
+      allowFieldCreation: allowFieldCreation,
+      useLeader: useLeader,
+      presetFields: presetFields,
+    });
+  };
+
+  return (
+    <form
+      className="my-1 flex flex-col"
+      onSubmit={submitForm}
+      ref={assignablePresetFormRef}
+    >
+      <label className="text-center">Assignable Presets</label>
+      <label>
+        ID Source:{" "}
+        <select
+          className="rounded-sm border"
+          name="idsource"
+          value={idSource}
+          onChange={(e) => setIDSource(e.target.value)}
+        >
+          <option className="text-black" value="id">
+            ID Field
+          </option>
+          <option className="text-black" value="name">
+            Name
+          </option>
+          {[...presetFields.entries()].map(([key, value]) => (
+            <option className="text-black" key={key} value={key}>
+              {key} ({value[0]})
+            </option>
+          ))}
+        </select>
+      </label>
+      <hr />
+      <ul>
+        {[...presetFields.entries()].map(([key, value]) => (
+          <li className="flex flex-row place-content-between" key={key}>
+            {key} {value}
+            <button
+              className="rounded-sm border px-1"
+              onClick={() =>
+                presetFieldsDispatch({
+                  type: "delete",
+                  key: key /* || "Field " + miscellaneous.size.toLocaleString() */,
+                })
+              }
+            >
+              &times;
+            </button>
+          </li>
+        ))}
+      </ul>
+      <hr />
+      <div className="border p-1">
+        <label>
+          Add Input Field
           <input
             className="rounded-sm border"
             type="text"
             name="newAssignableField"
             value={fieldName}
-            placeholder="New Field"
-            size={10}
+            placeholder="Field Name"
             onChange={(e) => setFieldName(e.target.value)}
           />
+        </label>
+        <div className="whitespace-nowrap">
           <select
             className="rounded-sm border"
-            name="college"
-            value={fieldType}
-            onChange={updateFieldType}
+            name="fieldgroup"
+            value={fieldGroup}
+            onChange={(e) => setFieldGroup(e.target.value)}
           >
             <option className="dark:text-black">---</option>
             <option className="dark:text-black" value="contact">
@@ -635,52 +856,56 @@ const AssignableForm = ({
             </option>
             <option className="dark:text-black">Other</option>
           </select>
-          <button
-            className="rounded-sm border px-1"
-            type="button"
-            onClick={createField}
+          <select
+            className="rounded-sm border"
+            name="fieldtype"
+            defaultValue={fieldType}
+            onChange={(e) => setFieldType(e.target.value)}
           >
-            +
-          </button>
-        </li>
-      </ul>
+            <option className="dark:text-black" value="string">
+              String
+            </option>
+            <option className="dark:text-black" value="number">
+              Number
+            </option>
+            <option className="dark:text-black" value="boolean">
+              Boolean
+            </option>
+          </select>
+          <label>
+            Optional?
+            <input
+              type="checkbox"
+              checked={optionalField}
+              onChange={(e) => setOptionalField(e.target.checked)}
+            />
+          </label>
+        </div>
+        <button
+          className="rounded-sm border px-1"
+          type="button"
+          onClick={createField}
+        >
+          Add Field
+        </button>
+      </div>
+      <hr />
       <label>
-        Leader
+        Allow Field Creation?
         <input
           type="checkbox"
-          checked={isLeader}
-          onChange={(e) => setIsLeader(e.target.checked)}
+          checked={allowFieldCreation}
+          onChange={(e) => setAllowFieldCreation(e.target.checked)}
         />
       </label>
-      <button className="rounded-full border" type="submit">
-        Create
-      </button>
-    </form>
-  );
-};
-
-const AssignablePresetForm = ({}) => {
-  const assignablePresetFormRef = useRef(null);
-  const submitForm = (event: FormEvent) => {
-    event.preventDefault();
-  };
-  return (
-    <form
-      className="my-1 flex flex-col rounded-md border p-2"
-      onSubmit={submitForm}
-      ref={assignablePresetFormRef}
-    >
-      <label className="text-center">Assignable Presets</label>
-      <label>
-        ID source:
-        <select className="rounded-sm border">
-          <option className="text-black">ID Field</option>
-          <option className="text-black">Name</option>
-        </select>
-      </label>
+      <hr />
       <label>
         Uses Leaders?
-        <input type="checkbox" />
+        <input
+          type="checkbox"
+          checked={useLeader}
+          onChange={(e) => setUseLeader(e.target.checked)}
+        />
       </label>
       <button className="rounded-full border" type="submit">
         Save Assignable Presets
@@ -810,15 +1035,15 @@ const GroupForm = ({
 
 export default function Page() {
   const [assignableCollection, assignableDispatch] = useReducer(
-    mapReducer<Assignable>(),
+    mapReducer<string, Assignable>(),
     new Map<string, Assignable>()
   );
   const [unassignedCollection, unassignedDispatch] = useReducer(
-    mapReducer<Assignable>(),
+    mapReducer<string, Assignable>(),
     new Map<string, Assignable>()
   );
   const [groupCollection, groupDispatch] = useReducer(
-    mapReducer<Group>(),
+    mapReducer<string, Group>(),
     new Map<string, Group>()
   );
 
@@ -834,6 +1059,12 @@ export default function Page() {
       value: assignable,
     });
   };
+
+  const [assignablePreset, setAssignablePreset] = useState({
+    useIDSource: "id",
+    allowFieldCreation: false,
+    useLeader: false,
+  });
 
   const deleteAssignable = (assignable: Assignable) => {
     assignableDispatch({
@@ -881,6 +1112,10 @@ export default function Page() {
     });
   };
 
+  const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
+  const [showAssignablePreset, setShowAssignablePreset] =
+    useState<boolean>(false);
+
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
       <main className="row-start-2 flex flex-col items-center gap-8 sm:items-start">
@@ -888,34 +1123,63 @@ export default function Page() {
         <p>WIP</p>
         <div className="flex flex-row">
           <div>
-            <AssignablePresetForm />
-            <AssignableForm assignableCallback={addAssignable} />
-            {assignableCollection && (
-              <>
-                <h1 className="text-center">Assignables</h1>
-                <ul>
-                  {[...assignableCollection.values()].map((value) => (
-                    <li key={value.getID()}>
-                      <AssignableComponent
-                        data={value}
-                        assignableCallback={deleteAssignable}
-                      />
-                    </li>
-                  ))}
-                </ul>
-                <h1 className="text-center">Unassigned</h1>
-                <ul className="m-1 h-[70svh] overflow-auto">
-                  {[...unassignedCollection.values()].map((value) => (
-                    <li key={value.getID()}>
-                      <AssignableComponent
-                        data={value}
-                        assignableCallback={deleteAssignable}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+            <div className="rounded-md border p-2">
+              <button
+                className="float-right"
+                onClick={() => setShowAssignablePreset(!showAssignablePreset)}
+              >
+                &hellip;
+              </button>
+              {showAssignablePreset ? (
+                <AssignablePresetForm
+                  assignablePreset={assignablePreset}
+                  assignablePresetCallback={setAssignablePreset}
+                />
+              ) : (
+                <AssignableForm
+                  preset={assignablePreset}
+                  assignableCallback={addAssignable}
+                />
+              )}
+            </div>
+            <div>
+              <button
+                className="float-right"
+                onClick={() => setShowOnlyUnassigned(!showOnlyUnassigned)}
+              >
+                &hellip;
+              </button>
+              {assignableCollection &&
+                (!showOnlyUnassigned ? (
+                  <>
+                    <h1 className="text-center">Assignables</h1>
+                    <ul className="m-1 h-[70svh] overflow-auto">
+                      {[...assignableCollection.values()].map((value) => (
+                        <li key={value.getID()}>
+                          <AssignableComponent
+                            data={value}
+                            assignableCallback={deleteAssignable}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-center">Unassigned</h1>
+                    <ul className="m-1 h-[70svh] overflow-auto">
+                      {[...unassignedCollection.values()].map((value) => (
+                        <li key={value.getID()}>
+                          <AssignableComponent
+                            data={value}
+                            assignableCallback={deleteAssignable}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ))}
+            </div>
           </div>
           <div>
             <GroupForm
