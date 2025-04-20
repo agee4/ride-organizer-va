@@ -38,6 +38,10 @@ function mapReducer<K, V>() {
   };
 }
 
+function useMapReducer<K, V>() {
+  return useReducer(mapReducer<K, V>(), new Map<K, V>());
+}
+
 class Assignable {
   private _id: string;
   private name: string;
@@ -168,6 +172,22 @@ const AssignableComponent = ({
             )}
           {data.getLocation() &&
             Array.from(data.getLocation() as Map<string, string>).map(
+              ([key, value]) => (
+                <li key={key}>
+                  {key}: {value}
+                </li>
+              )
+            )}
+          {data.getAffinity() &&
+            Array.from(data.getAffinity() as Map<string, string>).map(
+              ([key, value]) => (
+                <li key={key}>
+                  {key}: {value}
+                </li>
+              )
+            )}
+          {data.getMiscellaneous() &&
+            Array.from(data.getMiscellaneous() as Map<string, string>).map(
               ([key, value]) => (
                 <li key={key}>
                   {key}: {value}
@@ -339,6 +359,14 @@ class Field {
   getPreset() {
     return this.preset;
   }
+
+  getPlaceholderName() {
+    return (
+      this.name +
+      (!this.optional ? "*" : "") +
+      (this.group != "miscellaneous" ? " (" + this.group + ")" : "")
+    );
+  }
 }
 
 const PresetForm = ({
@@ -358,53 +386,19 @@ const PresetForm = ({
   const [groupCustomName, setGroupCustomName] = useState<boolean>(false);
 
   const [fieldName, setFieldName] = useState<string>("");
-  const [fieldGroup, setFieldGroup] = useState<string>("");
+  const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
   const [fieldType, setFieldType] = useState<string>("string");
   const [optionalField, setOptionalField] = useState<boolean>(false);
-  const [presetFields, presetFieldsDispatch] = useReducer(
-    mapReducer<string, Field>(),
-    preset.presetFields
-  );
+  const [presetFields, presetFieldsDispatch] = useMapReducer<string, Field>();
   const createField = () => {
-    /* switch (fieldGroup) {
-      case "contact":
-        contactDispatch({
-          type: "create",
-          key: fieldName || "Field " + contact.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      case "availability":
-        availabilityDispatch({
-          type: "create",
-          key: fieldName || "Field " + availability.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      case "location":
-        locationDispatch({
-          type: "create",
-          key: fieldName || "Field " + location.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      case "affinity":
-        affinityDispatch({
-          type: "create",
-          key: fieldName || "Field " + affinity.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      default:
-    } */
-    if (fieldName.length > 0) {
+    if (fieldName.trim().length > 0) {
       presetFieldsDispatch({
         type: "create",
-        key: fieldName /* || "Field " + miscellaneous.size.toLocaleString() */,
+        key: fieldName,
         value: new Field({
           name: fieldName,
-          type: fieldType || "string",
-          group: fieldGroup || "miscellaneous",
+          type: fieldType,
+          group: fieldGroup,
           optional: optionalField,
           preset: true,
         }),
@@ -446,28 +440,26 @@ const PresetForm = ({
           <option className="text-black" value="name">
             Name
           </option>
-          {[...presetFields.entries()].map(([key, value]) => (
-            <option className="text-black" key={key} value={key}>
-              {key} ({value.getGroup()})
-            </option>
-          ))}
+          {[...presetFields.entries()]
+            .filter(([_, value]) => !value.getOptional())
+            .map(([key, _]) => (
+              <option className="text-black" key={key} value={key}>
+                {key}
+              </option>
+            ))}
         </select>
       </label>
       <hr />
       <ul>
         {[...presetFields.entries()].map(([key, value]) => (
           <li className="flex flex-row place-content-between" key={key}>
-            {value.getName() +
-              (!value.getOptional() ? "*" : "") +
-              (value.getGroup() != "miscellaneous"
-                ? " (" + value.getGroup() + ")"
-                : "")}
+            {value.getPlaceholderName()}
             <button
               className="rounded-sm border px-1"
               onClick={() =>
                 presetFieldsDispatch({
                   type: "delete",
-                  key: key /* || "Field " + miscellaneous.size.toLocaleString() */,
+                  key: key,
                 })
               }
             >
@@ -532,12 +524,16 @@ const PresetForm = ({
                 <option className="dark:text-black" value="string">
                   String
                 </option>
-                <option className="dark:text-black" value="number">
-                  Number
-                </option>
-                <option className="dark:text-black" value="boolean">
-                  Boolean
-                </option>
+                {fieldGroup == "miscellaneous" && (
+                  <>
+                    <option className="dark:text-black" value="number">
+                      Number
+                    </option>
+                    <option className="dark:text-black" value="boolean">
+                      Boolean
+                    </option>
+                  </>
+                )}
               </select>
               <label>
                 Optional?
@@ -613,55 +609,32 @@ const AssignableForm = ({
     setData({ ...data, [name]: value });
   };
 
+  const [customFields, customFieldsDispatch] = useMapReducer<string, Field>();
   const [fieldName, setFieldName] = useState<string>("");
-  const [fieldType, setFieldType] = useState<string>("");
+  const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
+  const [fieldType, setFieldType] = useState<string>("string");
+  const updateFieldGroup = (event: ChangeEvent<HTMLSelectElement>) => {
+    setFieldGroup(event.target.value);
+  };
   const updateFieldType = (event: ChangeEvent<HTMLSelectElement>) => {
     setFieldType(event.target.value);
   };
   const createField = () => {
-    switch (fieldType) {
-      case "contact":
-        contactDispatch({
-          type: "create",
-          key: fieldName || "Field " + contact.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      case "availability":
-        availabilityDispatch({
-          type: "create",
-          key: fieldName || "Field " + availability.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      case "location":
-        locationDispatch({
-          type: "create",
-          key: fieldName || "Field " + location.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      case "affinity":
-        affinityDispatch({
-          type: "create",
-          key: fieldName || "Field " + affinity.size.toLocaleString(),
-          value: "",
-        });
-        break;
-      default:
-        miscellaneousDispatch({
-          type: "create",
-          key: fieldName || "Field " + miscellaneous.size.toLocaleString(),
-          value: "",
-        });
+    if (!preset.presetFields.get(fieldName)) {
+      customFieldsDispatch({
+        type: "create",
+        key: fieldName,
+        value: new Field({
+          name: fieldName,
+          type: fieldType,
+          group: fieldGroup,
+        }),
+      });
+      setFieldName("");
     }
-    setFieldName("");
   };
 
-  const [contact, contactDispatch] = useReducer(
-    mapReducer<string, string>(),
-    new Map<string, string>()
-  );
+  const [contact, contactDispatch] = useMapReducer<string, string>();
   const updateContact = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     contactDispatch({
@@ -670,10 +643,7 @@ const AssignableForm = ({
       value: value,
     });
   };
-  const [availability, availabilityDispatch] = useReducer(
-    mapReducer<string, string>(),
-    new Map<string, string>()
-  );
+  const [availability, availabilityDispatch] = useMapReducer<string, string>();
   const updateAvailability = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     availabilityDispatch({
@@ -682,10 +652,7 @@ const AssignableForm = ({
       value: value,
     });
   };
-  const [location, locationDispatch] = useReducer(
-    mapReducer<string, string>(),
-    new Map<string, string>()
-  );
+  const [location, locationDispatch] = useMapReducer<string, string>();
   const updateLocation = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     locationDispatch({
@@ -694,10 +661,7 @@ const AssignableForm = ({
       value: value,
     });
   };
-  const [affinity, affinityDispatch] = useReducer(
-    mapReducer<string, string>(),
-    new Map<string, string>()
-  );
+  const [affinity, affinityDispatch] = useMapReducer<string, string>();
   const updateAffinity = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     affinityDispatch({
@@ -706,13 +670,23 @@ const AssignableForm = ({
       value: value,
     });
   };
-  const [miscellaneous, miscellaneousDispatch] = useReducer(
-    mapReducer<string, string>(),
-    new Map<string, string>()
-  );
+  const [miscellaneous, miscellaneousDispatch] = useMapReducer<
+    string,
+    string
+  >();
   const updateMiscellaneous = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     miscellaneousDispatch({
+      type: "create",
+      key: name,
+      value: value,
+    });
+  };
+
+  const [tag, tagDispatch] = useMapReducer<string, any>();
+  const updateTag = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    tagDispatch({
       type: "create",
       key: name,
       value: value,
@@ -723,24 +697,34 @@ const AssignableForm = ({
   useEffect(() => {
     if (preset.presetFields)
       for (const field of preset.presetFields.values()) {
-        switch (field.group) {
-          case "contact":
-            contactDispatch({
-              type: "create",
-              key: field.name,
-              value: "",
-            });
-            break;
-          default:
-            miscellaneousDispatch({
-              type: "create",
-              key: field.name,
-              value: "",
-              /* (field.type == "boolean") ? false : (field.type == "number") ? 0 : */
-            });
-        }
+        tagDispatch({
+          type: "create",
+          key: field.name,
+          value:
+            field.type == "boolean" ? false : field.type == "number" ? 0 : "",
+        });
       }
-  }, [preset]);
+    for (const field of customFields.values()) {
+      tagDispatch({
+        type: "create",
+        key: field.getName(),
+        value:
+          field.getType() == "boolean"
+            ? false
+            : field.getType() == "number"
+              ? 0
+              : "",
+      });
+    }
+    for (const field of tag.keys()) {
+      if (!preset.presetFields.get(field) && !customFields.get(field)) {
+        tagDispatch({
+          type: "delete",
+          key: field,
+        });
+      }
+    }
+  }, [preset, customFields]);
 
   const [isLeader, setIsLeader] = useState<boolean>(false);
 
@@ -751,10 +735,30 @@ const AssignableForm = ({
         case "name":
           return data.name;
         case "id":
-        default:
           return data.id;
+        default:
+          return tag.get(preset.useIDSource);
       }
     };
+    /**todo */
+    preset.presetFields.forEach((field: any) => {
+      switch (field.group) {
+        case "contact":
+          contact.set(field.name, tag.get(field.name));
+          break;
+        default:
+          miscellaneous.set(field.name, tag.get(field.name));
+      }
+    });
+    customFields.forEach((field) => {
+      switch (field.getGroup()) {
+        case "contact":
+          contact.set(field.getName(), tag.get(field.getName()));
+          break;
+        default:
+          miscellaneous.set(field.getName(), tag.get(field.getName()));
+      }
+    });
     assignableCallback(
       new Assignable({
         id: ID() || "error",
@@ -763,6 +767,7 @@ const AssignableForm = ({
         availability: availability,
         location: location,
         affinity: affinity,
+        miscellaneous: miscellaneous,
         leader: isLeader,
       })
     );
@@ -771,6 +776,9 @@ const AssignableForm = ({
     setData({
       id: "",
       name: "",
+    });
+    tag.forEach((_, key) => {
+      tagDispatch({ type: "create", key: key, value: "" });
     });
     contact.forEach((_, key) => {
       contactDispatch({ type: "create", key: key, value: "" });
@@ -820,7 +828,91 @@ const AssignableForm = ({
         />
       )}
       <ul>
-        {[...contact.entries()].map(([key, value]) => (
+        {/* {[...preset.presetFields.values(), ...customFields.values()].map((field) => (
+          <li className="whitespace-nowrap" key={field.getName()}>
+            {field.type == "string" ? (
+              <input
+                className="rounded-sm border"
+                type="text"
+                name={field.name}
+                value={tag.get(field.name) || ""}
+                placeholder={field.getPlaceholderName()}
+                onChange={updateTag}
+              />
+            ) : field.type == "number" ? (
+              <input
+                className="rounded-sm border"
+                type="number"
+                name={field.name}
+                value={tag.get(field.name) || 0}
+                placeholder={field.getPlaceholderName()}
+                onChange={updateTag}
+              />
+            ) : (
+              <input
+                className="rounded-sm border"
+                type="text"
+                name={field.name}
+                value={tag.get(field.name) || ""}
+                placeholder={field.getPlaceholderName()}
+                onChange={updateTag}
+              />
+            )}
+          </li>
+        ))} */}
+        {[...preset.presetFields.values(), ...customFields.values()].map(
+          (field) => (
+            <li className="whitespace-nowrap" key={field.getName()}>
+              {field.getType() == "string" ? (
+                <input
+                  className="rounded-sm border"
+                  type="text"
+                  name={field.getName()}
+                  value={tag.get(field.getName()) || ""}
+                  placeholder={field.getPlaceholderName()}
+                  onChange={updateTag}
+                />
+              ) : field.getType() == "number" ? (
+                <input
+                  className="rounded-sm border"
+                  type="number"
+                  name={field.getName()}
+                  value={tag.get(field.getName()) || ""}
+                  placeholder={field.getPlaceholderName()}
+                  onChange={updateTag}
+                />
+              ) : (
+                <input
+                  className="rounded-sm border"
+                  type="text"
+                  name={field.getName()}
+                  value={tag.get(field.getName()) || ""}
+                  placeholder={field.getPlaceholderName()}
+                  onChange={updateTag}
+                />
+              )}
+              {!field.getPreset() && (
+                <button
+                  className="rounded-sm border px-1"
+                  type="button"
+                  onClick={() => {
+                    customFieldsDispatch({
+                      type: "delete",
+                      key: field.getName(),
+                    });
+                    tagDispatch({
+                      type: "delete",
+                      key: field.getName(),
+                    });
+                  }}
+                >
+                  &times;
+                </button>
+              )}
+            </li>
+          )
+        )}
+        {/* {[...contact.entries()].map(([key, value]) => (
           <li className="whitespace-nowrap" key={key}>
             <input
               className="rounded-sm border"
@@ -939,46 +1031,67 @@ const AssignableForm = ({
               &times;
             </button>
           </li>
-        ))}
+        ))} */}
         {preset.allowFieldCreation && (
-          <li className="whitespace-nowrap">
+          <li className="border whitespace-nowrap">
             <input
               className="rounded-sm border"
               type="text"
               name="newAssignableField"
               value={fieldName}
               placeholder="New Field"
-              size={10}
               onChange={(e) => setFieldName(e.target.value)}
             />
-            <select
-              className="rounded-sm border"
-              name="fieldtype"
-              value={fieldType}
-              onChange={updateFieldType}
-            >
-              <option className="dark:text-black">---</option>
-              <option className="dark:text-black" value="contact">
-                Contact
-              </option>
-              <option className="dark:text-black" value="availability">
-                Availability
-              </option>
-              <option className="dark:text-black" value="location">
-                Location
-              </option>
-              <option className="dark:text-black" value="affinity">
-                Affinity
-              </option>
-              <option className="dark:text-black">Other</option>
-            </select>
-            <button
-              className="rounded-sm border px-1"
-              type="button"
-              onClick={createField}
-            >
-              +
-            </button>
+            <div>
+              <select
+                className="rounded-sm border"
+                name="fieldgroup"
+                value={fieldGroup}
+                onChange={updateFieldGroup}
+              >
+                <option className="dark:text-black" value="miscellaneous">
+                  ---
+                </option>
+                <option className="dark:text-black" value="contact">
+                  Contact
+                </option>
+                <option className="dark:text-black" value="availability">
+                  Availability
+                </option>
+                <option className="dark:text-black" value="location">
+                  Location
+                </option>
+                <option className="dark:text-black" value="affinity">
+                  Affinity
+                </option>
+                <option className="dark:text-black" value="miscellaneous">
+                  Other
+                </option>
+              </select>
+              <select
+                className="rounded-sm border"
+                name="fieldtype"
+                value={fieldType}
+                onChange={updateFieldType}
+              >
+                <option className="dark:text-black" value="string">
+                  String
+                </option>
+                <option className="dark:text-black" value="number">
+                  Number
+                </option>
+                <option className="dark:text-black" value="boolean">
+                  True/False
+                </option>
+              </select>
+              <button
+                className="rounded-sm border px-1"
+                type="button"
+                onClick={createField}
+              >
+                +
+              </button>
+            </div>
           </li>
         )}
       </ul>
@@ -1120,18 +1233,15 @@ const GroupForm = ({
 };
 
 export default function Page() {
-  const [assignableCollection, assignableDispatch] = useReducer(
-    mapReducer<string, Assignable>(),
-    new Map<string, Assignable>()
-  );
-  const [unassignedCollection, unassignedDispatch] = useReducer(
-    mapReducer<string, Assignable>(),
-    new Map<string, Assignable>()
-  );
-  const [groupCollection, groupDispatch] = useReducer(
-    mapReducer<string, Group>(),
-    new Map<string, Group>()
-  );
+  const [assignableCollection, assignableDispatch] = useMapReducer<
+    string,
+    Assignable
+  >();
+  const [unassignedCollection, unassignedDispatch] = useMapReducer<
+    string,
+    Assignable
+  >();
+  const [groupCollection, groupDispatch] = useMapReducer<string, Group>();
 
   const addAssignable = (assignable: Assignable) => {
     assignableDispatch({
@@ -1208,7 +1318,7 @@ export default function Page() {
       <main className="row-start-2 flex flex-col items-center gap-8 sm:items-start">
         <h1>group organizer test</h1>
         <p>WIP</p>
-        <div className="border rounded-md p-1">
+        <div className="rounded-md border p-1">
           <button
             className="float-right"
             onClick={() => setShowPresetForm(!showPresetForm)}
