@@ -71,7 +71,7 @@ class Assignable {
     contact?: Map<string, string>;
     availability?: Map<string, string>;
     location?: Map<string, string>;
-    affinity?: Map<string, string>;
+    affinity?: Map<string, string | number>;
     miscellaneous?: Map<string, any>;
     leader?: boolean;
     size?: number;
@@ -387,11 +387,25 @@ const PresetForm = ({
 
   const [fieldName, setFieldName] = useState<string>("");
   const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
+  const updateFieldGroup = (fieldGroup: string) => {
+    setFieldGroup(fieldGroup);
+    setFieldType("string");
+    /* switch (fieldGroup) {
+      case "contact":
+      case "miscellaneous":
+        break;
+      default:
+        
+    } */
+  };
   const [fieldType, setFieldType] = useState<string>("string");
   const [optionalField, setOptionalField] = useState<boolean>(false);
   const [presetFields, presetFieldsDispatch] = useMapReducer<string, Field>();
   const createField = () => {
-    if (fieldName.trim().length > 0) {
+    const cleanedFieldName = fieldName.trim().toLocaleLowerCase();
+    if (
+      !["", "id", "name", ...presetFields.keys()].includes(cleanedFieldName)
+    ) {
       presetFieldsDispatch({
         type: "create",
         key: fieldName,
@@ -404,8 +418,17 @@ const PresetForm = ({
         }),
       });
       setFieldName("");
+      setShowAddInputField(false);
     }
   };
+  const deleteField = (field: string) => {
+    presetFieldsDispatch({
+      type: "delete",
+      key: field,
+    });
+    if (field == idSource) setIDSource("id");
+  };
+
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
     presetCallback({
@@ -425,7 +448,7 @@ const PresetForm = ({
       onSubmit={submitForm}
       ref={assignablePresetFormRef}
     >
-      <label className="text-center">Assignable Presets</label>
+      <label className="text-center">Presets</label>
       <label>
         Assignable ID Source:{" "}
         <select
@@ -449,114 +472,119 @@ const PresetForm = ({
             ))}
         </select>
       </label>
-      <hr />
-      <ul>
+      <ul className="flex flex-col border p-1">
+        <li>Assignable Preset Fields</li>
+        <hr />
         {[...presetFields.entries()].map(([key, value]) => (
           <li className="flex flex-row place-content-between" key={key}>
             {value.getPlaceholderName()}
             <button
               className="rounded-sm border px-1"
-              onClick={() =>
-                presetFieldsDispatch({
-                  type: "delete",
-                  key: key,
-                })
-              }
+              onClick={() => deleteField(key)}
             >
               &times;
             </button>
           </li>
         ))}
-      </ul>
-      <hr />
-      <div className="flex flex-col border p-1">
-        <div className="flex flex-row place-content-between">
-          <div>Add Input Field</div>
-          <button
-            type="button"
-            onClick={() => setShowAddInputField(!showAddInputField)}
-          >
-            &hellip;
-          </button>
-        </div>
-        {showAddInputField && (
-          <>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name="newAssignableField"
-              value={fieldName}
-              placeholder="Field Name*"
-              onChange={(e) => setFieldName(e.target.value)}
-            />
-            <div className="whitespace-nowrap">
-              <select
-                className="rounded-sm border"
-                name="fieldgroup"
-                value={fieldGroup}
-                onChange={(e) => setFieldGroup(e.target.value)}
+        <li>
+          <div className="flex flex-col border p-1">
+            <div className="flex flex-row place-content-between">
+              <div>Add Input Field</div>
+              <button
+                type="button"
+                onClick={() => setShowAddInputField(!showAddInputField)}
               >
-                <option className="dark:text-black" value="miscellaneous">
-                  ---
-                </option>
-                <option className="dark:text-black" value="contact">
-                  Contact
-                </option>
-                <option className="dark:text-black" value="availability">
-                  Availability
-                </option>
-                <option className="dark:text-black" value="location">
-                  Location
-                </option>
-                <option className="dark:text-black" value="affinity">
-                  Affinity
-                </option>
-                <option className="dark:text-black" value="miscellaneous">
-                  Other
-                </option>
-              </select>
-              <select
-                className="rounded-sm border"
-                name="fieldtype"
-                defaultValue={fieldType}
-                onChange={(e) => setFieldType(e.target.value)}
-              >
-                <option className="dark:text-black" value="string">
-                  String
-                </option>
-                {fieldGroup == "miscellaneous" && (
-                  <>
-                    <option className="dark:text-black" value="number">
-                      Number
-                    </option>
-                    <option className="dark:text-black" value="boolean">
-                      Boolean
-                    </option>
-                  </>
-                )}
-              </select>
-              <label>
-                Optional?
-                <input
-                  type="checkbox"
-                  checked={optionalField}
-                  onChange={(e) => setOptionalField(e.target.checked)}
-                />
-              </label>
+                {showAddInputField ? <>&times;</> : "+"}
+              </button>
             </div>
-            <button
-              className="rounded-sm border px-1"
-              type="button"
-              onClick={createField}
-            >
-              Add Field
-            </button>
-          </>
-        )}
-      </div>
-      <hr />
-      <label>
-        Allow Field Creation?
+            {showAddInputField && (
+              <>
+                <input
+                  className="rounded-sm border"
+                  type="text"
+                  name="newAssignableField"
+                  value={fieldName}
+                  placeholder="Field Name*"
+                  onChange={(e) => setFieldName(e.target.value)}
+                />
+                <div className="whitespace-nowrap">
+                  <select
+                    className="rounded-sm border"
+                    name="fieldgroup"
+                    value={fieldGroup}
+                    onChange={(e) => updateFieldGroup(e.target.value)}
+                  >
+                    <option className="dark:text-black" value="miscellaneous">
+                      Tag Group
+                    </option>
+                    <option className="dark:text-black" value="contact">
+                      Contact
+                    </option>
+                    <option className="dark:text-black" value="availability">
+                      Availability
+                    </option>
+                    <option className="dark:text-black" value="location">
+                      Location
+                    </option>
+                    <option className="dark:text-black" value="affinity">
+                      Affinity
+                    </option>
+                  </select>
+                  {["miscellaneous", "contact"].includes(fieldGroup) && (
+                    <select
+                      className="rounded-sm border"
+                      name="fieldtype"
+                      defaultValue={fieldType}
+                      onChange={(e) => setFieldType(e.target.value)}
+                    >
+                      {fieldGroup == "contact" && (
+                        <>
+                          <option className="dark:text-black" value="email">
+                            Email
+                          </option>
+                          <option className="dark:text-black" value="tel">
+                            Phone
+                          </option>
+                        </>
+                      )}
+                      <option className="dark:text-black" value="string">
+                        Text
+                      </option>
+                      {fieldGroup == "miscellaneous" && (
+                        <>
+                          <option className="dark:text-black" value="number">
+                            Number
+                          </option>
+                          <option className="dark:text-black" value="boolean">
+                            T/F
+                          </option>
+                        </>
+                      )}
+                    </select>
+                  )}
+                  <label>
+                    Optional
+                    <input
+                      type="checkbox"
+                      checked={optionalField}
+                      onChange={(e) => setOptionalField(e.target.checked)}
+                    />
+                  </label>
+                </div>
+                <button
+                  className="rounded-sm border px-1"
+                  type="button"
+                  onClick={createField}
+                >
+                  Add Field
+                </button>
+              </>
+            )}
+          </div>
+        </li>
+      </ul>
+      <label className="flex flex-row place-content-between">
+        Allow Field Creation
         <input
           type="checkbox"
           checked={allowFieldCreation}
@@ -564,8 +592,8 @@ const PresetForm = ({
         />
       </label>
       <hr />
-      <label>
-        Uses Leaders?
+      <label className="flex flex-row place-content-between">
+        Uses Leaders
         <input
           type="checkbox"
           checked={useLeader}
@@ -573,8 +601,8 @@ const PresetForm = ({
         />
       </label>
       <hr />
-      <label>
-        Allow Group Names?
+      <label className="flex flex-row place-content-between">
+        Allow Group Names
         <input
           type="checkbox"
           checked={groupCustomName}
@@ -613,14 +641,12 @@ const AssignableForm = ({
   const [fieldName, setFieldName] = useState<string>("");
   const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
   const [fieldType, setFieldType] = useState<string>("string");
-  const updateFieldGroup = (event: ChangeEvent<HTMLSelectElement>) => {
-    setFieldGroup(event.target.value);
-  };
-  const updateFieldType = (event: ChangeEvent<HTMLSelectElement>) => {
-    setFieldType(event.target.value);
-  };
+  const [optionalField, setOptionalField] = useState<boolean>(false);
   const createField = () => {
-    if (!preset.presetFields.get(fieldName)) {
+    if (
+      !preset.presetFields.get(fieldName) &&
+      !["", "name", "id"].includes(fieldName)
+    ) {
       customFieldsDispatch({
         type: "create",
         key: fieldName,
@@ -628,59 +654,12 @@ const AssignableForm = ({
           name: fieldName,
           type: fieldType,
           group: fieldGroup,
+          optional: optionalField,
         }),
       });
       setFieldName("");
+      setShowAddInputField(false);
     }
-  };
-
-  const [contact, contactDispatch] = useMapReducer<string, string>();
-  const updateContact = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    contactDispatch({
-      type: "create",
-      key: name,
-      value: value,
-    });
-  };
-  const [availability, availabilityDispatch] = useMapReducer<string, string>();
-  const updateAvailability = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    availabilityDispatch({
-      type: "create",
-      key: name,
-      value: value,
-    });
-  };
-  const [location, locationDispatch] = useMapReducer<string, string>();
-  const updateLocation = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    locationDispatch({
-      type: "create",
-      key: name,
-      value: value,
-    });
-  };
-  const [affinity, affinityDispatch] = useMapReducer<string, string>();
-  const updateAffinity = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    affinityDispatch({
-      type: "create",
-      key: name,
-      value: value,
-    });
-  };
-  const [miscellaneous, miscellaneousDispatch] = useMapReducer<
-    string,
-    string
-  >();
-  const updateMiscellaneous = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    miscellaneousDispatch({
-      type: "create",
-      key: name,
-      value: value,
-    });
   };
 
   const [tag, tagDispatch] = useMapReducer<string, any>();
@@ -740,20 +719,24 @@ const AssignableForm = ({
           return tag.get(preset.useIDSource);
       }
     };
-    /**todo */
-    preset.presetFields.forEach((field: any) => {
-      switch (field.group) {
-        case "contact":
-          contact.set(field.name, tag.get(field.name));
-          break;
-        default:
-          miscellaneous.set(field.name, tag.get(field.name));
-      }
-    });
-    customFields.forEach((field) => {
+    const contact = new Map<string, string>();
+    const availability = new Map<string, string>();
+    const location = new Map<string, string>();
+    const affinity = new Map<string, string | number>();
+    const miscellaneous = new Map<string, any>();
+    new Map([...preset.presetFields, ...customFields]).forEach((field: any) => {
       switch (field.getGroup()) {
         case "contact":
           contact.set(field.getName(), tag.get(field.getName()));
+          break;
+        case "availability":
+          availability.set(field.getName(), tag.get(field.getName()));
+          break;
+        case "location":
+          location.set(field.getName(), tag.get(field.getName()));
+          break;
+        case "affinity":
+          affinity.set(field.getName(), tag.get(field.getName()));
           break;
         default:
           miscellaneous.set(field.getName(), tag.get(field.getName()));
@@ -761,7 +744,7 @@ const AssignableForm = ({
     });
     assignableCallback(
       new Assignable({
-        id: ID() || "error",
+        id: ID() || "!ERROR!",
         name: data.name,
         contact: contact,
         availability: availability,
@@ -780,23 +763,10 @@ const AssignableForm = ({
     tag.forEach((_, key) => {
       tagDispatch({ type: "create", key: key, value: "" });
     });
-    contact.forEach((_, key) => {
-      contactDispatch({ type: "create", key: key, value: "" });
-    });
-    availability.forEach((_, key) => {
-      availabilityDispatch({ type: "create", key: key, value: "" });
-    });
-    location.forEach((_, key) => {
-      locationDispatch({ type: "create", key: key, value: "" });
-    });
-    affinity.forEach((_, key) => {
-      affinityDispatch({ type: "create", key: key, value: "" });
-    });
-    miscellaneous.forEach((_, key) => {
-      miscellaneousDispatch({ type: "create", key: key, value: "" });
-    });
     assignableFormRef.current?.reset();
   };
+
+  const [showAddInputField, setShowAddInputField] = useState<boolean>(false);
 
   return (
     <form
@@ -828,69 +798,27 @@ const AssignableForm = ({
         />
       )}
       <ul>
-        {/* {[...preset.presetFields.values(), ...customFields.values()].map((field) => (
-          <li className="whitespace-nowrap" key={field.getName()}>
-            {field.type == "string" ? (
-              <input
-                className="rounded-sm border"
-                type="text"
-                name={field.name}
-                value={tag.get(field.name) || ""}
-                placeholder={field.getPlaceholderName()}
-                onChange={updateTag}
-              />
-            ) : field.type == "number" ? (
-              <input
-                className="rounded-sm border"
-                type="number"
-                name={field.name}
-                value={tag.get(field.name) || 0}
-                placeholder={field.getPlaceholderName()}
-                onChange={updateTag}
-              />
-            ) : (
-              <input
-                className="rounded-sm border"
-                type="text"
-                name={field.name}
-                value={tag.get(field.name) || ""}
-                placeholder={field.getPlaceholderName()}
-                onChange={updateTag}
-              />
-            )}
-          </li>
-        ))} */}
         {[...preset.presetFields.values(), ...customFields.values()].map(
           (field) => (
             <li className="whitespace-nowrap" key={field.getName()}>
-              {field.getType() == "string" ? (
-                <input
-                  className="rounded-sm border"
-                  type="text"
-                  name={field.getName()}
-                  value={tag.get(field.getName()) || ""}
-                  placeholder={field.getPlaceholderName()}
-                  onChange={updateTag}
-                />
-              ) : field.getType() == "number" ? (
-                <input
-                  className="rounded-sm border"
-                  type="number"
-                  name={field.getName()}
-                  value={tag.get(field.getName()) || ""}
-                  placeholder={field.getPlaceholderName()}
-                  onChange={updateTag}
-                />
-              ) : (
-                <input
-                  className="rounded-sm border"
-                  type="text"
-                  name={field.getName()}
-                  value={tag.get(field.getName()) || ""}
-                  placeholder={field.getPlaceholderName()}
-                  onChange={updateTag}
-                />
-              )}
+              <input
+                className="rounded-sm border"
+                type={field.getType()}
+                name={field.getName()}
+                value={tag.get(field.getName()) || ""}
+                placeholder={
+                  field.getPlaceholderName() +
+                  (field.getName() == preset.useIDSource ? " (ID)" : "")
+                }
+                required={!field.getOptional() || undefined}
+                minLength={
+                  !field.getOptional() &&
+                  ["text", "email", "tel"].includes(field.getType())
+                    ? 1
+                    : undefined
+                }
+                onChange={updateTag}
+              />
               {!field.getPreset() && (
                 <button
                   className="rounded-sm border px-1"
@@ -912,185 +840,103 @@ const AssignableForm = ({
             </li>
           )
         )}
-        {/* {[...contact.entries()].map(([key, value]) => (
-          <li className="whitespace-nowrap" key={key}>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name={key}
-              value={value}
-              placeholder={key + "(Contact)"}
-              onChange={updateContact}
-            />
-            <button
-              className="rounded-sm border px-1"
-              type="button"
-              onClick={() =>
-                contactDispatch({
-                  type: "delete",
-                  key: key,
-                })
-              }
-            >
-              &times;
-            </button>
-          </li>
-        ))}
-        {[...availability.entries()].map(([key, value]) => (
-          <li className="whitespace-nowrap" key={key}>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name={key}
-              value={value}
-              placeholder={key + "(Availability)"}
-              onChange={updateAvailability}
-            />
-            <button
-              className="rounded-sm border px-1"
-              type="button"
-              onClick={() =>
-                availabilityDispatch({
-                  type: "delete",
-                  key: key,
-                })
-              }
-            >
-              &times;
-            </button>
-          </li>
-        ))}
-        {[...location.entries()].map(([key, value]) => (
-          <li className="whitespace-nowrap" key={key}>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name={key}
-              value={value}
-              placeholder={key + "(Location)"}
-              onChange={updateLocation}
-            />
-            <button
-              className="rounded-sm border px-1"
-              type="button"
-              onClick={() =>
-                locationDispatch({
-                  type: "delete",
-                  key: key,
-                })
-              }
-            >
-              &times;
-            </button>
-          </li>
-        ))}
-        {[...affinity.entries()].map(([key, value]) => (
-          <li className="whitespace-nowrap" key={key}>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name={key}
-              value={value}
-              placeholder={key + "(Affinity)"}
-              onChange={updateAffinity}
-            />
-            <button
-              className="rounded-sm border px-1"
-              type="button"
-              onClick={() =>
-                affinityDispatch({
-                  type: "delete",
-                  key: key,
-                })
-              }
-            >
-              &times;
-            </button>
-          </li>
-        ))}
-        {[...miscellaneous.entries()].map(([key, value]) => (
-          <li className="whitespace-nowrap" key={key}>
-            <input
-              className="rounded-sm border"
-              type="text"
-              name={key}
-              value={value}
-              placeholder={key}
-              onChange={updateMiscellaneous}
-            />
-            <button
-              className="rounded-sm border px-1"
-              type="button"
-              onClick={() =>
-                miscellaneousDispatch({
-                  type: "delete",
-                  key: key,
-                })
-              }
-            >
-              &times;
-            </button>
-          </li>
-        ))} */}
         {preset.allowFieldCreation && (
           <li className="border whitespace-nowrap">
-            <input
-              className="rounded-sm border"
-              type="text"
-              name="newAssignableField"
-              value={fieldName}
-              placeholder="New Field"
-              onChange={(e) => setFieldName(e.target.value)}
-            />
-            <div>
-              <select
-                className="rounded-sm border"
-                name="fieldgroup"
-                value={fieldGroup}
-                onChange={updateFieldGroup}
-              >
-                <option className="dark:text-black" value="miscellaneous">
-                  ---
-                </option>
-                <option className="dark:text-black" value="contact">
-                  Contact
-                </option>
-                <option className="dark:text-black" value="availability">
-                  Availability
-                </option>
-                <option className="dark:text-black" value="location">
-                  Location
-                </option>
-                <option className="dark:text-black" value="affinity">
-                  Affinity
-                </option>
-                <option className="dark:text-black" value="miscellaneous">
-                  Other
-                </option>
-              </select>
-              <select
-                className="rounded-sm border"
-                name="fieldtype"
-                value={fieldType}
-                onChange={updateFieldType}
-              >
-                <option className="dark:text-black" value="string">
-                  String
-                </option>
-                <option className="dark:text-black" value="number">
-                  Number
-                </option>
-                <option className="dark:text-black" value="boolean">
-                  True/False
-                </option>
-              </select>
-              <button
-                className="rounded-sm border px-1"
-                type="button"
-                onClick={createField}
-              >
-                +
-              </button>
+            <div className="flex flex-col border p-1">
+              <div className="flex flex-row place-content-between">
+                <div>Add Input Field</div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddInputField(!showAddInputField)}
+                >
+                  {showAddInputField ? <>&times;</> : "+"}
+                </button>
+              </div>
+              {showAddInputField && (
+                <>
+                  <input
+                    className="rounded-sm border"
+                    type="text"
+                    name="newAssignableField"
+                    value={fieldName}
+                    placeholder="Field Name*"
+                    onChange={(e) => setFieldName(e.target.value)}
+                  />
+                  <div className="whitespace-nowrap">
+                    <select
+                      className="rounded-sm border"
+                      name="fieldgroup"
+                      value={fieldGroup}
+                      onChange={(e) => setFieldGroup(e.target.value)}
+                    >
+                      <option className="dark:text-black" value="miscellaneous">
+                        Tag Group
+                      </option>
+                      <option className="dark:text-black" value="contact">
+                        Contact
+                      </option>
+                      <option className="dark:text-black" value="availability">
+                        Availability
+                      </option>
+                      <option className="dark:text-black" value="location">
+                        Location
+                      </option>
+                      <option className="dark:text-black" value="affinity">
+                        Affinity
+                      </option>
+                    </select>
+                    {["miscellaneous", "contact"].includes(fieldGroup) && (
+                      <select
+                        className="rounded-sm border"
+                        name="fieldtype"
+                        defaultValue={fieldType}
+                        onChange={(e) => setFieldType(e.target.value)}
+                      >
+                        {fieldGroup == "contact" && (
+                          <>
+                            <option className="dark:text-black" value="email">
+                              Email
+                            </option>
+                            <option className="dark:text-black" value="tel">
+                              Phone
+                            </option>
+                          </>
+                        )}
+                        <option className="dark:text-black" value="string">
+                          Text
+                        </option>
+                        {fieldGroup == "miscellaneous" && (
+                          <>
+                            <option className="dark:text-black" value="number">
+                              Number
+                            </option>
+                            <option className="dark:text-black" value="boolean">
+                              T/F
+                            </option>
+                          </>
+                        )}
+                      </select>
+                    )}
+                    {
+                      <label>
+                        Optional
+                        <input
+                          type="checkbox"
+                          checked={optionalField}
+                          onChange={(e) => setOptionalField(e.target.checked)}
+                        />
+                      </label>
+                    }
+                  </div>
+                  <button
+                    className="rounded-sm border px-1"
+                    type="button"
+                    onClick={createField}
+                  >
+                    Add Field
+                  </button>
+                </>
+              )}
             </div>
           </li>
         )}
@@ -1142,15 +988,18 @@ const GroupForm = ({
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
     if (preset.useLeader) {
-      const name = data.name && data.name.length > 0 ? data.name : undefined;
-      groupCallback(
-        new Group({
-          id: leader,
-          name: name,
-          leader: assignableCollection.get(leader),
-        }),
-        assignableCollection.get(leader)
-      );
+      if (!!assignableCollection.get(leader)) {
+        const name = data.name && data.name.length > 0 ? data.name : undefined;
+        groupCallback(
+          new Group({
+            id: leader,
+            name: name,
+            leader: assignableCollection.get(leader),
+          }),
+          assignableCollection.get(leader)
+        );
+        setLeader("");
+      }
     } else {
       const name = data.name && data.name.length > 0 ? data.name : undefined;
       groupCallback(
@@ -1186,7 +1035,7 @@ const GroupForm = ({
                 setLeader(e.target.value);
               }}
             >
-              <option className="dark:text-black" value={undefined}>
+              <option className="dark:text-black" value="">
                 ---
               </option>
               {unassignedLeaderList.map((a) => (
@@ -1273,10 +1122,10 @@ export default function Page() {
       type: "delete",
       key: assignable.getID(),
     });
-    for (const group of groupCollection.values()) {
-      if (group.getLeader() == assignable)
-        groupDispatch({ type: "delete", key: group.getID() });
-    }
+    groupCollection.forEach((value, key) => {
+      if (value.getLeader() == assignable)
+        groupDispatch({ type: "delete", key: key });
+    });
   };
 
   const addGroup = (group: Group, leader?: Assignable) => {
@@ -1285,25 +1134,24 @@ export default function Page() {
       key: group.getID(),
       value: group,
     });
-    if (leader) unassignedDispatch({ type: "delete", key: leader.getID() });
+    if (!!leader) unassignedDispatch({ type: "delete", key: leader.getID() });
   };
 
   const deleteGroup = (group: Group) => {
     const leader = group.getLeader();
-    if (!!leader) {
+    if (!!leader)
       unassignedDispatch({
         type: "create",
         key: leader.getID(),
         value: leader,
       });
-    }
-    for (const assignable of group.getAllMembers().values()) {
+    group.getAllMembers().forEach((value, key) => {
       unassignedDispatch({
         type: "create",
-        key: assignable.getID(),
-        value: assignable,
+        key: key,
+        value: value,
       });
-    }
+    });
     groupDispatch({
       type: "delete",
       key: group.getID(),
@@ -1339,12 +1187,14 @@ export default function Page() {
               assignableCallback={addAssignable}
             />
             <div>
-              <button
-                className="float-right"
-                onClick={() => setShowOnlyUnassigned(!showOnlyUnassigned)}
-              >
-                &hellip;
-              </button>
+              {assignableCollection.size > 0 && (
+                <button
+                  className="float-right"
+                  onClick={() => setShowOnlyUnassigned(!showOnlyUnassigned)}
+                >
+                  &hellip;
+                </button>
+              )}
               {assignableCollection &&
                 (!showOnlyUnassigned ? (
                   <>
