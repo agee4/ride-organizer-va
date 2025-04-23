@@ -3,7 +3,9 @@
 import {
   ActionDispatch,
   ChangeEvent,
+  Dispatch,
   FormEvent,
+  SetStateAction,
   use,
   useEffect,
   useReducer,
@@ -364,8 +366,81 @@ class Field {
     return (
       this.name +
       (!this.optional ? "*" : "") +
-      (this.group != "miscellaneous" ? " (" + this.group + ")" : "")
+      (this.group != "miscellaneous" ? " (" + this.group + ")" : "") +
+      (" [" + this.type + "]")
     );
+  }
+}
+
+class Preset {
+  private assignableIDSource: string;
+  private allowFieldCreation: boolean;
+  private assignablePresetFields: Map<string, Field>;
+  private useLeader: boolean;
+  private groupIDSource: string;
+  private groupCustomName: boolean;
+  private groupUseSize: boolean;
+  private groupSizeSource: string;
+
+  constructor({
+    assignableIDSource,
+    allowFieldCreation,
+    assignablePresetFields,
+    useLeader,
+    groupIDSource,
+    groupCustomName,
+    groupUseSize,
+    groupSizeSource,
+  }: {
+    assignableIDSource?: string;
+    allowFieldCreation?: boolean;
+    assignablePresetFields: Map<string, Field>;
+    useLeader?: boolean;
+    groupIDSource?: string;
+    groupCustomName?: boolean;
+    groupUseSize?: boolean;
+    groupSizeSource: string;
+  }) {
+    this.assignableIDSource = assignableIDSource || "id";
+    this.allowFieldCreation = allowFieldCreation || false;
+    this.assignablePresetFields = assignablePresetFields;
+    this.useLeader = useLeader || false;
+    this.groupIDSource = groupIDSource || "id";
+    this.groupCustomName = groupCustomName || false;
+    this.groupUseSize = groupUseSize || false;
+    this.groupSizeSource = groupSizeSource;
+  }
+
+  getAssignableIDSource() {
+    return this.assignableIDSource;
+  }
+
+  getAllowFieldCreation() {
+    return this.allowFieldCreation;
+  }
+
+  getAssignablePresetFields() {
+    return this.assignablePresetFields;
+  }
+
+  getUseLeader() {
+    return this.useLeader;
+  }
+
+  getGroupIDSource() {
+    return this.groupIDSource;
+  }
+
+  getGroupCustomName() {
+    return this.groupCustomName;
+  }
+
+  getGroupUseSize() {
+    return this.groupUseSize;
+  }
+
+  getGroupSizeSource() {
+    return this.groupSizeSource;
   }
 }
 
@@ -373,22 +448,33 @@ const PresetForm = ({
   preset,
   presetCallback,
 }: {
-  preset: any;
-  presetCallback: any;
+  preset: Preset;
+  presetCallback: Dispatch<SetStateAction<Preset>>;
 }) => {
   const assignablePresetFormRef = useRef(null);
 
   const [assignableIDSource, setAssignableIDSource] = useState<string>(
-    preset.assignableIDSource
+    preset.getAssignableIDSource()
   );
   const [allowFieldCreation, setAllowFieldCreation] = useState<boolean>(
-    preset.allowFieldCreation
+    preset.getAllowFieldCreation()
   );
-  const [useLeader, setUseLeader] = useState<boolean>(preset.useLeader);
+  const [useLeader, setUseLeader] = useState<boolean>(preset.getUseLeader());
+  const updateUseLeader = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.checked && groupIDSource == "leader") setGroupIDSource("id");
+    setUseLeader(e.target.checked);
+  };
+  const [groupIDSource, setGroupIDSource] = useState<string>(
+    preset.getGroupIDSource()
+  );
   const [groupCustomName, setGroupCustomName] = useState<boolean>(false);
+  const updateGroupCustomName = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.checked && groupIDSource == "name") setGroupIDSource("id");
+    setGroupCustomName(e.target.checked);
+  };
   const [groupUseSize, setGroupUseSize] = useState<boolean>(false);
   const [groupSizeSource, setGroupSizeSource] = useState<string>(
-    preset.groupSizeSource
+    preset.getGroupSizeSource()
   );
 
   const [fieldName, setFieldName] = useState<string>("");
@@ -433,15 +519,18 @@ const PresetForm = ({
 
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
-    presetCallback({
-      assignableIDSource: assignableIDSource,
-      allowFieldCreation: allowFieldCreation,
-      assignablePresetFields: assignablePresetFields,
-      useLeader: useLeader,
-      groupCustomName: groupCustomName,
-      groupUseSize: groupUseSize,
-      groupSizeSource: groupUseSize ? groupSizeSource : "",
-    });
+    presetCallback(
+      new Preset({
+        assignableIDSource: assignableIDSource,
+        allowFieldCreation: allowFieldCreation,
+        assignablePresetFields: assignablePresetFields,
+        useLeader: useLeader,
+        groupIDSource: groupIDSource,
+        groupCustomName: groupCustomName,
+        groupUseSize: groupUseSize,
+        groupSizeSource: groupUseSize ? groupSizeSource : "",
+      })
+    );
   };
 
   const [showAddInputField, setShowAddInputField] = useState<boolean>(false);
@@ -453,207 +542,259 @@ const PresetForm = ({
       ref={assignablePresetFormRef}
     >
       <label className="text-center">Presets</label>
-      <label>
-        Assignable ID Source:{" "}
-        <select
-          className="rounded-sm border"
-          name="idsource"
-          value={assignableIDSource}
-          onChange={(e) => setAssignableIDSource(e.target.value)}
-        >
-          <option className="text-black" value="id">
-            ID Field
-          </option>
-          <option className="text-black" value="name">
-            Name
-          </option>
-          {[...assignablePresetFields.entries()]
-            .filter(
-              ([_, value]) =>
-                !value.getOptional() && value.getType() != "boolean"
-            )
-            .map(([key, _]) => (
-              <option className="text-black" key={key} value={key}>
-                {key}
-              </option>
-            ))}
-        </select>
-      </label>
-      <ul className="flex flex-col border p-1">
-        <li>Assignable Preset Fields</li>
-        <hr />
-        {[...assignablePresetFields.entries()].map(([key, value]) => (
-          <li className="flex flex-row place-content-between" key={key}>
-            {value.getPlaceholderName()}
-            <button
-              className="rounded-sm border px-1"
-              onClick={() => deleteField(key)}
+      <div className="flex flex-row">
+        <div>
+          <label>
+            Assignable ID Source:{" "}
+            <select
+              className="rounded-sm border"
+              name="idsource"
+              value={assignableIDSource}
+              onChange={(e) => setAssignableIDSource(e.target.value)}
             >
-              &times;
-            </button>
-          </li>
-        ))}
-        <li>
-          <div className="flex flex-col border p-1">
-            <div className="flex flex-row place-content-between">
-              <div>Add Input Field</div>
-              <button
-                type="button"
-                onClick={() => setShowAddInputField(!showAddInputField)}
-              >
-                {showAddInputField ? <>&times;</> : "+"}
-              </button>
-            </div>
-            {showAddInputField && (
-              <>
-                <input
-                  className="rounded-sm border"
-                  type="text"
-                  name="newAssignableField"
-                  value={fieldName}
-                  placeholder="Field Name*"
-                  onChange={(e) => setFieldName(e.target.value)}
-                />
-                <div className="whitespace-nowrap">
-                  <select
-                    className="rounded-sm border"
-                    name="fieldgroup"
-                    value={fieldGroup}
-                    onChange={(e) => updateFieldGroup(e.target.value)}
-                  >
-                    <option className="dark:text-black" value="miscellaneous">
-                      Tag Group
-                    </option>
-                    <option className="dark:text-black" value="contact">
-                      Contact
-                    </option>
-                    <option className="dark:text-black" value="availability">
-                      Availability
-                    </option>
-                    <option className="dark:text-black" value="location">
-                      Location
-                    </option>
-                    <option className="dark:text-black" value="affinity">
-                      Affinity
-                    </option>
-                  </select>
-                  {[
-                    "miscellaneous",
-                    "contact",
-                    "availability",
-                    "affinity",
-                  ].includes(fieldGroup) && (
-                    <select
-                      className="rounded-sm border"
-                      name="fieldtype"
-                      defaultValue={fieldType}
-                      onChange={(e) => setFieldType(e.target.value)}
-                    >
-                      {fieldGroup == "contact" && (
-                        <>
-                          <option className="dark:text-black" value="email">
-                            Email
-                          </option>
-                          <option className="dark:text-black" value="tel">
-                            Phone
-                          </option>
-                        </>
-                      )}
-                      <option className="dark:text-black" value="string">
-                        Text
-                      </option>
-                      {["miscellaneous", "availability", "affinity"].includes(
-                        fieldGroup
-                      ) && (
-                        <>
-                          {fieldGroup == "miscellaneous" && (
-                            <option className="dark:text-black" value="number">
-                              Number
-                            </option>
-                          )}
-                          <option className="dark:text-black" value="boolean">
-                            T/F
-                          </option>
-                        </>
-                      )}
-                    </select>
-                  )}
-                  <label>
-                    Optional
-                    <input
-                      type="checkbox"
-                      checked={optionalField}
-                      onChange={(e) => setOptionalField(e.target.checked)}
-                    />
-                  </label>
-                </div>
+              <option className="text-black" value="id">
+                ID Field
+              </option>
+              <option className="text-black" value="name">
+                Name
+              </option>
+              {[...assignablePresetFields.entries()]
+                .filter(
+                  ([_, value]) =>
+                    !value.getOptional() && value.getType() != "boolean"
+                )
+                .map(([key, _]) => (
+                  <option className="text-black" key={key} value={key}>
+                    {key}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <ul className="flex flex-col border p-1">
+            <li>Assignable Preset Fields</li>
+            <hr />
+            {[...assignablePresetFields.entries()].map(([key, value]) => (
+              <li className="flex flex-row place-content-between" key={key}>
+                {value.getPlaceholderName()}
                 <button
                   className="rounded-sm border px-1"
-                  type="button"
-                  onClick={createField}
+                  onClick={() => deleteField(key)}
                 >
-                  Add Field
+                  &times;
                 </button>
-              </>
-            )}
-          </div>
-        </li>
-      </ul>
-      <label className="flex flex-row place-content-between">
-        Allow Field Creation
-        <input
-          type="checkbox"
-          checked={allowFieldCreation}
-          onChange={(e) => setAllowFieldCreation(e.target.checked)}
-        />
-      </label>
-      <hr />
-      <label className="flex flex-row place-content-between">
-        Uses Leaders
-        <input
-          type="checkbox"
-          checked={useLeader}
-          onChange={(e) => setUseLeader(e.target.checked)}
-        />
-      </label>
-      <hr />
-      <label className="flex flex-row place-content-between">
-        Allow Group Names
-        <input
-          type="checkbox"
-          checked={groupCustomName}
-          onChange={(e) => setGroupCustomName(e.target.checked)}
-        />
-      </label>
-      <hr />
-      <label className="flex flex-row place-content-between">
-        Group Size
-        <input
-          type="checkbox"
-          checked={groupUseSize}
-          onChange={(e) => setGroupUseSize(e.target.checked)}
-        />
-      </label>
-      {groupUseSize && (
-        <select
-          className="rounded-sm border"
-          name="sizesource"
-          defaultValue={groupSizeSource}
-          onChange={(e) => setGroupSizeSource(e.target.value)}
-        >
-          <option className="dark:text-black" value="size">
-            Size
-          </option>
-          {useLeader &&
-            [...assignablePresetFields.entries()]
-              .filter(([_, value]) => value.getType() == "number")
-              .map(([key, _]) => (
-                <option className="text-black" key={key} value={key}>
-                  {key}
+              </li>
+            ))}
+            <li>
+              <div className="flex flex-col border p-1">
+                <div className="flex flex-row place-content-between">
+                  <div>Add Input Field</div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddInputField(!showAddInputField)}
+                  >
+                    {showAddInputField ? <>&uarr;</> : <>&darr;</>}
+                  </button>
+                </div>
+                {showAddInputField && (
+                  <>
+                    <input
+                      className="rounded-sm border"
+                      type="text"
+                      name="newAssignableField"
+                      value={fieldName}
+                      placeholder="Field Name*"
+                      onChange={(e) => setFieldName(e.target.value)}
+                    />
+                    <label className="whitespace-nowrap">
+                      Tag Group:{" "}
+                      <select
+                        className="rounded-sm border"
+                        name="fieldgroup"
+                        value={fieldGroup}
+                        onChange={(e) => updateFieldGroup(e.target.value)}
+                      >
+                        <option className="dark:text-black" value="contact">
+                          Contact
+                        </option>
+                        <option
+                          className="dark:text-black"
+                          value="availability"
+                        >
+                          Availability
+                        </option>
+                        <option className="dark:text-black" value="location">
+                          Location
+                        </option>
+                        <option className="dark:text-black" value="affinity">
+                          Affinity
+                        </option>
+                        <option
+                          className="dark:text-black"
+                          value="miscellaneous"
+                        >
+                          Miscellaneous
+                        </option>
+                      </select>
+                    </label>
+                    {[
+                      "miscellaneous",
+                      "contact",
+                      "availability",
+                      "affinity",
+                    ].includes(fieldGroup) && (
+                      <label className="whitespace-nowrap">
+                        Field Type:{" "}
+                        <select
+                          className="rounded-sm border"
+                          name="fieldtype"
+                          defaultValue={fieldType}
+                          onChange={(e) => setFieldType(e.target.value)}
+                        >
+                          {fieldGroup == "contact" && (
+                            <>
+                              <option className="dark:text-black" value="email">
+                                Email
+                              </option>
+                              <option className="dark:text-black" value="tel">
+                                Phone
+                              </option>
+                            </>
+                          )}
+                          <option className="dark:text-black" value="string">
+                            Text
+                          </option>
+                          {[
+                            "miscellaneous",
+                            "availability",
+                            "affinity",
+                          ].includes(fieldGroup) && (
+                            <>
+                              {fieldGroup == "miscellaneous" && (
+                                <option
+                                  className="dark:text-black"
+                                  value="number"
+                                >
+                                  Number
+                                </option>
+                              )}
+                              <option
+                                className="dark:text-black"
+                                value="boolean"
+                              >
+                                Checkbox
+                              </option>
+                            </>
+                          )}
+                        </select>
+                      </label>
+                    )}
+                    {fieldType != "boolean" && (
+                      <label>
+                        Optional
+                        <input
+                          type="checkbox"
+                          checked={optionalField}
+                          onChange={(e) => setOptionalField(e.target.checked)}
+                        />
+                      </label>
+                    )}
+                    <button
+                      className="rounded-sm border px-1"
+                      type="button"
+                      onClick={createField}
+                    >
+                      Add Field
+                    </button>
+                  </>
+                )}
+              </div>
+            </li>
+          </ul>
+          {/* <label className="flex flex-row place-content-between">
+            Field Creation
+            <input
+              type="checkbox"
+              checked={allowFieldCreation}
+              onChange={(e) => setAllowFieldCreation(e.target.checked)}
+            />
+          </label> */}
+          <hr />
+          <label className="flex flex-row place-content-between">
+            Leaders
+            <input
+              type="checkbox"
+              checked={useLeader}
+              onChange={updateUseLeader}
+            />
+          </label>
+          <hr />
+        </div>
+        <div className="mx-1 border-r-1"></div>
+        <div>
+          <label>
+            Group ID Source:{" "}
+            <select
+              className="rounded-sm border"
+              name="groupidsource"
+              value={groupIDSource}
+              onChange={(e) => setGroupIDSource(e.target.value)}
+            >
+              <option className="text-black" value="id">
+                ID Field
+              </option>
+              {groupCustomName && (
+                <option className="text-black" value="name">
+                  Name
                 </option>
-              ))}
-        </select>
-      )}
+              )}
+              {useLeader && (
+                <option className="text-black" value="leader">
+                  Leader
+                </option>
+              )}
+            </select>
+          </label>
+          <hr />
+          <label className="flex flex-row place-content-between">
+            Group Names
+            <input
+              type="checkbox"
+              checked={groupCustomName}
+              onChange={updateGroupCustomName}
+            />
+          </label>
+          <hr />
+          <label className="flex flex-row place-content-between">
+            Group Size
+            <input
+              type="checkbox"
+              checked={groupUseSize}
+              onChange={(e) => setGroupUseSize(e.target.checked)}
+            />
+          </label>
+          {groupUseSize && (
+            <select
+              className="rounded-sm border"
+              name="sizesource"
+              defaultValue={groupSizeSource}
+              onChange={(e) => setGroupSizeSource(e.target.value)}
+            >
+              <option className="dark:text-black" value="size">
+                Size
+              </option>
+              {useLeader &&
+                [...assignablePresetFields.entries()]
+                  .filter(([_, value]) => value.getType() == "number")
+                  .map(([key, _]) => (
+                    <option className="text-black" key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+            </select>
+          )}
+          <hr />
+        </div>
+      </div>
       <button className="rounded-full border" type="submit">
         Save Presets
       </button>
@@ -665,7 +806,7 @@ const AssignableForm = ({
   preset,
   assignableCallback,
 }: {
-  preset: any;
+  preset: Preset;
   assignableCallback: (assignable: Assignable) => void;
 }) => {
   const assignableFormRef = useRef<HTMLFormElement>(null);
@@ -682,14 +823,25 @@ const AssignableForm = ({
     setData({ ...data, [name]: value });
   };
 
-  const [customFields, customFieldsDispatch] = useMapReducer<string, Field>();
+  const [tag, tagDispatch] = useMapReducer<string, any>();
+  const updateTag = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    tagDispatch({
+      type: "create",
+      key: name,
+      value: value,
+    });
+  };
+
+  /**custom fields */
+  /* const [customFields, customFieldsDispatch] = useMapReducer<string, Field>();
   const [fieldName, setFieldName] = useState<string>("");
   const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
   const [fieldType, setFieldType] = useState<string>("string");
   const [optionalField, setOptionalField] = useState<boolean>(false);
   const createField = () => {
     if (
-      !preset.assignablePresetFields.get(fieldName) &&
+      !preset.getAssignablePresetFields().get(fieldName) &&
       !["", "name", "id"].includes(fieldName)
     ) {
       customFieldsDispatch({
@@ -705,30 +857,24 @@ const AssignableForm = ({
       setFieldName("");
       setShowAddInputField(false);
     }
-  };
+  }; */
 
-  const [tag, tagDispatch] = useMapReducer<string, any>();
-  const updateTag = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    tagDispatch({
-      type: "create",
-      key: name,
-      value: value,
-    });
-  };
-
-  /**load preset fields */
+  /**load fields from preset & custom */
   useEffect(() => {
-    if (preset.assignablePresetFields)
-      for (const field of preset.assignablePresetFields.values()) {
+    if (preset.getAssignablePresetFields())
+      for (const field of preset.getAssignablePresetFields().values()) {
         tagDispatch({
           type: "create",
-          key: field.name,
+          key: field.getName(),
           value:
-            field.type == "boolean" ? false : field.type == "number" ? 0 : "",
+            field.getType() == "boolean"
+              ? false
+              : field.getType() == "number"
+                ? 0
+                : "",
         });
       }
-    for (const field of customFields.values()) {
+    /* for (const field of customFields.values()) {
       tagDispatch({
         type: "create",
         key: field.getName(),
@@ -739,11 +885,11 @@ const AssignableForm = ({
               ? 0
               : "",
       });
-    }
+    } */
     for (const field of tag.keys()) {
       if (
-        !preset.assignablePresetFields.get(field) &&
-        !customFields.get(field)
+        !preset.getAssignablePresetFields().get(field) /* &&
+        !customFields.get(field) */
       ) {
         tagDispatch({
           type: "delete",
@@ -751,20 +897,20 @@ const AssignableForm = ({
         });
       }
     }
-  }, [preset, customFields]);
+  }, [preset /* customFields */]);
 
   const [isLeader, setIsLeader] = useState<boolean>(false);
 
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
     const ID = () => {
-      switch (preset.assignableIDSource) {
+      switch (preset.getAssignableIDSource()) {
         case "name":
           return data.name;
         case "id":
           return data.id;
         default:
-          return tag.get(preset.assignableIDSource);
+          return tag.get(preset.getAssignableIDSource());
       }
     };
     const contact = new Map<string, string>();
@@ -772,26 +918,26 @@ const AssignableForm = ({
     const location = new Map<string, string>();
     const affinity = new Map<string, string | number>();
     const miscellaneous = new Map<string, any>();
-    new Map([...preset.assignablePresetFields, ...customFields]).forEach(
-      (field: any) => {
-        switch (field.getGroup()) {
-          case "contact":
-            contact.set(field.getName(), tag.get(field.getName()));
-            break;
-          case "availability":
-            availability.set(field.getName(), tag.get(field.getName()));
-            break;
-          case "location":
-            location.set(field.getName(), tag.get(field.getName()));
-            break;
-          case "affinity":
-            affinity.set(field.getName(), tag.get(field.getName()));
-            break;
-          default:
-            miscellaneous.set(field.getName(), tag.get(field.getName()));
-        }
+    new Map([
+      ...preset.getAssignablePresetFields() /* ...customFields */,
+    ]).forEach((field: Field) => {
+      switch (field.getGroup()) {
+        case "contact":
+          contact.set(field.getName(), tag.get(field.getName()));
+          break;
+        case "availability":
+          availability.set(field.getName(), tag.get(field.getName()));
+          break;
+        case "location":
+          location.set(field.getName(), tag.get(field.getName()));
+          break;
+        case "affinity":
+          affinity.set(field.getName(), tag.get(field.getName()));
+          break;
+        default:
+          miscellaneous.set(field.getName(), tag.get(field.getName()));
       }
-    );
+    });
     assignableCallback(
       new Assignable({
         id: ID() || "!ERROR!",
@@ -831,13 +977,13 @@ const AssignableForm = ({
         name="name"
         value={data.name}
         placeholder={
-          "Name*" + (preset.assignableIDSource == "name" ? " (ID)" : "")
+          "Name*" + (preset.getAssignableIDSource() == "name" ? " (ID)" : "")
         }
         required
         minLength={1}
         onChange={updateForm}
       />
-      {preset?.assignableIDSource == "id" && (
+      {preset?.getAssignableIDSource() == "id" && (
         <input
           className="rounded-sm border"
           type="text"
@@ -851,8 +997,8 @@ const AssignableForm = ({
       )}
       <ul>
         {[
-          ...preset.assignablePresetFields.values(),
-          ...customFields.values(),
+          ...preset.getAssignablePresetFields().values(),
+          /* ...customFields.values(), */
         ].map((field) => (
           <li className="whitespace-nowrap" key={field.getName()}>
             <input
@@ -862,7 +1008,9 @@ const AssignableForm = ({
               value={tag.get(field.getName()) || ""}
               placeholder={
                 field.getPlaceholderName() +
-                (field.getName() == preset.assignableIDSource ? " (ID)" : "")
+                (field.getName() == preset.getAssignableIDSource()
+                  ? " (ID)"
+                  : "")
               }
               required={!field.getOptional() || undefined}
               minLength={
@@ -873,7 +1021,7 @@ const AssignableForm = ({
               }
               onChange={updateTag}
             />
-            {!field.getPreset() && (
+            {/* !field.getPreset() && (
               <button
                 className="rounded-sm border px-1"
                 type="button"
@@ -890,10 +1038,10 @@ const AssignableForm = ({
               >
                 &times;
               </button>
-            )}
+            ) */}
           </li>
         ))}
-        {preset.allowFieldCreation && (
+        {/* preset.getAllowFieldCreation() && (
           <li className="border whitespace-nowrap">
             <div className="flex flex-col border p-1">
               <div className="flex flex-row place-content-between">
@@ -902,7 +1050,7 @@ const AssignableForm = ({
                   type="button"
                   onClick={() => setShowAddInputField(!showAddInputField)}
                 >
-                  {showAddInputField ? <>&times;</> : "+"}
+                  {showAddInputField ? <>uarr;</> : <>&darr;</>}
                 </button>
               </div>
               {showAddInputField && (
@@ -970,7 +1118,7 @@ const AssignableForm = ({
                         )}
                       </select>
                     )}
-                    {
+                    {fieldType != "boolean" && (
                       <label>
                         Optional
                         <input
@@ -979,7 +1127,7 @@ const AssignableForm = ({
                           onChange={(e) => setOptionalField(e.target.checked)}
                         />
                       </label>
-                    }
+                    )}
                   </div>
                   <button
                     className="rounded-sm border px-1"
@@ -992,9 +1140,9 @@ const AssignableForm = ({
               )}
             </div>
           </li>
-        )}
+        ) */}
       </ul>
-      {preset?.useLeader && (
+      {preset?.getUseLeader() && (
         <label>
           Leader
           <input
@@ -1016,7 +1164,7 @@ const GroupForm = ({
   groupCallback,
   assignableCollection,
 }: {
-  preset: any;
+  preset: Preset;
   groupCallback: (group: Group, leader?: Assignable) => void;
   assignableCollection: Map<string, Assignable>;
 }) => {
@@ -1032,6 +1180,7 @@ const GroupForm = ({
   }>({
     id: "",
     name: "",
+    size: 0,
   });
   const updateData = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -1041,34 +1190,62 @@ const GroupForm = ({
 
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
-    if (preset.useLeader) {
-      if (!!assignableCollection.get(leader)) {
-        const name = data.name && data.name.length > 0 ? data.name : undefined;
+    switch (preset.getGroupIDSource()) {
+      case "leader":
+        if (preset.getUseLeader())
+          if (!!assignableCollection.get(leader)) {
+            const name = data.name && data.name.length > 0 ? data.name : leader;
+            groupCallback(
+              new Group({
+                id: leader,
+                name: name,
+                leader: assignableCollection.get(leader),
+                size: assignableCollection
+                  .get(leader)
+                  ?.getSize() /**TODO change to any preset defined size field */,
+              }),
+              assignableCollection.get(leader)
+            );
+            setLeader("");
+          }
+        break;
+      case "name":
         groupCallback(
           new Group({
-            id: leader,
-            name: name,
-            leader: assignableCollection.get(leader),
-            size: assignableCollection
-              .get(leader)
-              ?.getSize() /**TODO change to any preset defined size field */,
+            id: data.name as string,
+            name: data.name,
+            leader: preset.getUseLeader()
+              ? assignableCollection.get(leader)
+              : undefined,
+            size: preset.getGroupUseSize()
+              ? assignableCollection.get(leader)?.getSize()
+              : undefined /**TODO change to any preset defined size field */,
           }),
           assignableCollection.get(leader)
         );
         setLeader("");
-      }
-    } else {
-      const name = data.name && data.name.length > 0 ? data.name : undefined;
-      groupCallback(
-        new Group({
-          id: data.id,
-          name: name,
-        })
-      );
+        break;
+      case "id":
+      default:
+        const name = data.name && data.name.length > 0 ? data.name : undefined;
+        groupCallback(
+          new Group({
+            id: data.id,
+            name: name,
+            leader: preset.getUseLeader()
+              ? assignableCollection.get(leader)
+              : undefined,
+            size: preset.getGroupUseSize()
+              ? assignableCollection.get(leader)?.getSize()
+              : undefined /**TODO change to any preset defined size field */,
+          }),
+          assignableCollection.get(leader)
+        );
     }
     setData({
       id: "",
       name: "",
+      size: 0,
     });
     groupFormRef.current?.reset();
   };
@@ -1080,58 +1257,61 @@ const GroupForm = ({
       ref={groupFormRef}
     >
       <label className="text-center">New Group</label>
-      <div className="whitespace-nowrap">
-        {preset.useLeader ? (
-          <label>
-            Leader:
-            <select
-              className="rounded-sm border"
-              name="college"
-              value={leader}
-              onChange={(e) => {
-                setLeader(e.target.value);
-              }}
-            >
-              <option className="dark:text-black" value="">
-                ---
-              </option>
-              {unassignedLeaderList.map((a) => (
-                <option
-                  className="dark:text-black"
-                  key={a.getID()}
-                  value={a.getID()}
-                >
-                  {a.getName()}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <input
+      {preset.getUseLeader() && (
+        <label className="whitespace-nowrap">
+          {"Leader" +
+            (preset.getGroupIDSource() == "leader" ? " (ID)" : "") +
+            ":"}
+          <select
             className="rounded-sm border"
-            type="text"
-            name="id"
-            value={data.id}
-            placeholder="ID*"
-            required
-            min={1}
-            onChange={updateData}
-          />
-        )}
-      </div>
-      {preset.groupCustomName && (
+            name="college"
+            value={leader}
+            onChange={(e) => {
+              setLeader(e.target.value);
+            }}
+          >
+            <option className="dark:text-black" value="">
+              ---
+            </option>
+            {unassignedLeaderList.map((a) => (
+              <option
+                className="dark:text-black"
+                key={a.getID()}
+                value={a.getID()}
+              >
+                {a.getName()}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {preset.getGroupIDSource() == "id" && (
         <input
           className="rounded-sm border"
           type="text"
-          name="name"
-          value={data.name}
-          placeholder="Name*"
+          name="id"
+          value={data.id}
+          placeholder="ID*"
           required
           min={1}
           onChange={updateData}
         />
       )}
-      {preset.groupUseSize && preset.groupSizeSource == "size" && (
+      {preset.getGroupCustomName() && (
+        <input
+          className="rounded-sm border"
+          type="text"
+          name="name"
+          value={data.name}
+          placeholder={
+            "Name*" + (preset.getGroupIDSource() == "name" ? " (ID)" : "")
+          }
+          required
+          min={1}
+          onChange={updateData}
+        />
+      )}
+      {preset.getGroupUseSize() && preset.getGroupSizeSource() == "size" && (
         <input
           className="rounded-sm border"
           type="number"
@@ -1174,15 +1354,12 @@ export default function Page() {
     });
   };
 
-  const [assignablePreset, setAssignablePreset] = useState({
-    assignableIDSource: "id",
-    allowFieldCreation: false,
-    assignablePresetFields: new Map<string, Field>(),
-    useLeader: false,
-    groupCustomName: false,
-    groupUseSize: false,
-    groupSizeSource: "size",
-  });
+  const [assignablePreset, setAssignablePreset] = useState<Preset>(
+    new Preset({
+      assignablePresetFields: new Map<string, Field>(),
+      groupSizeSource: "size",
+    })
+  );
 
   const deleteAssignable = (assignable: Assignable) => {
     assignableDispatch({
