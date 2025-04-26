@@ -44,6 +44,35 @@ function useMapReducer<K, V>(map?: Map<K, V>) {
   return useReducer(mapReducer<K, V>(), map || new Map<K, V>());
 }
 
+type SetReducerAction<V> =
+  | { type: "create"; value: V }
+  | { type: "delete"; value: V }
+  | { type: "replace"; value: Set<V> };
+
+function setReducer<V>() {
+  return (itemSet: Set<V>, action: SetReducerAction<V>) => {
+    switch (action.type) {
+      case "create": {
+        return new Set(itemSet).add(action.value);
+      }
+      case "delete": {
+        const newCollection = new Set(itemSet);
+        newCollection.delete(action.value);
+        return newCollection;
+      }
+      case "replace": {
+        return action.value;
+      }
+      default:
+        throw Error("Unknown action");
+    }
+  };
+}
+
+function useSetReducer<V>(set?: Set<V>) {
+  return useReducer(setReducer<V>(), set || new Set<V>());
+}
+
 class Assignable {
   private _id: string;
   private name: string;
@@ -319,26 +348,34 @@ class Field {
   private name: string;
   private type: string;
   private group: string;
-  private optional: boolean = false;
-  private preset: boolean = false;
+  private optional: boolean;
+  private options: Set<string>;
+  private multiple: boolean;
+  private preset: boolean;
 
   constructor({
     name,
     type,
     group,
     optional,
+    options,
+    multiple,
     preset,
   }: {
     name: string;
     type: string;
     group: string;
     optional?: boolean;
+    options?: Set<string>;
+    multiple?: boolean;
     preset?: boolean;
   }) {
     this.name = name;
     this.type = type;
     this.group = group;
     this.optional = optional || false;
+    this.options = options || new Set<string>();
+    this.multiple = multiple || false;
     this.preset = preset || false;
   }
 
@@ -356,6 +393,14 @@ class Field {
 
   getOptional() {
     return this.optional;
+  }
+
+  getOptions() {
+    return this.options;
+  }
+
+  getMultiple() {
+    return this.multiple;
   }
 
   getPreset() {
@@ -498,6 +543,32 @@ const bereanCollegeRidesPreset = new Preset({
       }),
     ],
     [
+      "Phone",
+      new Field({
+        name: "Phone",
+        type: "tel",
+        group: "contact",
+        preset: true,
+      }),
+    ],
+    [
+      "Ride Needs",
+      new Field({
+        name: "Ride Needs",
+        type: "select",
+        group: "location",
+        optional: true,
+        options: new Set<string>([
+          "Friday",
+          "Sunday First",
+          "Sunday Second",
+          "Sunday Third",
+        ]),
+        multiple: true,
+        preset: true,
+      }),
+    ],
+    [
       "Address",
       new Field({
         name: "Address",
@@ -507,12 +578,24 @@ const bereanCollegeRidesPreset = new Preset({
       }),
     ],
     [
-      "Phone",
+      "Campus",
       new Field({
-        name: "Phone",
-        type: "tel",
-        group: "contact",
+        name: "Campus",
+        type: "select",
+        group: "location",
         optional: true,
+        options: new Set<string>(["UCI", "CSULB", "Biola", "Chapman"]),
+        preset: true,
+      }),
+    ],
+    [
+      "Year",
+      new Field({
+        name: "Year",
+        type: "select",
+        group: "affinity",
+        optional: true,
+        options: new Set<string>(["Freshman", "Sophomore", "Junior", "Senior"]),
         preset: true,
       }),
     ],
@@ -631,10 +714,16 @@ const PresetForm = ({
     setFieldGroup(fieldGroup);
     setFieldType("string");
   };
-  const [fieldType, setFieldType] = useState<string>("string");
-  const updateFieldType = (fieldType: string) => {
-    if (fieldType == "checkbox") setOptionalField(true);
-    setFieldType(fieldType);
+  const [fieldType, setFieldType] = useState<string>("text");
+  const updateFieldType = (newFieldType: string) => {
+    if (fieldType == "checkbox") setOptionalField(false);
+    if (fieldType == "select") {
+      setOptionalField(true);
+      setSelectOptions({ type: "replace", value: new Set<string>() });
+      setMultipleSelect(false);
+    }
+    if (newFieldType == "checkbox") setOptionalField(true);
+    setFieldType(newFieldType);
   };
   const [optionalField, setOptionalField] = useState<boolean>(false);
   const [assignablePresetFields, assignablePresetFieldsDispatch] =
@@ -654,6 +743,8 @@ const PresetForm = ({
           type: fieldType,
           group: fieldGroup,
           optional: optionalField,
+          options: fieldType == "select" ? selectOptions : undefined,
+          multiple: fieldType == "select" ? multipleSelect : undefined,
           preset: true,
         }),
       });
@@ -661,6 +752,9 @@ const PresetForm = ({
       setFieldGroup("miscellaneous");
       setFieldType("string");
       setOptionalField(false);
+      setOptionName("");
+      setSelectOptions({ type: "replace", value: new Set<string>() });
+      setMultipleSelect(false);
       setShowAddInputField(false);
     }
   };
@@ -670,6 +764,17 @@ const PresetForm = ({
       key: field,
     });
     if (field == assignableIDSource) setAssignableIDSource("id");
+  };
+
+  const [selectOptions, setSelectOptions] = useSetReducer<string>();
+  const [optionName, setOptionName] = useState<string>("");
+  const [multipleSelect, setMultipleSelect] = useState<boolean>(false);
+  const createOption = () => {
+    const cleanedOptionName = optionName.trim().toLocaleLowerCase();
+    if (!["", "id", "name", ...selectOptions].includes(cleanedOptionName)) {
+      setSelectOptions({ type: "create", value: optionName });
+      setOptionName("");
+    }
   };
 
   const submitForm = (event: FormEvent) => {
@@ -713,8 +818,8 @@ const PresetForm = ({
       <label className="text-center">Presets</label>
       <div className="flex flex-row">
         <div>
-          <label>
-            Assignable ID Source:{" "}
+          <label className="flex flex-row place-content-between">
+            Assignable ID Source:
             <select
               className="rounded-sm border"
               name="idsource"
@@ -730,7 +835,8 @@ const PresetForm = ({
               {[...assignablePresetFields.entries()]
                 .filter(
                   ([_, value]) =>
-                    !value.getOptional() && value.getType() != "boolean"
+                    !value.getOptional() &&
+                    !["checkbox", "select"].includes(value.getType())
                 )
                 .map(([key, _]) => (
                   <option className="text-black" key={key} value={key}>
@@ -740,8 +846,8 @@ const PresetForm = ({
             </select>
           </label>
           <ul className="flex flex-col border p-1">
-            <div className="flex flex-row place-content-between">
-              <li>Assignable Fields</li>
+            <label className="flex flex-row place-content-between">
+              Assignable Fields
               <button
                 type="button"
                 onClick={() =>
@@ -750,7 +856,7 @@ const PresetForm = ({
               >
                 {showAssignablePresetFields ? <>&uarr;</> : <>&darr;</>}
               </button>
-            </div>
+            </label>
             {showAssignablePresetFields && (
               <>
                 <hr />
@@ -766,15 +872,15 @@ const PresetForm = ({
                   </li>
                 ))}
                 <li className="flex flex-col border p-1">
-                  <div className="flex flex-row place-content-between">
-                    <div>Add Input Field</div>
+                  <label className="flex flex-row place-content-between">
+                    Add Input Field
                     <button
                       type="button"
                       onClick={() => setShowAddInputField(!showAddInputField)}
                     >
                       {showAddInputField ? <>&uarr;</> : <>&darr;</>}
                     </button>
-                  </div>
+                  </label>
                   {showAddInputField && (
                     <>
                       <input
@@ -785,8 +891,8 @@ const PresetForm = ({
                         placeholder="Field Name*"
                         onChange={(e) => setFieldName(e.target.value)}
                       />
-                      <label className="whitespace-nowrap">
-                        Field Group:{" "}
+                      <label className="flex flex-row place-content-between">
+                        Field Group:
                         <select
                           className="rounded-sm border"
                           name="fieldgroup"
@@ -822,8 +928,8 @@ const PresetForm = ({
                         "availability",
                         "affinity",
                       ].includes(fieldGroup) && (
-                        <label className="whitespace-nowrap">
-                          Field Type:{" "}
+                        <label className="flex flex-row place-content-between">
+                          Field Type:
                           <select
                             className="rounded-sm border"
                             name="fieldtype"
@@ -843,7 +949,7 @@ const PresetForm = ({
                                 </option>
                               </>
                             )}
-                            <option className="dark:text-black" value="string">
+                            <option className="dark:text-black" value="text">
                               Text
                             </option>
                             {[
@@ -866,19 +972,79 @@ const PresetForm = ({
                                 >
                                   Checkbox
                                 </option>
+                                <option
+                                  className="dark:text-black"
+                                  value="select"
+                                >
+                                  Select
+                                </option>
                               </>
                             )}
                           </select>
                         </label>
                       )}
-                      <label>
-                        Optional
-                        <input
-                          type="checkbox"
-                          checked={optionalField}
-                          onChange={(e) => setOptionalField(e.target.checked)}
-                        />
-                      </label>
+                      {fieldType == "select" && (
+                        <div className="flex flex-col border">
+                          <div>Select Options</div>
+                          <hr />
+                          <ul>
+                            {[...selectOptions].map((value) => (
+                              <li
+                                className="flex flex-row place-content-between"
+                                key={value}
+                              >
+                                {value}
+                                <button
+                                  className="rounded-sm border px-1"
+                                  onClick={() =>
+                                    setSelectOptions({
+                                      type: "delete",
+                                      value: value,
+                                    })
+                                  }
+                                >
+                                  &times;
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                          <input
+                            className="rounded-sm border"
+                            type="text"
+                            name="newSelectOption"
+                            value={optionName}
+                            placeholder="Option Name*"
+                            onChange={(e) => setOptionName(e.target.value)}
+                          />
+                          <button
+                            className="rounded-sm border px-1"
+                            type="button"
+                            onClick={createOption}
+                          >
+                            Add Option
+                          </button>
+                          <label className="flex flex-row place-content-between">
+                            Multiple
+                            <input
+                              type="checkbox"
+                              checked={multipleSelect}
+                              onChange={(e) =>
+                                setMultipleSelect(e.target.checked)
+                              }
+                            />
+                          </label>
+                        </div>
+                      )}
+                      {!["checkbox", "select"].includes(fieldType) && (
+                        <label className="flex flex-row place-content-between">
+                          Optional
+                          <input
+                            type="checkbox"
+                            checked={optionalField}
+                            onChange={(e) => setOptionalField(e.target.checked)}
+                          />
+                        </label>
+                      )}
                       <button
                         className="rounded-sm border px-1"
                         type="button"
@@ -911,10 +1077,10 @@ const PresetForm = ({
           </label>
           <hr />
         </div>
-        <div className="mx-1 border-r-1"></div>
+        <div className="mx-1 border-l-1"></div>
         <div>
-          <label>
-            Group ID Source:{" "}
+          <label className="flex flex-row place-content-between">
+            Group ID Source:
             <select
               className="rounded-sm border"
               name="groupidsource"
@@ -1014,6 +1180,16 @@ const AssignableForm = ({
         preset.getAssignablePresetFields().get(name)?.getType() == "checkbox"
           ? checked
           : value,
+    });
+  };
+  const updateDataSelect = (event: ChangeEvent<HTMLSelectElement>) => {
+    const { name, value, selectedOptions } = event.target;
+    dataDispatch({
+      type: "create",
+      key: name,
+      value: preset.getAssignablePresetFields().get(name)?.getMultiple()
+        ? [...selectedOptions].map((o) => o.value)
+        : value,
     });
   };
 
@@ -1179,34 +1355,56 @@ const AssignableForm = ({
         ].map((field) => (
           <li className="whitespace-nowrap" key={field.getName()}>
             <label className="flex flex-row place-content-between">
-              {["number", "checkbox"].includes(field.getType()) &&
+              {["number", "checkbox", "select"].includes(field.getType()) &&
                 field.getName() + (field.getOptional() ? "" : "*") + ": "}
-              <input
-                className="rounded-sm border"
-                type={field.getType()}
-                name={field.getName()}
-                value={
-                  data.get(field.getName()) ||
-                  (field.getType() == "number" ? 0 : "")
-                }
-                checked={data.get(field.getName()) || false}
-                placeholder={
-                  field.getName() +
-                  (field.getOptional() ? "" : "*") +
-                  (field.getName() == preset.getAssignableIDSource()
-                    ? " (ID)"
-                    : "")
-                }
-                size={field.getType() == "number" ? 7 : undefined}
-                required={!field.getOptional() || undefined}
-                minLength={
-                  !field.getOptional() &&
-                  ["text", "email", "tel"].includes(field.getType())
-                    ? 1
-                    : undefined
-                }
-                onChange={updateData}
-              />
+              {field.getType() == "select" ? (
+                <select
+                  className="rounded-sm border"
+                  name={field.getName()}
+                  value={
+                    data.get(field.getName()) || (field.getMultiple() ? [] : "")
+                  }
+                  multiple={field.getMultiple()}
+                  onChange={updateDataSelect}
+                >
+                  {Array.from(field.getOptions()).map((value) => (
+                    <option
+                      className={field.getMultiple() ? "" : "text-black"}
+                      key={value}
+                      value={value}
+                    >
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="rounded-sm border"
+                  type={field.getType()}
+                  name={field.getName()}
+                  value={
+                    data.get(field.getName()) ||
+                    (field.getType() == "number" ? 0 : "")
+                  }
+                  checked={data.get(field.getName()) || false}
+                  placeholder={
+                    field.getName() +
+                    (field.getOptional() ? "" : "*") +
+                    (field.getName() == preset.getAssignableIDSource()
+                      ? " (ID)"
+                      : "")
+                  }
+                  size={field.getType() == "number" ? 7 : undefined}
+                  required={!field.getOptional() || undefined}
+                  minLength={
+                    !field.getOptional() &&
+                    ["text", "email", "tel"].includes(field.getType())
+                      ? 1
+                      : undefined
+                  }
+                  onChange={updateData}
+                />
+              )}
             </label>
             {/* !field.getPreset() && (
               <button
@@ -1330,7 +1528,7 @@ const AssignableForm = ({
         ) */}
       </ul>
       {preset.getUseLeader() && (
-        <label>
+        <label className="flex flex-row place-content-between">
           Leader
           <input
             type="checkbox"
