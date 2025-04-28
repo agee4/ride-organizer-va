@@ -6,7 +6,6 @@ import {
   Dispatch,
   FormEvent,
   SetStateAction,
-  use,
   useEffect,
   useReducer,
   useRef,
@@ -77,10 +76,10 @@ class Assignable {
   private _id: string;
   private name: string;
   private contact?: Map<string, string>;
-  private availability?: Map<string, string | boolean>;
-  private location?: Map<string, string | boolean>;
-  private affinity?: Map<string, string | number | boolean>;
-  private miscellaneous?: Map<string, any>;
+  private availability?: Map<string, string | boolean | number | string[]>;
+  private location?: Map<string, string | boolean | number | string[]>;
+  private affinity?: Map<string, string | boolean | number | string[]>;
+  private miscellaneous?: Map<string, string | boolean | number | string[]>;
   private leader?: boolean;
   private size?: number;
   private notes?: string;
@@ -100,10 +99,10 @@ class Assignable {
     id: string;
     name: string;
     contact?: Map<string, string>;
-    availability?: Map<string, string | boolean>;
-    location?: Map<string, string | boolean>;
-    affinity?: Map<string, string | number | boolean>;
-    miscellaneous?: Map<string, any>;
+    availability?: Map<string, string | boolean | number | string[]>;
+    location?: Map<string, string | boolean | number | string[]>;
+    affinity?: Map<string, string | boolean | number | string[]>;
+    miscellaneous?: Map<string, string | boolean | number | string[]>;
     leader?: boolean;
     size?: number;
     notes?: string;
@@ -295,7 +294,7 @@ const GroupComponent = ({
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-neutral-400 p-2 dark:bg-neutral-600">
       <ul>
-        <div className="flex flex-row place-content-between font-bold">
+        <li className="flex flex-row place-content-between font-bold">
           {data.getName() || leader?.getName() || data.getID()}
           <button
             className="rounded-sm border px-1"
@@ -303,25 +302,25 @@ const GroupComponent = ({
           >
             &times;
           </button>
-        </div>
+        </li>
         <li className="text-xs italic">{data.getID()}</li>
         {!!leader && (
-          <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+          <li className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
             <ul>
               <div className="font-bold">{leader.getName()}</div>
               <li className="text-xs italic">{leader.getID()}</li>
               <ul className="m-1">
                 {leader.getContact() &&
-                  Array.from(
-                    data.getLeader()?.getContact() as Map<string, string>
-                  ).map(([key, value]) => (
-                    <li key={key}>
-                      {key}: {value}
-                    </li>
-                  ))}
+                  Array.from(leader.getContact() as Map<string, string>).map(
+                    ([key, value]) => (
+                      <li key={key}>
+                        {key}: {value}
+                      </li>
+                    )
+                  )}
                 {leader.getAvailability() &&
                   Array.from(
-                    data.getLeader()?.getAvailability() as Map<string, string>
+                    leader.getAvailability() as Map<string, string>
                   ).map(([key, value]) => (
                     <li key={key}>
                       {key}: {value}
@@ -337,7 +336,14 @@ const GroupComponent = ({
                   )}
               </ul>
             </ul>
-          </div>
+          </li>
+        )}
+        {(!data.getSize() ||
+          data.getSize() ||
+          0 > data.getAllMembers().size) && (
+          <li className="text-center">
+            <button className="rounded-sm border">+</button>
+          </li>
         )}
       </ul>
     </div>
@@ -434,6 +440,7 @@ class Field {
 }
 
 class Setting {
+  private name?: string;
   private assignableIDSource: string;
   private allowFieldCreation: boolean;
   private assignableFields: Map<string, Field>;
@@ -444,6 +451,7 @@ class Setting {
   private groupSizeSource: string;
 
   constructor({
+    name,
     assignableIDSource,
     allowFieldCreation,
     assignableFields,
@@ -453,6 +461,7 @@ class Setting {
     groupUseSize,
     groupSizeSource,
   }: {
+    name?: string;
     assignableIDSource?: string;
     allowFieldCreation?: boolean;
     assignableFields?: Map<string, Field>;
@@ -462,6 +471,7 @@ class Setting {
     groupUseSize?: boolean;
     groupSizeSource?: string;
   }) {
+    this.name = name;
     this.assignableIDSource = assignableIDSource || "id";
     this.allowFieldCreation = allowFieldCreation || false;
     this.assignableFields = assignableFields || new Map<string, Field>();
@@ -470,6 +480,14 @@ class Setting {
     this.groupCustomName = groupCustomName || false;
     this.groupUseSize = groupUseSize || false;
     this.groupSizeSource = groupSizeSource || "size";
+  }
+
+  getName() {
+    return this.name;
+  }
+
+  setName(name: string) {
+    this.name = name;
   }
 
   getAssignableIDSource() {
@@ -529,9 +547,10 @@ class Setting {
   }
 }
 
-const defaultSettings = new Setting({});
+const defaultSettings = new Setting({ name: "Default" });
 
 const bereanCollegeRidesSettings = new Setting({
+  name: "College Rides",
   assignableIDSource: "Email",
   assignableFields: new Map<string, Field>([
     [
@@ -606,6 +625,7 @@ const bereanCollegeRidesSettings = new Setting({
 });
 
 const bibleStudyTablesSettings = new Setting({
+  name: "Bible Study Tables",
   assignableIDSource: "Email",
   assignableFields: new Map<string, Field>([
     [
@@ -643,6 +663,7 @@ const bibleStudyTablesSettings = new Setting({
 });
 
 const noLeaderGroupsSettings = new Setting({
+  name: "No Leader Groups",
   assignableIDSource: "Email",
   assignableFields: new Map<string, Field>([
     [
@@ -678,6 +699,109 @@ const noLeaderGroupsSettings = new Setting({
   ]),
 });
 
+const presetList = [
+  defaultSettings,
+  bereanCollegeRidesSettings,
+  bibleStudyTablesSettings,
+  noLeaderGroupsSettings,
+];
+
+const PresetForm = ({
+  settings,
+  settingsCallback,
+  presets,
+  presetsCallback,
+}: {
+  settings: Setting;
+  settingsCallback: Dispatch<SetStateAction<Setting>>;
+  presets: Map<string | undefined, Setting>;
+  presetsCallback: ActionDispatch<
+    [action: MapReducerAction<string | undefined, Setting>]
+  >;
+}) => {
+  const [preset, setPreset] = useState<string>(settings.getName() || "Custom");
+
+  const [newPresetName, setNewPresetName] = useState<string>("");
+
+  const submitForm = (e: FormEvent) => {
+    e.preventDefault();
+    if (preset == "Custom") {
+      settings.setName(newPresetName);
+      presetsCallback({
+        type: "create",
+        key: newPresetName,
+        value: settings,
+      });
+      settingsCallback(settings);
+      setNewPresetName("");
+      setPreset(newPresetName);
+    } else settingsCallback(presets.get(preset) || defaultSettings);
+  };
+
+  useEffect(() => {
+    console.log(presets);
+    setPreset(settings.getName() || "Custom");
+  }, [settings]);
+
+  const invalidNewPresetName =
+    preset == "Custom" &&
+    !newPresetName.trim() &&
+    !presets.has(newPresetName.trim());
+
+  return (
+    <form className="flex flex-col" onSubmit={submitForm}>
+      <label className="text-center">Preset</label>
+      <div className="flex flex-row place-content-center">
+        <div className="flex flex-col">
+          <select
+            className="rounded-sm border"
+            name="presets"
+            value={preset}
+            onChange={(e) => setPreset(e.target.value)}
+          >
+            {Array.from(presets.values()).map((value) => (
+              <option
+                className="dark:text-black"
+                value={value.getName()}
+                key={value.getName()}
+              >
+                {value.getName()}
+              </option>
+            ))}
+            <option className="dark:text-black" value={"Custom"}>
+              {"Custom"}
+            </option>
+          </select>
+          {preset == "Custom" && (
+            <input
+              className="rounded-sm border"
+              type="text"
+              name="newAssignableField"
+              value={newPresetName}
+              placeholder="Preset Name*"
+              onChange={(e) => setNewPresetName(e.target.value)}
+            />
+          )}
+        </div>
+        <button
+          className={
+            "rounded-full border px-1" +
+            (invalidNewPresetName || settings.equals(presets.get(preset))
+              ? " text-neutral-500"
+              : "")
+          }
+          type="submit"
+          disabled={
+            invalidNewPresetName || settings.equals(presets.get(preset))
+          }
+        >
+          {preset == "Custom" ? "Save" : "Use"}
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const SettingsForm = ({
   settings,
   settingsCallback,
@@ -701,12 +825,16 @@ const SettingsForm = ({
   const [groupIDSource, setGroupIDSource] = useState<string>(
     settings.getGroupIDSource()
   );
-  const [groupCustomName, setGroupCustomName] = useState<boolean>(false);
+  const [groupCustomName, setGroupCustomName] = useState<boolean>(
+    settings.getGroupCustomName()
+  );
   const updateGroupCustomName = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.checked && groupIDSource == "name") setGroupIDSource("id");
     setGroupCustomName(e.target.checked);
   };
-  const [groupUseSize, setGroupUseSize] = useState<boolean>(false);
+  const [groupUseSize, setGroupUseSize] = useState<boolean>(
+    settings.getGroupUseSize()
+  );
   const [groupSizeSource, setGroupSizeSource] = useState<string>(
     settings.getGroupSizeSource()
   );
@@ -715,7 +843,7 @@ const SettingsForm = ({
   const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
   const updateFieldGroup = (fieldGroup: string) => {
     setFieldGroup(fieldGroup);
-    setFieldType("string");
+    updateFieldType("text");
   };
   const [fieldType, setFieldType] = useState<string>("text");
   const updateFieldType = (newFieldType: string) => {
@@ -794,6 +922,19 @@ const SettingsForm = ({
     );
   };
 
+  useEffect(() => {
+    setAssignableIDSource(settings.getAssignableIDSource());
+    assignableFieldsDispatch({
+      type: "replace",
+      value: settings.getAssignableFields(),
+    });
+    setUseLeader(settings.getUseLeader());
+    setGroupIDSource(settings.getGroupIDSource());
+    setGroupCustomName(settings.getGroupCustomName());
+    setGroupUseSize(settings.getGroupUseSize());
+    setGroupSizeSource(settings.getGroupSizeSource());
+  }, [settings]);
+
   const [showAddInputField, setShowAddInputField] = useState<boolean>(false);
   const [showAssignableFields, setShowAssignableFields] =
     useState<boolean>(false);
@@ -849,7 +990,12 @@ const SettingsForm = ({
           </label>
           <ul className="flex flex-col border p-1">
             <label className="flex flex-row place-content-between">
-              Assignable Fields
+              <span>
+                Assignable Fields{" "}
+                <span className="rounded-full bg-cyan-500 px-1">
+                  {assignableFields.size}
+                </span>
+              </span>
               <button
                 type="button"
                 onClick={() => setShowAssignableFields(!showAssignableFields)}
@@ -861,14 +1007,34 @@ const SettingsForm = ({
               <>
                 <hr />
                 {[...assignableFields.entries()].map(([key, value]) => (
-                  <li className="flex flex-row place-content-between" key={key}>
-                    {value.getPlaceholderName()}
-                    <button
-                      className="rounded-sm border px-1"
-                      onClick={() => deleteField(key)}
-                    >
-                      &times;
-                    </button>
+                  <li key={key}>
+                    <label className="flex flex-row place-content-between">
+                      {value.getPlaceholderName()}
+                      <button
+                        className="rounded-sm border px-1"
+                        onClick={() => deleteField(key)}
+                      >
+                        &times;
+                      </button>
+                    </label>
+                    {value.getType() == "select" && (
+                      <ul>
+                        {Array.from(value.getOptions()).map((option) => (
+                          <li
+                            key={option}
+                            className={
+                              "list-inside " +
+                              (value.getMultiple()
+                                ? "list-[square]"
+                                : "list-[circle]")
+                            }
+                          >
+                            {option}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <hr />
                   </li>
                 ))}
                 <li className="flex flex-col border p-1">
@@ -922,67 +1088,57 @@ const SettingsForm = ({
                           </option>
                         </select>
                       </label>
-                      {[
-                        "miscellaneous",
-                        "contact",
-                        "availability",
-                        "affinity",
-                      ].includes(fieldGroup) && (
-                        <label className="flex flex-row place-content-between">
-                          Field Type:
-                          <select
-                            className="rounded-sm border"
-                            name="fieldtype"
-                            defaultValue={fieldType}
-                            onChange={(e) => updateFieldType(e.target.value)}
-                          >
-                            {fieldGroup == "contact" && (
-                              <>
-                                <option
-                                  className="dark:text-black"
-                                  value="email"
-                                >
-                                  Email
-                                </option>
-                                <option className="dark:text-black" value="tel">
-                                  Phone
-                                </option>
-                              </>
-                            )}
-                            <option className="dark:text-black" value="text">
-                              Text
-                            </option>
-                            {[
-                              "miscellaneous",
-                              "availability",
-                              "affinity",
-                            ].includes(fieldGroup) && (
-                              <>
-                                {fieldGroup == "miscellaneous" && (
-                                  <option
-                                    className="dark:text-black"
-                                    value="number"
-                                  >
-                                    Number
-                                  </option>
-                                )}
-                                <option
-                                  className="dark:text-black"
-                                  value="checkbox"
-                                >
-                                  Checkbox
-                                </option>
-                                <option
-                                  className="dark:text-black"
-                                  value="select"
-                                >
-                                  Select
-                                </option>
-                              </>
-                            )}
-                          </select>
-                        </label>
-                      )}
+
+                      <label className="flex flex-row place-content-between">
+                        Field Type:
+                        <select
+                          className="rounded-sm border"
+                          name="fieldtype"
+                          value={fieldType}
+                          onChange={(e) => updateFieldType(e.target.value)}
+                        >
+                          {fieldGroup == "contact" && (
+                            <>
+                              <option className="dark:text-black" value="email">
+                                Email
+                              </option>
+                              <option className="dark:text-black" value="tel">
+                                Phone
+                              </option>
+                            </>
+                          )}
+                          <option className="dark:text-black" value="text">
+                            Text
+                          </option>
+                          {[
+                            "miscellaneous",
+                            "availability",
+                            "location",
+                            "affinity",
+                          ].includes(fieldGroup) && (
+                            <>
+                              <option
+                                className="dark:text-black"
+                                value="number"
+                              >
+                                Number
+                              </option>
+                              <option
+                                className="dark:text-black"
+                                value="checkbox"
+                              >
+                                Checkbox
+                              </option>
+                              <option
+                                className="dark:text-black"
+                                value="select"
+                              >
+                                Select
+                              </option>
+                            </>
+                          )}
+                        </select>
+                      </label>
                       {fieldType == "select" && (
                         <div className="flex flex-col border">
                           <div>Select Options</div>
@@ -1124,7 +1280,7 @@ const SettingsForm = ({
             <select
               className="rounded-sm border"
               name="sizesource"
-              defaultValue={groupSizeSource}
+              value={groupSizeSource}
               onChange={(e) => setGroupSizeSource(e.target.value)}
             >
               <option className="dark:text-black" value="size">
@@ -1230,11 +1386,13 @@ const AssignableForm = ({
           type: "create",
           key: fieldname,
           value:
-            field.getType() == "checkbox"
-              ? false
-              : field.getType() == "number"
-                ? 0
-                : "",
+            field.getType() == "select" && field.getMultiple()
+              ? new Array<string>()
+              : field.getType() == "checkbox"
+                ? false
+                : field.getType() == "number"
+                  ? 0
+                  : "",
         });
     }
     {
@@ -1270,10 +1428,16 @@ const AssignableForm = ({
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
     const contact = new Map<string, string>();
-    const availability = new Map<string, string>();
-    const location = new Map<string, string>();
-    const affinity = new Map<string, string | number>();
-    const miscellaneous = new Map<string, any>();
+    const availability = new Map<
+      string,
+      string | boolean | number | string[]
+    >();
+    const location = new Map<string, string | boolean | number | string[]>();
+    const affinity = new Map<string, string | boolean | number | string[]>();
+    const miscellaneous = new Map<
+      string,
+      string | boolean | number | string[]
+    >();
     new Map([...settings.getAssignableFields() /* ...customFields */]).forEach(
       (field: Field) => {
         switch (field.getGroup()) {
@@ -1643,10 +1807,10 @@ const GroupForm = ({
     >
       <label className="text-center">New Group</label>
       {settings.getUseLeader() && (
-        <label className="whitespace-nowrap">
+        <label className="flex flex-row place-content-between">
           {"Leader" +
             (settings.getGroupIDSource() == "leader" ? " (ID)" : "") +
-            ": "}
+            ":"}
           <select
             className="rounded-sm border"
             name="college"
@@ -1698,16 +1862,20 @@ const GroupForm = ({
       )}
       {settings.getGroupUseSize() &&
         settings.getGroupSizeSource() == "size" && (
-          <input
-            className="rounded-sm border"
-            type="number"
-            name="size"
-            value={data.size}
-            placeholder="Size*"
-            required
-            min={1}
-            onChange={updateData}
-          />
+          <label className="flex flex-row place-content-between">
+            Size:
+            <input
+              className="rounded-sm border"
+              type="number"
+              name="size"
+              value={data.size}
+              placeholder="Size*"
+              required
+              min={1}
+              size={5}
+              onChange={updateData}
+            />
+          </label>
         )}
       <button className="rounded-full border" type="submit">
         Create
@@ -1741,6 +1909,10 @@ export default function Page() {
   };
 
   const [settings, setSettings] = useState<Setting>(defaultSettings);
+
+  const [presetCollection, presetCollectionDispatch] = useMapReducer(
+    new Map(presetList.map((setting) => [setting.getName(), setting]))
+  );
 
   const deleteAssignable = (assignable: Assignable) => {
     assignableDispatch({
@@ -1803,7 +1975,18 @@ export default function Page() {
             {showSettingsForm ? <>&times;</> : "Edit Settings"}
           </button>
           {showSettingsForm && (
-            <SettingsForm settings={settings} settingsCallback={setSettings} />
+            <>
+              <SettingsForm
+                settings={settings}
+                settingsCallback={setSettings}
+              />
+              <PresetForm
+                settings={settings}
+                settingsCallback={setSettings}
+                presets={presetCollection}
+                presetsCallback={presetCollectionDispatch}
+              />
+            </>
           )}
         </div>
         <div className="flex flex-row">
