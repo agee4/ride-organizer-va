@@ -81,7 +81,7 @@ class Assignable {
   private affinity?: Map<string, string | boolean | number | string[]>;
   private miscellaneous?: Map<string, string | boolean | number | string[]>;
   private leader?: boolean;
-  private size?: number;
+  private size?: number | string;
   private notes?: string;
 
   constructor({
@@ -104,7 +104,7 @@ class Assignable {
     affinity?: Map<string, string | boolean | number | string[]>;
     miscellaneous?: Map<string, string | boolean | number | string[]>;
     leader?: boolean;
-    size?: number;
+    size?: number | string;
     notes?: string;
   }) {
     this._id = id;
@@ -152,7 +152,13 @@ class Assignable {
   }
 
   getSize() {
-    return this.size;
+    switch (typeof this.size) {
+      case "number":
+      case "undefined":
+        return this.size;
+      default:
+        return this.miscellaneous?.get(this.size) as number;
+    }
   }
 
   getNotes() {
@@ -186,45 +192,142 @@ const AssignableComponent = ({
         <ul className="m-1">
           {data.getContact() &&
             Array.from(data.getContact() as Map<string, string>)
-              .filter(([_, value]) => value)
+              .filter(([, value]) => value)
               .map(([key, value]) => (
-                <li key={key}>
-                  {key}: {value}
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  <span>{value}</span>
                 </li>
               ))}
           {data.getAvailability() &&
-            Array.from(data.getAvailability() as Map<string, string>)
-              .filter(([_, value]) => value)
+            Array.from(
+              data.getAvailability() as Map<
+                string,
+                string | number | boolean | string[]
+              >
+            )
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
               .map(([key, value]) => (
-                <li key={key}>
-                  {key}: {value}
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>{value}</span>
+                  )}
                 </li>
               ))}
           {data.getLocation() &&
-            Array.from(data.getLocation() as Map<string, string>)
-              .filter(([_, value]) => value)
+            Array.from(
+              data.getLocation() as Map<
+                string,
+                string | number | boolean | string[]
+              >
+            )
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
               .map(([key, value]) => (
-                <li key={key}>
-                  {key}: {value}
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>{value}</span>
+                  )}
                 </li>
               ))}
           {data.getAffinity() &&
-            Array.from(data.getAffinity() as Map<string, string>)
-              .filter(([_, value]) => value)
+            Array.from(
+              data.getAffinity() as Map<
+                string,
+                string | number | boolean | string[]
+              >
+            )
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
               .map(([key, value]) => (
-                <li key={key}>
-                  {key}: {value}
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>{value}</span>
+                  )}
                 </li>
               ))}
           {data.getMiscellaneous() &&
-            Array.from(data.getMiscellaneous() as Map<string, string>)
-              .filter(([_, value]) => value)
+            Array.from(
+              data.getMiscellaneous() as Map<
+                string,
+                string | number | boolean | string[]
+              >
+            )
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
               .map(([key, value]) => (
-                <li key={key}>
-                  {key}: {value}
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>{value}</span>
+                  )}
                 </li>
               ))}
         </ul>
+        {data.getSize() && (
+          <li className="m-1 flex flex-row place-content-between gap-1">
+            <span>Size:</span>
+            <span>{data.getSize()}</span>
+          </li>
+        )}
+        {data.getNotes() && (
+          <textarea
+            className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+            disabled
+            defaultValue={data.getNotes()}
+          />
+        )}
       </ul>
     </div>
   );
@@ -236,18 +339,21 @@ class Group {
   private name?: string;
   private leader?: Assignable;
   private size?: number;
+  private notes?: string;
 
   constructor({
     id,
     name,
     leader,
     size,
+    notes,
     members,
   }: {
     id: string;
     name?: string;
     leader?: Assignable;
     size?: number;
+    notes?: string;
     members?: Map<string, Assignable>;
   }) {
     this._id = id;
@@ -255,6 +361,7 @@ class Group {
     this.name = name;
     this.leader = leader;
     this.size = size;
+    this.notes = notes;
   }
 
   getID() {
@@ -271,6 +378,10 @@ class Group {
 
   getSize() {
     return this.size;
+  }
+
+  getNotes() {
+    return this.notes;
   }
 
   getAllMembers() {
@@ -290,6 +401,7 @@ const GroupComponent = ({
   deleteGroupCallback: (group: Group) => void;
 }) => {
   const leader = data.getLeader();
+  const size = data.getSize() || -1;
 
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-neutral-400 p-2 dark:bg-neutral-600">
@@ -313,37 +425,78 @@ const GroupComponent = ({
                 {leader.getContact() &&
                   Array.from(leader.getContact() as Map<string, string>).map(
                     ([key, value]) => (
-                      <li key={key}>
-                        {key}: {value}
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        <span>{value}</span>
                       </li>
                     )
                   )}
                 {leader.getAvailability() &&
-                  Array.from(
-                    leader.getAvailability() as Map<string, string>
-                  ).map(([key, value]) => (
-                    <li key={key}>
-                      {key}: {value}
-                    </li>
-                  ))}
-                {leader.getLocation() &&
-                  Array.from(leader.getLocation() as Map<string, string>).map(
-                    ([key, value]) => (
-                      <li key={key}>
-                        {key}: {value}
-                      </li>
+                  Array.from(leader.getAvailability() as Map<string, string>)
+                    .filter(
+                      ([, value]) =>
+                        (Array.isArray(value) && value.length > 0) || value
                     )
-                  )}
+                    .map(([key, value]) => (
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        {Array.isArray(value) ? (
+                          <ul>
+                            {value.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>{value}</span>
+                        )}
+                      </li>
+                    ))}
+                {leader.getLocation() &&
+                  Array.from(leader.getLocation() as Map<string, string>)
+                    .filter(
+                      ([, value]) =>
+                        (Array.isArray(value) && value.length > 0) || value
+                    )
+                    .map(([key, value]) => (
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        {Array.isArray(value) ? (
+                          <ul>
+                            {value.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>{value}</span>
+                        )}
+                      </li>
+                    ))}
               </ul>
             </ul>
           </li>
         )}
-        {(!data.getSize() ||
-          data.getSize() ||
-          0 > data.getAllMembers().size) && (
+        {(size > data.getAllMembers().size || data.getSize() != undefined) && (
           <li className="text-center">
+            Size:{" "}
+            {data.getSize() || 0 > data.getAllMembers().size || !data.getSize()}
             <button className="rounded-sm border">+</button>
           </li>
+        )}
+        {data.getNotes() && (
+          <textarea
+            className="rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+            disabled
+            defaultValue={data.getNotes()}
+          />
         )}
       </ul>
     </div>
@@ -442,44 +595,48 @@ class Field {
 class Setting {
   private name?: string;
   private assignableIDSource: string;
-  private allowFieldCreation: boolean;
   private assignableFields: Map<string, Field>;
+  private assignableNotes: boolean;
   private useLeader: boolean;
   private groupIDSource: string;
   private groupCustomName: boolean;
   private groupUseSize: boolean;
   private groupSizeSource: string;
+  private groupNotes: boolean;
 
   constructor({
     name,
     assignableIDSource,
-    allowFieldCreation,
     assignableFields,
+    assignableNotes,
     useLeader,
     groupIDSource,
     groupCustomName,
     groupUseSize,
     groupSizeSource,
+    groupNotes,
   }: {
     name?: string;
     assignableIDSource?: string;
-    allowFieldCreation?: boolean;
     assignableFields?: Map<string, Field>;
+    assignableNotes?: boolean;
     useLeader?: boolean;
     groupIDSource?: string;
     groupCustomName?: boolean;
     groupUseSize?: boolean;
     groupSizeSource?: string;
+    groupNotes?: boolean;
   }) {
     this.name = name;
-    this.assignableIDSource = assignableIDSource || "id";
-    this.allowFieldCreation = allowFieldCreation || false;
+    this.assignableIDSource = assignableIDSource || "name";
     this.assignableFields = assignableFields || new Map<string, Field>();
+    this.assignableNotes = assignableNotes || false;
     this.useLeader = useLeader || false;
     this.groupIDSource = groupIDSource || "id";
     this.groupCustomName = groupCustomName || false;
     this.groupUseSize = groupUseSize || false;
-    this.groupSizeSource = groupSizeSource || "size";
+    this.groupSizeSource = groupSizeSource || "groupsize";
+    this.groupNotes = groupNotes || false;
   }
 
   getName() {
@@ -494,12 +651,12 @@ class Setting {
     return this.assignableIDSource;
   }
 
-  getAllowFieldCreation() {
-    return this.allowFieldCreation;
-  }
-
   getAssignableFields() {
     return this.assignableFields;
+  }
+
+  getAssignableNotes() {
+    return this.assignableNotes;
   }
 
   getUseLeader() {
@@ -522,6 +679,10 @@ class Setting {
     return this.groupSizeSource;
   }
 
+  getGroupNotes() {
+    return this.groupNotes;
+  }
+
   equals(other: Setting | undefined) {
     function fieldsEquals(
       first: Map<string, Field>,
@@ -536,13 +697,14 @@ class Setting {
     return (
       other &&
       this.assignableIDSource == other.assignableIDSource &&
-      this.allowFieldCreation == other.allowFieldCreation &&
       fieldsEquals(this.assignableFields, other.assignableFields) &&
+      this.assignableNotes == other.assignableNotes &&
       this.useLeader == other.useLeader &&
       this.groupIDSource == other.groupIDSource &&
       this.groupCustomName == other.groupCustomName &&
       this.groupUseSize == other.groupUseSize &&
-      this.groupSizeSource == other.groupSizeSource
+      this.groupSizeSource == other.groupSizeSource &&
+      this.groupNotes == other.groupNotes
     );
   }
 }
@@ -574,11 +736,11 @@ const bereanCollegeRidesSettings = new Setting({
       }),
     ],
     [
-      "Ride Needs",
+      "Main Rides",
       new Field({
-        name: "Ride Needs",
+        name: "Main Rides",
         type: "select",
-        group: "location",
+        group: "availability",
         options: new Set<string>([
           "Friday",
           "Sunday First",
@@ -619,9 +781,28 @@ const bereanCollegeRidesSettings = new Setting({
         preset: true,
       }),
     ],
+    [
+      "Backup Rides",
+      new Field({
+        name: "Backup Rides",
+        type: "select",
+        group: "availability",
+        options: new Set<string>([
+          "Friday",
+          "Sunday First",
+          "Sunday Second",
+          "Sunday Third",
+        ]),
+        multiple: true,
+        preset: true,
+      }),
+    ],
   ]),
+  assignableNotes: true,
   useLeader: true,
   groupIDSource: "leader",
+  groupUseSize: true,
+  groupSizeSource: "leadersize",
 });
 
 const bibleStudyTablesSettings = new Setting({
@@ -660,6 +841,7 @@ const bibleStudyTablesSettings = new Setting({
     ],
   ]),
   useLeader: true,
+  groupUseSize: true,
 });
 
 const noLeaderGroupsSettings = new Setting({
@@ -739,7 +921,6 @@ const PresetForm = ({
   };
 
   useEffect(() => {
-    console.log(presets);
     setPreset(settings.getName() || "Custom");
   }, [settings]);
 
@@ -749,10 +930,10 @@ const PresetForm = ({
     !presets.has(newPresetName.trim());
 
   return (
-    <form className="flex flex-col" onSubmit={submitForm}>
+    <form className="my-1 flex flex-col" onSubmit={submitForm}>
       <label className="text-center">Preset</label>
       <div className="flex flex-row place-content-center">
-        <div className="flex flex-col">
+        <div className="flex flex-col place-content-center">
           <select
             className="rounded-sm border"
             name="presets"
@@ -814,12 +995,15 @@ const SettingsForm = ({
   const [assignableIDSource, setAssignableIDSource] = useState<string>(
     settings.getAssignableIDSource()
   );
-  /* const [allowFieldCreation, setAllowFieldCreation] = useState<boolean>(
-    preset.getAllowFieldCreation()
-  ); */
+  const [assignableNotes, setAssignableNotes] = useState<boolean>(
+    settings.getAssignableNotes()
+  );
   const [useLeader, setUseLeader] = useState<boolean>(settings.getUseLeader());
   const updateUseLeader = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.checked && groupIDSource == "leader") setGroupIDSource("id");
+    if (!e.target.checked) {
+      setGroupSizeSource("groupsize");
+      if (groupIDSource == "leader") setGroupIDSource("id");
+    }
     setUseLeader(e.target.checked);
   };
   const [groupIDSource, setGroupIDSource] = useState<string>(
@@ -837,6 +1021,9 @@ const SettingsForm = ({
   );
   const [groupSizeSource, setGroupSizeSource] = useState<string>(
     settings.getGroupSizeSource()
+  );
+  const [groupNotes, setGroupNotes] = useState<boolean>(
+    settings.getGroupNotes()
   );
 
   const [fieldName, setFieldName] = useState<string>("");
@@ -893,6 +1080,7 @@ const SettingsForm = ({
       key: field,
     });
     if (field == assignableIDSource) setAssignableIDSource("id");
+    if (field == groupSizeSource) setGroupSizeSource("groupsize");
   };
 
   const [selectOptions, setSelectOptions] = useSetReducer<string>();
@@ -911,13 +1099,14 @@ const SettingsForm = ({
     settingsCallback(
       new Setting({
         assignableIDSource: assignableIDSource,
-        /* allowFieldCreation: allowFieldCreation, */
         assignableFields: assignableFields,
+        assignableNotes: assignableNotes,
         useLeader: useLeader,
         groupIDSource: groupIDSource,
         groupCustomName: groupCustomName,
         groupUseSize: groupUseSize,
         groupSizeSource: groupUseSize ? groupSizeSource : "",
+        groupNotes: groupNotes,
       })
     );
   };
@@ -928,12 +1117,14 @@ const SettingsForm = ({
       type: "replace",
       value: settings.getAssignableFields(),
     });
+    setAssignableNotes(settings.getAssignableNotes());
     setUseLeader(settings.getUseLeader());
     setGroupIDSource(settings.getGroupIDSource());
     setGroupCustomName(settings.getGroupCustomName());
     setGroupUseSize(settings.getGroupUseSize());
     setGroupSizeSource(settings.getGroupSizeSource());
-  }, [settings]);
+    setGroupNotes(settings.getGroupNotes());
+  }, [settings, assignableFieldsDispatch]);
 
   const [showAddInputField, setShowAddInputField] = useState<boolean>(false);
   const [showAssignableFields, setShowAssignableFields] =
@@ -942,13 +1133,14 @@ const SettingsForm = ({
   const settingsUnaltered = settings.equals(
     new Setting({
       assignableIDSource: assignableIDSource,
-      /* allowFieldCreation: allowFieldCreation, */
       assignableFields: assignableFields,
+      assignableNotes: assignableNotes,
       useLeader: useLeader,
       groupIDSource: groupIDSource,
       groupCustomName: groupCustomName,
       groupUseSize: groupUseSize,
-      groupSizeSource: groupUseSize ? groupSizeSource : "",
+      groupSizeSource: groupSizeSource,
+      groupNotes: groupNotes,
     })
   );
 
@@ -960,9 +1152,10 @@ const SettingsForm = ({
     >
       <label className="text-center">Settings</label>
       <div className="flex flex-row">
-        <div>
-          <label className="flex flex-row place-content-between">
-            Assignable ID Source:
+        <div className="flex flex-col gap-1">
+          <h1 className="text-center">Assignable</h1>
+          <label className="flex flex-row place-content-between gap-1">
+            ID Source:
             <select
               className="rounded-sm border"
               name="idsource"
@@ -977,21 +1170,22 @@ const SettingsForm = ({
               </option>
               {[...assignableFields.entries()]
                 .filter(
-                  ([_, value]) =>
+                  ([, value]) =>
                     value.getRequired() &&
                     !["checkbox", "select"].includes(value.getType())
                 )
-                .map(([key, _]) => (
+                .map(([key]) => (
                   <option className="text-black" key={key} value={key}>
                     {key}
                   </option>
                 ))}
             </select>
           </label>
+          <hr />
           <ul className="flex flex-col border p-1">
-            <label className="flex flex-row place-content-between">
+            <label className="flex flex-row place-content-between gap-1">
               <span>
-                Assignable Fields{" "}
+                Fields{" "}
                 <span className="rounded-full bg-cyan-500 px-1">
                   {assignableFields.size}
                 </span>
@@ -1008,7 +1202,7 @@ const SettingsForm = ({
                 <hr />
                 {[...assignableFields.entries()].map(([key, value]) => (
                   <li key={key}>
-                    <label className="flex flex-row place-content-between">
+                    <label className="flex flex-row place-content-between gap-1">
                       {value.getPlaceholderName()}
                       <button
                         className="rounded-sm border px-1"
@@ -1214,14 +1408,15 @@ const SettingsForm = ({
               </>
             )}
           </ul>
-          {/* <label className="flex flex-row place-content-between">
-            Field Creation
+          <hr />
+          <label className="flex flex-row place-content-between">
+            Notes
             <input
               type="checkbox"
-              checked={allowFieldCreation}
-              onChange={(e) => setAllowFieldCreation(e.target.checked)}
+              checked={assignableNotes}
+              onChange={(e) => setAssignableNotes(e.target.checked)}
             />
-          </label> */}
+          </label>
           <hr />
           <label className="flex flex-row place-content-between">
             Leaders
@@ -1234,9 +1429,10 @@ const SettingsForm = ({
           <hr />
         </div>
         <div className="mx-1 border-l-1"></div>
-        <div>
-          <label className="flex flex-row place-content-between">
-            Group ID Source:
+        <div className="flex flex-col gap-1">
+          <h1 className="text-center">Group</h1>
+          <label className="flex flex-row place-content-between gap-1">
+            ID Source:
             <select
               className="rounded-sm border"
               name="groupidsource"
@@ -1260,7 +1456,7 @@ const SettingsForm = ({
           </label>
           <hr />
           <label className="flex flex-row place-content-between">
-            Group Names
+            Name
             <input
               type="checkbox"
               checked={groupCustomName}
@@ -1269,7 +1465,7 @@ const SettingsForm = ({
           </label>
           <hr />
           <label className="flex flex-row place-content-between">
-            Group Size
+            Size
             <input
               type="checkbox"
               checked={groupUseSize}
@@ -1283,20 +1479,38 @@ const SettingsForm = ({
               value={groupSizeSource}
               onChange={(e) => setGroupSizeSource(e.target.value)}
             >
-              <option className="dark:text-black" value="size">
-                Size
+              <option className="dark:text-black" value="groupsize">
+                Size Field
               </option>
-              {useLeader &&
-                [...assignableFields.entries()]
-                  .filter(([_, value]) => value.getType() == "number")
-                  .map(([key, _]) => (
-                    <option className="text-black" key={key} value={key}>
-                      {key}
-                    </option>
-                  ))}
+              {useLeader && (
+                <>
+                  <option className="text-black" value="leadersize">
+                    Leader Size
+                  </option>
+                  {[...assignableFields.entries()]
+                    .filter(
+                      ([, value]) =>
+                        value.getType() == "number" &&
+                        value.getGroup() == "miscellaneous"
+                    )
+                    .map(([key]) => (
+                      <option className="text-black" key={key} value={key}>
+                        {key}
+                      </option>
+                    ))}
+                </>
+              )}
             </select>
           )}
           <hr />
+          <label className="flex flex-row place-content-between">
+            Notes
+            <input
+              type="checkbox"
+              checked={groupNotes}
+              onChange={(e) => setGroupNotes(e.target.checked)}
+            />
+          </label>
         </div>
       </div>
       <button
@@ -1325,10 +1539,11 @@ const AssignableForm = ({
     new Map([
       ["name", ""],
       ["id", ""],
+      ["notes", ""],
     ])
   );
-  const updateData = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, checked } = event.target;
+  const updateDataInput = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value, checked, valueAsNumber } = event.target;
 
     dataDispatch({
       type: "create",
@@ -1336,7 +1551,10 @@ const AssignableForm = ({
       value:
         settings.getAssignableFields().get(name)?.getType() == "checkbox"
           ? checked
-          : value,
+          : settings.getAssignableFields().get(name)?.getType() == "number" ||
+              name == "leadersize"
+            ? valueAsNumber
+            : value,
     });
   };
   const updateDataSelect = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -1350,35 +1568,17 @@ const AssignableForm = ({
     });
   };
 
-  /**custom fields */
-  {
-    /* const [customFields, customFieldsDispatch] = useMapReducer<string, Field>();
-  const [fieldName, setFieldName] = useState<string>("");
-  const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
-  const [fieldType, setFieldType] = useState<string>("string");
-  const [optionalField, setOptionalField] = useState<boolean>(false);
-  const createField = () => {
-    if (
-      !preset.getAssignablePresetFields().get(fieldName) &&
-      !["", "name", "id"].includes(fieldName)
-    ) {
-      customFieldsDispatch({
-        type: "create",
-        key: fieldName,
-        value: new Field({
-          name: fieldName,
-          type: fieldType,
-          group: fieldGroup,
-          optional: optionalField,
-        }),
-      });
-      setFieldName("");
-      setShowAddInputField(false);
-    }
-  }; */
-  }
+  const updateNotes = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
 
-  /**load fields from preset & custom */
+    dataDispatch({
+      type: "create",
+      key: name,
+      value: value,
+    });
+  };
+
+  /**load fields from settings*/
   useEffect(() => {
     for (const [fieldname, field] of settings.getAssignableFields().entries()) {
       if (!data.has(fieldname))
@@ -1395,25 +1595,19 @@ const AssignableForm = ({
                   : "",
         });
     }
-    {
-      /* for (const field of customFields.values()) {
-      tagDispatch({
+    if (
+      settings.getGroupSizeSource() == "leadersize" &&
+      !data.has("leadersize")
+    )
+      dataDispatch({
         type: "create",
-        key: field.getName(),
-        value:
-          field.getType() == "boolean"
-            ? false
-            : field.getType() == "number"
-              ? 0
-              : "",
+        key: "leadersize",
+        value: 0,
       });
-    } */
-    }
     for (const field of data.keys()) {
       if (
         !settings.getAssignableFields().get(field) &&
-        !["name", "id"].includes(field) /* &&
-        !customFields.get(field) */
+        !["name", "id", "notes", "leadersize"].includes(field)
       ) {
         dataDispatch({
           type: "delete",
@@ -1421,7 +1615,7 @@ const AssignableForm = ({
         });
       }
     }
-  }, [settings /* customFields */]);
+  }, [data, dataDispatch, settings]);
 
   const [isLeader, setIsLeader] = useState<boolean>(false);
 
@@ -1438,26 +1632,26 @@ const AssignableForm = ({
       string,
       string | boolean | number | string[]
     >();
-    new Map([...settings.getAssignableFields() /* ...customFields */]).forEach(
-      (field: Field) => {
-        switch (field.getGroup()) {
-          case "contact":
-            contact.set(field.getName(), data.get(field.getName()));
-            break;
-          case "availability":
-            availability.set(field.getName(), data.get(field.getName()));
-            break;
-          case "location":
-            location.set(field.getName(), data.get(field.getName()));
-            break;
-          case "affinity":
-            affinity.set(field.getName(), data.get(field.getName()));
-            break;
-          default:
-            miscellaneous.set(field.getName(), data.get(field.getName()));
-        }
+    settings.getAssignableFields().forEach((field: Field) => {
+      switch (field.getGroup()) {
+        case "contact":
+          contact.set(field.getName(), data.get(field.getName()));
+          break;
+        case "availability":
+          availability.set(field.getName(), data.get(field.getName()));
+          break;
+        case "location":
+          location.set(field.getName(), data.get(field.getName()));
+          break;
+        case "affinity":
+          affinity.set(field.getName(), data.get(field.getName()));
+          break;
+        case "leadersize":
+          break;
+        default:
+          miscellaneous.set(field.getName(), data.get(field.getName()));
       }
-    );
+    });
     assignableCallback(
       new Assignable({
         id: data.get(settings.getAssignableIDSource()) || "!ERROR!",
@@ -1468,6 +1662,12 @@ const AssignableForm = ({
         affinity: affinity,
         miscellaneous: miscellaneous,
         leader: isLeader,
+        size: isLeader
+          ? settings.getGroupSizeSource() == "leadersize"
+            ? data.get(settings.getGroupSizeSource())
+            : settings.getGroupSizeSource()
+          : undefined,
+        notes: data.get("notes"),
       })
     );
 
@@ -1475,10 +1675,9 @@ const AssignableForm = ({
     data.forEach((_, key) => {
       dataDispatch({ type: "create", key: key, value: "" });
     });
+    setIsLeader(false);
     assignableFormRef.current?.reset();
   };
-
-  /* const [showAddInputField, setShowAddInputField] = useState<boolean>(false); */
 
   return (
     <form
@@ -1497,7 +1696,7 @@ const AssignableForm = ({
         }
         required
         minLength={1}
-        onChange={updateData}
+        onChange={updateDataInput}
       />
       {settings.getAssignableIDSource() == "id" && (
         <input
@@ -1508,18 +1707,15 @@ const AssignableForm = ({
           placeholder="ID*"
           required
           minLength={1}
-          onChange={updateData}
+          onChange={updateDataInput}
         />
       )}
       <ul>
-        {[
-          ...settings.getAssignableFields().values(),
-          /* ...customFields.values(), */
-        ].map((field) => (
+        {[...settings.getAssignableFields().values()].map((field) => (
           <li className="whitespace-nowrap" key={field.getName()}>
             <label className="flex flex-row place-content-between">
               {["number", "checkbox", "select"].includes(field.getType()) &&
-                field.getName() + (field.getRequired() ? "*" : "") + ": "}
+                field.getName() + (field.getRequired() ? "*" : "") + ":"}
               {field.getType() == "select" ? (
                 <select
                   className="rounded-sm border"
@@ -1566,130 +1762,12 @@ const AssignableForm = ({
                       ? 1
                       : undefined
                   }
-                  onChange={updateData}
+                  onChange={updateDataInput}
                 />
               )}
             </label>
-            {/* !field.getPreset() && (
-              <button
-                className="rounded-sm border px-1"
-                type="button"
-                onClick={() => {
-                  customFieldsDispatch({
-                    type: "delete",
-                    key: field.getName(),
-                  });
-                  tagDispatch({
-                    type: "delete",
-                    key: field.getName(),
-                  });
-                }}
-              >
-                &times;
-              </button>
-            ) */}
           </li>
         ))}
-        {/* preset.getAllowFieldCreation() && (
-          <li className="border whitespace-nowrap">
-            <div className="flex flex-col border p-1">
-              <div className="flex flex-row place-content-between">
-                <div>Add Input Field</div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddInputField(!showAddInputField)}
-                >
-                  {showAddInputField ? <>uarr;</> : <>&darr;</>}
-                </button>
-              </div>
-              {showAddInputField && (
-                <>
-                  <input
-                    className="rounded-sm border"
-                    type="text"
-                    name="newAssignableField"
-                    value={fieldName}
-                    placeholder="Field Name*"
-                    onChange={(e) => setFieldName(e.target.value)}
-                  />
-                  <div className="whitespace-nowrap">
-                    <select
-                      className="rounded-sm border"
-                      name="fieldgroup"
-                      value={fieldGroup}
-                      onChange={(e) => setFieldGroup(e.target.value)}
-                    >
-                      <option className="dark:text-black" value="miscellaneous">
-                        Tag Group
-                      </option>
-                      <option className="dark:text-black" value="contact">
-                        Contact
-                      </option>
-                      <option className="dark:text-black" value="availability">
-                        Availability
-                      </option>
-                      <option className="dark:text-black" value="location">
-                        Location
-                      </option>
-                      <option className="dark:text-black" value="affinity">
-                        Affinity
-                      </option>
-                    </select>
-                    {["miscellaneous", "contact"].includes(fieldGroup) && (
-                      <select
-                        className="rounded-sm border"
-                        name="fieldtype"
-                        defaultValue={fieldType}
-                        onChange={(e) => setFieldType(e.target.value)}
-                      >
-                        {fieldGroup == "contact" && (
-                          <>
-                            <option className="dark:text-black" value="email">
-                              Email
-                            </option>
-                            <option className="dark:text-black" value="tel">
-                              Phone
-                            </option>
-                          </>
-                        )}
-                        <option className="dark:text-black" value="string">
-                          Text
-                        </option>
-                        {fieldGroup == "miscellaneous" && (
-                          <>
-                            <option className="dark:text-black" value="number">
-                              Number
-                            </option>
-                            <option className="dark:text-black" value="boolean">
-                              T/F
-                            </option>
-                          </>
-                        )}
-                      </select>
-                    )}
-                    {fieldType != "boolean" && (
-                      <label>
-                        Optional
-                        <input
-                          type="checkbox"
-                          checked={optionalField}
-                          onChange={(e) => setOptionalField(e.target.checked)}
-                        />
-                      </label>
-                    )}
-                  </div>
-                  <button
-                    className="rounded-sm border px-1"
-                    type="button"
-                    onClick={createField}
-                  >
-                    Add Field
-                  </button>
-                </>
-              )}
-            </div>
-          </li>
-        ) */}
       </ul>
       {settings.getUseLeader() && (
         <label className="flex flex-row place-content-between">
@@ -1700,6 +1778,30 @@ const AssignableForm = ({
             onChange={(e) => setIsLeader(e.target.checked)}
           />
         </label>
+      )}
+      {isLeader && settings.getGroupSizeSource() == "leadersize" && (
+        <label className="flex flex-row place-content-between">
+          Size*:
+          <input
+            className="rounded-sm border"
+            type="number"
+            name="leadersize"
+            value={data.get("leadersize") || 0}
+            placeholder="Size*:"
+            size={7}
+            required={true}
+            onChange={updateDataInput}
+          />
+        </label>
+      )}
+      {settings.getAssignableNotes() && (
+        <textarea
+          name="notes"
+          className="rounded-sm border"
+          placeholder="Notes?"
+          value={data.get("notes")}
+          onChange={updateNotes}
+        />
       )}
       <button className="rounded-full border" type="submit">
         Create
@@ -1726,12 +1828,16 @@ const GroupForm = ({
     id: string;
     name?: string;
     size?: number;
+    notes?: string;
   }>({
     id: "",
     name: "",
     size: 0,
+    notes: "",
   });
-  const updateData = (event: ChangeEvent<HTMLInputElement>) => {
+  const updateData = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = event.target;
     setData({ ...data, [name]: value });
   };
@@ -1749,9 +1855,8 @@ const GroupForm = ({
                 id: leader,
                 name: name,
                 leader: assignableCollection.get(leader),
-                size: assignableCollection
-                  .get(leader)
-                  ?.getSize() /**TODO change to any preset defined size field */,
+                size: assignableCollection.get(leader)?.getSize(),
+                notes: data.notes,
               }),
               assignableCollection.get(leader)
             );
@@ -1763,12 +1868,9 @@ const GroupForm = ({
           new Group({
             id: data.name as string,
             name: data.name,
-            leader: settings.getUseLeader()
-              ? assignableCollection.get(leader)
-              : undefined,
-            size: settings.getGroupUseSize()
-              ? assignableCollection.get(leader)?.getSize()
-              : undefined /**TODO change to any preset defined size field */,
+            leader: assignableCollection.get(leader),
+            size: assignableCollection.get(leader)?.getSize(),
+            notes: data.notes,
           }),
           assignableCollection.get(leader)
         );
@@ -1784,9 +1886,8 @@ const GroupForm = ({
             leader: settings.getUseLeader()
               ? assignableCollection.get(leader)
               : undefined,
-            size: settings.getGroupUseSize()
-              ? assignableCollection.get(leader)?.getSize()
-              : undefined /**TODO change to any preset defined size field */,
+            size: assignableCollection.get(leader)?.getSize(),
+            notes: data.notes,
           }),
           assignableCollection.get(leader)
         );
@@ -1795,6 +1896,7 @@ const GroupForm = ({
       id: "",
       name: "",
       size: 0,
+      notes: "",
     });
     groupFormRef.current?.reset();
   };
@@ -1861,7 +1963,7 @@ const GroupForm = ({
         />
       )}
       {settings.getGroupUseSize() &&
-        settings.getGroupSizeSource() == "size" && (
+        settings.getGroupSizeSource() == "groupsize" && (
           <label className="flex flex-row place-content-between">
             Size:
             <input
@@ -1877,6 +1979,15 @@ const GroupForm = ({
             />
           </label>
         )}
+      {settings.getGroupNotes() && (
+        <textarea
+          name="notes"
+          className="rounded-sm border"
+          placeholder="Notes?"
+          value={data.notes}
+          onChange={updateData}
+        />
+      )}
       <button className="rounded-full border" type="submit">
         Create
       </button>
@@ -1967,98 +2078,94 @@ export default function Page() {
       <main className="row-start-2 flex flex-col items-center gap-8 sm:items-start">
         <h1>group organizer test</h1>
         <p>WIP</p>
-        <div className="rounded-md border p-1">
+        <div className="relative rounded-md border p-1">
           <button
-            className="float-right"
+            className={showSettingsForm ? "absolute top-0 right-0 px-1" : ""}
             onClick={() => setShowSettingsForm(!showSettingsForm)}
           >
             {showSettingsForm ? <>&times;</> : "Edit Settings"}
           </button>
           {showSettingsForm && (
             <>
-              <SettingsForm
-                settings={settings}
-                settingsCallback={setSettings}
-              />
               <PresetForm
                 settings={settings}
                 settingsCallback={setSettings}
                 presets={presetCollection}
                 presetsCallback={presetCollectionDispatch}
               />
+              <hr />
+              <SettingsForm
+                settings={settings}
+                settingsCallback={setSettings}
+              />
             </>
           )}
         </div>
-        <div className="flex flex-row">
+        <div className="grid grid-cols-2 gap-1">
+          <AssignableForm
+            settings={settings}
+            assignableCallback={addAssignable}
+          />
+          <GroupForm
+            settings={settings}
+            groupCallback={addGroup}
+            assignableCollection={unassignedCollection}
+          />
           <div>
-            <AssignableForm
-              settings={settings}
-              assignableCallback={addAssignable}
-            />
-            <div>
-              {assignableCollection.size > 0 && (
-                <button
-                  className="float-right"
-                  onClick={() => setShowOnlyUnassigned(!showOnlyUnassigned)}
-                >
-                  &hellip;
-                </button>
-              )}
-              {assignableCollection &&
-                (!showOnlyUnassigned ? (
-                  <>
-                    <h1 className="text-center">Assignables</h1>
-                    <ul className="m-1 h-[70svh] overflow-auto">
-                      {[...assignableCollection.values()].map((value) => (
-                        <li key={value.getID()}>
-                          <AssignableComponent
-                            data={value}
-                            assignableCallback={deleteAssignable}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <>
-                    <h1 className="text-center">Unassigned</h1>
-                    <ul className="m-1 h-[70svh] overflow-auto">
-                      {[...unassignedCollection.values()].map((value) => (
-                        <li key={value.getID()}>
-                          <AssignableComponent
-                            data={value}
-                            assignableCallback={deleteAssignable}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ))}
-            </div>
-          </div>
-          <div className="mx-1 border-r-1"></div>
-          <div>
-            <GroupForm
-              settings={settings}
-              groupCallback={addGroup}
-              assignableCollection={unassignedCollection}
-            />
-            {groupCollection && (
-              <>
-                <h1 className="text-center">Groups</h1>
-                <ul className="m-1 h-[70svh] overflow-auto">
-                  {[...groupCollection.values()].map((value) => (
-                    <li key={value.getID()}>
-                      <GroupComponent
-                        data={value}
-                        deleteGroupCallback={deleteGroup}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </>
+            {assignableCollection.size > 0 && (
+              <button
+                className="float-right"
+                onClick={() => setShowOnlyUnassigned(!showOnlyUnassigned)}
+              >
+                &hellip;
+              </button>
             )}
+            {assignableCollection &&
+              (!showOnlyUnassigned ? (
+                <>
+                  <h1 className="text-center">Assignables</h1>
+                  <ul className="m-1 h-[70svh] overflow-auto">
+                    {[...assignableCollection.values()].map((value) => (
+                      <li key={value.getID()}>
+                        <AssignableComponent
+                          data={value}
+                          assignableCallback={deleteAssignable}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-center">Unassigned</h1>
+                  <ul className="m-1 h-[70svh] overflow-auto">
+                    {[...unassignedCollection.values()].map((value) => (
+                      <li key={value.getID()}>
+                        <AssignableComponent
+                          data={value}
+                          assignableCallback={deleteAssignable}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ))}
           </div>
+          {groupCollection && (
+            <div>
+              <h1 className="text-center">Groups</h1>
+              <ul className="m-1 h-[70svh] overflow-auto">
+                {[...groupCollection.values()].map((value) => (
+                  <li key={value.getID()}>
+                    <GroupComponent
+                      data={value}
+                      deleteGroupCallback={deleteGroup}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </main>
     </div>
