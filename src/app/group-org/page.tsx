@@ -12,7 +12,36 @@ import {
   useState,
 } from "react";
 
-type RecursiveMap<K, V> = Map<K, V | RecursiveMap<K, V>>;
+/* type RecursiveMap<K, V> = Map<K, V | RecursiveMap<K, V>>; */
+
+type ArrayReducerAction<V> =
+  | { type: "create"; value: V }
+  | { type: "delete"; value: V }
+  | { type: "replace"; value: Array<V> };
+
+function arrayReducer<V>() {
+  return (itemArray: Array<V>, action: ArrayReducerAction<V>) => {
+    switch (action.type) {
+      case "create": {
+        return new Array(...itemArray, action.value);
+      }
+      case "delete": {
+        const newCollection = new Array(...itemArray);
+        /* newCollection(action.value); */
+        return newCollection;
+      }
+      case "replace": {
+        return action.value;
+      }
+      default:
+        throw Error("Unknown action");
+    }
+  };
+}
+
+function useArrayReducer<V>(array?: Array<V>) {
+  return useReducer(arrayReducer<V>(), array || new Array<V>());
+}
 
 type MapReducerAction<K, V> =
   | { type: "create"; key: K; value: V }
@@ -315,7 +344,7 @@ const AssignableComponent = ({
                 </li>
               ))}
         </ul>
-        {data.getSize() && (
+        {data.getSize() != undefined && (
           <li className="m-1 flex flex-row place-content-between gap-1">
             <span>Size:</span>
             <span>{data.getSize()}</span>
@@ -332,6 +361,35 @@ const AssignableComponent = ({
     </div>
   );
 };
+
+function sortAssignables(array: Assignable[], sort?: string) {
+  switch (sort) {
+    case "name":
+      array.sort((a, b) => a.getName().localeCompare(b.getName()));
+      break;
+    case "leader":
+      array.sort((a, b) => +!!b.getLeader() - +!!a.getLeader());
+      break;
+    default:
+  }
+  return array;
+}
+
+function filterAssignables(array: Assignable[], filter?: string[]) {
+  if (filter)
+    if (filter.length > 0) {
+      let newArray = [...array];
+      for (const f of filter) {
+        switch (f) {
+          case "leader":
+            newArray = [...newArray].filter((value) => value.getLeader());
+            break;
+        }
+      }
+      return newArray;
+    }
+  return array;
+}
 
 class Group {
   private _id: string;
@@ -476,7 +534,7 @@ const GroupComponent = ({
                             ))}
                           </ul>
                         ) : (
-                          <span>{value}</span>
+                          <span className="text-right">{value}</span>
                         )}
                       </li>
                     ))}
@@ -484,12 +542,15 @@ const GroupComponent = ({
             </ul>
           </li>
         )}
-        {(size > data.getAllMembers().size || data.getSize() != undefined) && (
-          <li className="text-center">
-            Size:{" "}
-            {data.getSize() || 0 > data.getAllMembers().size || !data.getSize()}
-            <button className="rounded-sm border">+</button>
-          </li>
+        {(size > data.getAllMembers().size || data.getSize() == undefined) && (
+          <ul className="text-center">
+            {data.getSize() != undefined && (
+              <li>Size: {size - data.getAllMembers().size}</li>
+            )}
+            <li>
+              <button className="rounded-sm border">+</button>
+            </li>
+          </ul>
         )}
         {data.getNotes() && (
           <textarea
@@ -502,6 +563,23 @@ const GroupComponent = ({
     </div>
   );
 };
+
+function sortGroups(array: Group[], sort?: string | undefined) {
+  switch (sort) {
+    case "name":
+      array.sort((a, b) => a.getName()?.localeCompare(b.getName() || "") || 0);
+      break;
+    case "size":
+      array.sort((a, b) => (b.getSize() || 0) - (a.getSize() || 0));
+      break;
+    default:
+  }
+  return array;
+}
+
+function filterGroups(array: Group[], filter?: string[]) {
+  return array;
+}
 
 class Field {
   private name: string;
@@ -748,6 +826,7 @@ const bereanCollegeRidesSettings = new Setting({
           "Sunday Third",
         ]),
         multiple: true,
+        required: true,
         preset: true,
       }),
     ],
@@ -755,7 +834,7 @@ const bereanCollegeRidesSettings = new Setting({
       "Address",
       new Field({
         name: "Address",
-        type: "string",
+        type: "text",
         group: "location",
         required: true,
         preset: true,
@@ -1038,7 +1117,7 @@ const SettingsForm = ({
       setSelectOptions({ type: "replace", value: new Set<string>() });
       setMultipleSelect(false);
     }
-    if (["checkbox", "select"].includes(newFieldType)) setRequiredField(false);
+    if (["checkbox"].includes(newFieldType)) setRequiredField(false);
     setFieldType(newFieldType);
   };
   const [requiredField, setRequiredField] = useState<boolean>(false);
@@ -1066,7 +1145,7 @@ const SettingsForm = ({
       });
       setFieldName("");
       setFieldGroup("miscellaneous");
-      setFieldType("string");
+      setFieldType("text");
       setRequiredField(false);
       setOptionName("");
       setSelectOptions({ type: "replace", value: new Set<string>() });
@@ -1426,7 +1505,6 @@ const SettingsForm = ({
               onChange={updateUseLeader}
             />
           </label>
-          <hr />
         </div>
         <div className="mx-1 border-l-1"></div>
         <div className="flex flex-col gap-1">
@@ -1681,7 +1759,7 @@ const AssignableForm = ({
 
   return (
     <form
-      className="my-1 flex flex-col rounded-md border p-2"
+      className="flex flex-col rounded-md border p-2"
       onSubmit={submitForm}
       ref={assignableFormRef}
     >
@@ -1724,9 +1802,12 @@ const AssignableForm = ({
                     data.get(field.getName()) || (field.getMultiple() ? [] : "")
                   }
                   multiple={field.getMultiple()}
+                  required={field.getRequired()}
                   onChange={updateDataSelect}
                 >
-                  {!field.getMultiple() && <option></option>}
+                  {!field.getMultiple() && (
+                    <option value="">-{field.getName()}-</option>
+                  )}
                   {Array.from(field.getOptions()).map((value) => (
                     <option
                       className={field.getMultiple() ? "" : "text-black"}
@@ -1743,8 +1824,11 @@ const AssignableForm = ({
                   type={field.getType()}
                   name={field.getName()}
                   value={
-                    data.get(field.getName()) ||
-                    (field.getType() == "number" ? 0 : "")
+                    data.has(field.getName())
+                      ? data.get(field.getName())
+                      : field.getType() == "number"
+                        ? 0
+                        : ""
                   }
                   checked={data.get(field.getName()) || false}
                   placeholder={
@@ -1752,7 +1836,9 @@ const AssignableForm = ({
                     (field.getRequired() ? "*" : "") +
                     (field.getName() == settings.getAssignableIDSource()
                       ? " (ID)"
-                      : "")
+                      : field.getName() == settings.getAssignableIDSource()
+                        ? " (Size)"
+                        : "")
                   }
                   size={field.getType() == "number" ? 7 : undefined}
                   required={field.getRequired() || undefined}
@@ -1789,6 +1875,7 @@ const AssignableForm = ({
             value={data.get("leadersize") || 0}
             placeholder="Size*:"
             size={7}
+            min={0}
             required={true}
             onChange={updateDataInput}
           />
@@ -1798,7 +1885,7 @@ const AssignableForm = ({
         <textarea
           name="notes"
           className="rounded-sm border"
-          placeholder="Notes?"
+          placeholder="Notes"
           value={data.get("notes")}
           onChange={updateNotes}
         />
@@ -1855,7 +1942,10 @@ const GroupForm = ({
                 id: leader,
                 name: name,
                 leader: assignableCollection.get(leader),
-                size: assignableCollection.get(leader)?.getSize(),
+                size:
+                  settings.getGroupSizeSource() == "groupsize"
+                    ? data.size
+                    : assignableCollection.get(leader)?.getSize(),
                 notes: data.notes,
               }),
               assignableCollection.get(leader)
@@ -1869,7 +1959,10 @@ const GroupForm = ({
             id: data.name as string,
             name: data.name,
             leader: assignableCollection.get(leader),
-            size: assignableCollection.get(leader)?.getSize(),
+            size:
+              settings.getGroupSizeSource() == "groupsize"
+                ? data.size
+                : assignableCollection.get(leader)?.getSize(),
             notes: data.notes,
           }),
           assignableCollection.get(leader)
@@ -1886,7 +1979,10 @@ const GroupForm = ({
             leader: settings.getUseLeader()
               ? assignableCollection.get(leader)
               : undefined,
-            size: assignableCollection.get(leader)?.getSize(),
+            size:
+              settings.getGroupSizeSource() == "groupsize"
+                ? data.size
+                : assignableCollection.get(leader)?.getSize(),
             notes: data.notes,
           }),
           assignableCollection.get(leader)
@@ -1903,7 +1999,7 @@ const GroupForm = ({
 
   return (
     <form
-      className="my-1 flex flex-col rounded-md border p-2"
+      className="flex flex-col rounded-md border p-2"
       onSubmit={submitForm}
       ref={groupFormRef}
     >
@@ -1983,7 +2079,7 @@ const GroupForm = ({
         <textarea
           name="notes"
           className="rounded-sm border"
-          placeholder="Notes?"
+          placeholder="Notes"
           value={data.notes}
           onChange={updateData}
         />
@@ -2006,6 +2102,12 @@ export default function Page() {
   >();
   const [groupCollection, groupDispatch] = useMapReducer<string, Group>();
 
+  const [settings, setSettings] = useState<Setting>(defaultSettings);
+
+  const [presetCollection, presetCollectionDispatch] = useMapReducer(
+    new Map(presetList.map((setting) => [setting.getName(), setting]))
+  );
+
   const addAssignable = (assignable: Assignable) => {
     assignableDispatch({
       type: "create",
@@ -2018,12 +2120,6 @@ export default function Page() {
       value: assignable,
     });
   };
-
-  const [settings, setSettings] = useState<Setting>(defaultSettings);
-
-  const [presetCollection, presetCollectionDispatch] = useMapReducer(
-    new Map(presetList.map((setting) => [setting.getName(), setting]))
-  );
 
   const deleteAssignable = (assignable: Assignable) => {
     assignableDispatch({
@@ -2073,14 +2169,57 @@ export default function Page() {
   const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
+  const [assignableList, setAssignableList] = useState<Array<Assignable>>([]);
+  const [unassignedList, setUnassignedList] = useState<Array<Assignable>>([]);
+  const [assignableSort, setAssignableSort] = useState<string>("");
+  const [assignableFilter, setAssignableFilter] = useState<Array<string>>([]);
+
+  const [groupList, setGroupList] = useState<Array<Group>>([]);
+  const [groupSort, setGroupSort] = useState<string>("");
+  const [groupFilter, setGroupFilter] = useState<Array<string>>([]);
+
+  useEffect(() => {
+    setAssignableList(
+      sortAssignables(
+        filterAssignables(
+          Array.from(assignableCollection.values()),
+          assignableFilter
+        ),
+        assignableSort
+      )
+    );
+    setUnassignedList(
+      sortAssignables(
+        filterAssignables(
+          Array.from(unassignedCollection.values()),
+          assignableFilter
+        ),
+        assignableSort
+      )
+    );
+  }, [
+    assignableCollection,
+    unassignedCollection,
+    assignableSort,
+    assignableFilter,
+  ]);
+
+  useEffect(() => {
+    setGroupList(
+      sortGroups(
+        filterGroups(Array.from(groupCollection.values()), groupFilter),
+        groupSort
+      )
+    );
+  }, [groupCollection, groupSort, groupFilter]);
+
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
       <main className="row-start-2 flex flex-col items-center gap-8 sm:items-start">
         <h1>group organizer test</h1>
-        <p>WIP</p>
         <div className="relative rounded-md border p-1">
           <button
-            className={showSettingsForm ? "absolute top-0 right-0 px-1" : ""}
+            className={showSettingsForm ? "absolute top-1 right-2" : ""}
             onClick={() => setShowSettingsForm(!showSettingsForm)}
           >
             {showSettingsForm ? <>&times;</> : "Edit Settings"}
@@ -2111,51 +2250,171 @@ export default function Page() {
             groupCallback={addGroup}
             assignableCollection={unassignedCollection}
           />
-          <div>
-            {assignableCollection.size > 0 && (
-              <button
-                className="float-right"
-                onClick={() => setShowOnlyUnassigned(!showOnlyUnassigned)}
+          {assignableCollection.size > 0 && (
+            <div className="relative rounded-md border p-1">
+              <input
+                className="absolute top-2 right-2"
+                type="checkbox"
+                checked={showOnlyUnassigned}
+                onChange={(e) => setShowOnlyUnassigned(e.target.checked)}
+              />
+              <h1 className="text-center">
+                {!showOnlyUnassigned ? "Assignables" : "Unassigned"}
+              </h1>
+              <select
+                className="rounded-sm border"
+                value={assignableSort}
+                onChange={(e) => setAssignableSort(e.target.value)}
               >
-                &hellip;
-              </button>
-            )}
-            {assignableCollection &&
-              (!showOnlyUnassigned ? (
-                <>
-                  <h1 className="text-center">Assignables</h1>
-                  <ul className="m-1 h-[70svh] overflow-auto">
-                    {[...assignableCollection.values()].map((value) => (
-                      <li key={value.getID()}>
-                        <AssignableComponent
-                          data={value}
-                          assignableCallback={deleteAssignable}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <h1 className="text-center">Unassigned</h1>
-                  <ul className="m-1 h-[70svh] overflow-auto">
-                    {[...unassignedCollection.values()].map((value) => (
-                      <li key={value.getID()}>
-                        <AssignableComponent
-                          data={value}
-                          assignableCallback={deleteAssignable}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ))}
-          </div>
-          {groupCollection && (
-            <div>
+                <option className="dark:text-black" value="">
+                  --Sort--
+                </option>
+                <option className="dark:text-black" value="name">
+                  Name
+                </option>
+                {settings.getUseLeader() && (
+                  <option className="dark:text-black" value="leader">
+                    Leader
+                  </option>
+                )}
+                {Array.from(settings.getAssignableFields().entries())
+                  .filter(([, value]) => ["text"].includes(value.getType()))
+                  .map(([key, value]) =>
+                    value.getType() == "select" ? (
+                      <optgroup
+                        className="dark:text-black"
+                        key={key}
+                        label={key}
+                      >
+                        {Array.from(value.getOptions()).map((option) => (
+                          <option className="dark:text-black" key={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : (
+                      <option className="dark:text-black" key={key}>
+                        {key}
+                      </option>
+                    )
+                  )}
+              </select>
+              {Array.from(settings.getAssignableFields().entries()).filter(
+                ([, value]) => !["contact"].includes(value.getGroup())
+              ).length > 0 && (
+                <select
+                  className="rounded-sm border"
+                  value={assignableFilter}
+                  onChange={(e) =>
+                    setAssignableFilter(
+                      [...e.target.selectedOptions].map((o) => o.value)
+                    )
+                  }
+                  multiple
+                >
+                  {settings.getUseLeader() && (
+                    <option value="leader">Leader</option>
+                  )}
+                  {Array.from(settings.getAssignableFields().entries())
+                    .filter(([, value]) =>
+                      ["select", "checkbox"].includes(value.getType())
+                    )
+                    .map(([key, value]) =>
+                      value.getType() == "select" ? (
+                        <optgroup key={key} label={key}>
+                          {Array.from(value.getOptions()).map((option) => (
+                            <option key={option}>{option}</option>
+                          ))}
+                        </optgroup>
+                      ) : (
+                        <option key={key}>{key}</option>
+                      )
+                    )}
+                </select>
+              )}
+              <ul className="m-1 max-h-[70svh] overflow-auto">
+                {(!showOnlyUnassigned ? assignableList : unassignedList).map(
+                  (value) => (
+                    <li key={value.getID()}>
+                      <AssignableComponent
+                        data={value}
+                        assignableCallback={deleteAssignable}
+                      />
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+          )}
+          {groupCollection.size > 0 && (
+            <div className="rounded-md border p-1">
               <h1 className="text-center">Groups</h1>
-              <ul className="m-1 h-[70svh] overflow-auto">
-                {[...groupCollection.values()].map((value) => (
+              <select
+                className="rounded-sm border"
+                value={groupSort}
+                onChange={(e) => setGroupSort(e.target.value)}
+              >
+                <option className="dark:text-black" value="">
+                  --Sort--
+                </option>
+                <option className="dark:text-black" value="name">
+                  Name
+                </option>
+                {settings.getUseLeader() &&
+                  Array.from(settings.getAssignableFields().entries())
+                    .filter(([, value]) => ["text"].includes(value.getType()))
+                    .map(([key, value]) =>
+                      value.getType() == "select" ? (
+                        <optgroup
+                          className="dark:text-black"
+                          key={key}
+                          label={key}
+                        >
+                          {Array.from(value.getOptions()).map((option) => (
+                            <option className="dark:text-black" key={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ) : (
+                        <option className="dark:text-black" key={key}>
+                          {key}
+                        </option>
+                      )
+                    )}
+              </select>
+              {Array.from(settings.getAssignableFields().entries()).filter(
+                ([, value]) => ["text"].includes(value.getType())
+              ).length > 0 && (
+                <select
+                  className="rounded-sm border"
+                  value={groupFilter}
+                  onChange={(e) =>
+                    setGroupFilter(
+                      [...e.target.selectedOptions].map((o) => o.value)
+                    )
+                  }
+                  multiple
+                >
+                  {Array.from(settings.getAssignableFields().entries())
+                    .filter(([, value]) =>
+                      ["select", "checkbox"].includes(value.getType())
+                    )
+                    .map(([key, value]) =>
+                      value.getType() == "select" ? (
+                        <optgroup key={key} label={key}>
+                          {Array.from(value.getOptions()).map((option) => (
+                            <option key={option}>{option}</option>
+                          ))}
+                        </optgroup>
+                      ) : (
+                        <option key={key}>{key}</option>
+                      )
+                    )}
+                </select>
+              )}
+              <ul className="m-1 max-h-[70svh] overflow-auto">
+                {groupList.map((value) => (
                   <li key={value.getID()}>
                     <GroupComponent
                       data={value}
