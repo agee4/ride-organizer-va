@@ -370,6 +370,9 @@ function sortAssignables(array: Assignable[], sort?: string) {
     case "leader":
       array.sort((a, b) => +!!b.getLeader() - +!!a.getLeader());
       break;
+    case "size":
+      array.sort((a, b) => (b.getSize() || -1) - (a.getSize() || -1));
+      break;
     default:
   }
   return array;
@@ -454,12 +457,20 @@ class Group {
 const GroupComponent = ({
   data,
   deleteGroupCallback,
+  addGroupMember,
+  removeGroupMember,
 }: {
   data: Group;
   deleteGroupCallback: (group: Group) => void;
+  addGroupMember: (group: Group) => void;
+  removeGroupMember: (group: Group, member: Assignable) => void;
 }) => {
   const leader = data.getLeader();
   const size = data.getSize() || -1;
+
+  const removeMember = (member: Assignable) => {
+    removeGroupMember(data, member);
+  };
 
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-neutral-400 p-2 dark:bg-neutral-600">
@@ -474,84 +485,29 @@ const GroupComponent = ({
           </button>
         </li>
         <li className="text-xs italic">{data.getID()}</li>
-        {!!leader && (
-          <li className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
-            <ul>
-              <div className="font-bold">{leader.getName()}</div>
-              <li className="text-xs italic">{leader.getID()}</li>
-              <ul className="m-1">
-                {leader.getContact() &&
-                  Array.from(leader.getContact() as Map<string, string>).map(
-                    ([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        <span>{value}</span>
-                      </li>
-                    )
-                  )}
-                {leader.getAvailability() &&
-                  Array.from(leader.getAvailability() as Map<string, string>)
-                    .filter(
-                      ([, value]) =>
-                        (Array.isArray(value) && value.length > 0) || value
-                    )
-                    .map(([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        {Array.isArray(value) ? (
-                          <ul>
-                            {value.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <span>{value}</span>
-                        )}
-                      </li>
-                    ))}
-                {leader.getLocation() &&
-                  Array.from(leader.getLocation() as Map<string, string>)
-                    .filter(
-                      ([, value]) =>
-                        (Array.isArray(value) && value.length > 0) || value
-                    )
-                    .map(([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        {Array.isArray(value) ? (
-                          <ul>
-                            {value.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <span className="text-right">{value}</span>
-                        )}
-                      </li>
-                    ))}
-              </ul>
-            </ul>
-          </li>
-        )}
-        {(size > data.getAllMembers().size || data.getSize() == undefined) && (
-          <ul className="text-center">
-            {data.getSize() != undefined && (
-              <li>Size: {size - data.getAllMembers().size}</li>
-            )}
+        {!!leader && <GroupMemberComponent member={leader} />}
+        <ul className="text-center">
+          {data.getSize() != undefined && (
+            <li>Size: {size - data.getAllMembers().size}</li>
+          )}
+          {Array.from(data.getAllMembers().values()).map((value) => (
+            <GroupMemberComponent
+              member={value}
+              removeMember={removeMember}
+              key={value.getID()}
+            />
+          ))}
+          {(!data.getSize() || size > data.getAllMembers().size) && (
             <li>
-              <button className="rounded-sm border">+</button>
+              <button
+                className="rounded-sm border"
+                onClick={() => addGroupMember(data)}
+              >
+                +
+              </button>
             </li>
-          </ul>
-        )}
+          )}
+        </ul>
         {data.getNotes() && (
           <textarea
             className="rounded-sm border bg-cyan-300 dark:bg-cyan-700"
@@ -564,13 +520,105 @@ const GroupComponent = ({
   );
 };
 
+const GroupMemberComponent = ({
+  member,
+  removeMember,
+}: {
+  member: Assignable;
+  removeMember?: (member: Assignable) => void;
+}) => {
+  return (
+    <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+      <ul>
+        <li className="flex flex-row place-content-between font-bold">
+          {member.getName()}
+          {removeMember && (
+            <button
+              className="rounded-sm border px-1"
+              onClick={() => removeMember(member)}
+            >
+              &times;
+            </button>
+          )}
+        </li>
+        <li className="text-xs italic">{member.getID()}</li>
+        <ul className="m-1">
+          {member.getContact() &&
+            Array.from(member.getContact() as Map<string, string>).map(
+              ([key, value]) => (
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  <span>{value}</span>
+                </li>
+              )
+            )}
+          {member.getAvailability() &&
+            Array.from(member.getAvailability() as Map<string, string>)
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
+              .map(([key, value]) => (
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>{value}</span>
+                  )}
+                </li>
+              ))}
+          {member.getLocation() &&
+            Array.from(member.getLocation() as Map<string, string>)
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
+              .map(([key, value]) => (
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-right">{value}</span>
+                  )}
+                </li>
+              ))}
+        </ul>
+      </ul>
+    </div>
+  );
+};
+
 function sortGroups(array: Group[], sort?: string | undefined) {
   switch (sort) {
     case "name":
       array.sort((a, b) => a.getName()?.localeCompare(b.getName() || "") || 0);
       break;
     case "size":
-      array.sort((a, b) => (b.getSize() || 0) - (a.getSize() || 0));
+      array.sort(
+        (a, b) =>
+          (b.getSize() || 0) -
+          b.getAllMembers().size -
+          ((a.getSize() || 0) - a.getAllMembers().size)
+      );
       break;
     default:
   }
@@ -578,6 +626,22 @@ function sortGroups(array: Group[], sort?: string | undefined) {
 }
 
 function filterGroups(array: Group[], filter?: string[]) {
+  if (filter)
+    if (filter.length > 0) {
+      let newArray = [...array];
+      for (const f of filter) {
+        switch (f) {
+          case "unfull":
+            newArray = [...newArray].filter(
+              (value) =>
+                value.getSize() == undefined ||
+                (value.getSize() || 0) > value.getAllMembers().size
+            );
+            break;
+        }
+      }
+      return newArray;
+    }
   return array;
 }
 
@@ -920,6 +984,8 @@ const bibleStudyTablesSettings = new Setting({
     ],
   ]),
   useLeader: true,
+  groupIDSource: "name",
+  groupCustomName: true,
   groupUseSize: true,
 });
 
@@ -965,6 +1031,12 @@ const presetList = [
   bereanCollegeRidesSettings,
   bibleStudyTablesSettings,
   noLeaderGroupsSettings,
+  new Setting({
+    name: "test",
+    assignableIDSource: "name",
+    useLeader: true,
+    groupIDSource: "leader",
+  }),
 ];
 
 const PresetForm = ({
@@ -1900,14 +1972,14 @@ const AssignableForm = ({
 const GroupForm = ({
   settings,
   groupCallback,
-  assignableCollection,
+  unassignedCollection,
 }: {
   settings: Setting;
   groupCallback: (group: Group, leader?: Assignable) => void;
-  assignableCollection: Map<string, Assignable>;
+  unassignedCollection: Map<string, Assignable>;
 }) => {
   const groupFormRef = useRef<HTMLFormElement>(null);
-  const unassignedLeaderList = [...assignableCollection.values()].filter((a) =>
+  const unassignedLeaderList = [...unassignedCollection.values()].filter((a) =>
     a.getLeader()
   );
 
@@ -1935,20 +2007,21 @@ const GroupForm = ({
     switch (settings.getGroupIDSource()) {
       case "leader":
         if (settings.getUseLeader())
-          if (!!assignableCollection.get(leader)) {
+          if (!!unassignedCollection.get(leader)) {
             const name = data.name && data.name.length > 0 ? data.name : leader;
             groupCallback(
               new Group({
                 id: leader,
                 name: name,
-                leader: assignableCollection.get(leader),
-                size:
-                  settings.getGroupSizeSource() == "groupsize"
+                leader: unassignedCollection.get(leader),
+                size: settings.getGroupUseSize()
+                  ? settings.getGroupSizeSource() == "groupsize"
                     ? data.size
-                    : assignableCollection.get(leader)?.getSize(),
+                    : unassignedCollection.get(leader)?.getSize()
+                  : undefined,
                 notes: data.notes,
               }),
-              assignableCollection.get(leader)
+              unassignedCollection.get(leader)
             );
             setLeader("");
           }
@@ -1958,14 +2031,15 @@ const GroupForm = ({
           new Group({
             id: data.name as string,
             name: data.name,
-            leader: assignableCollection.get(leader),
-            size:
-              settings.getGroupSizeSource() == "groupsize"
+            leader: unassignedCollection.get(leader),
+            size: settings.getGroupUseSize()
+              ? settings.getGroupSizeSource() == "groupsize"
                 ? data.size
-                : assignableCollection.get(leader)?.getSize(),
+                : unassignedCollection.get(leader)?.getSize()
+              : undefined,
             notes: data.notes,
           }),
-          assignableCollection.get(leader)
+          unassignedCollection.get(leader)
         );
         setLeader("");
         break;
@@ -1977,15 +2051,16 @@ const GroupForm = ({
             id: data.id,
             name: name,
             leader: settings.getUseLeader()
-              ? assignableCollection.get(leader)
+              ? unassignedCollection.get(leader)
               : undefined,
-            size:
-              settings.getGroupSizeSource() == "groupsize"
+            size: settings.getGroupUseSize()
+              ? settings.getGroupSizeSource() == "groupsize"
                 ? data.size
-                : assignableCollection.get(leader)?.getSize(),
+                : unassignedCollection.get(leader)?.getSize()
+              : undefined,
             notes: data.notes,
           }),
-          assignableCollection.get(leader)
+          unassignedCollection.get(leader)
         );
     }
     setData({
@@ -2104,11 +2179,11 @@ export default function Page() {
 
   const [settings, setSettings] = useState<Setting>(defaultSettings);
 
-  const [presetCollection, presetCollectionDispatch] = useMapReducer(
+  const [presetCollection, presetDispatch] = useMapReducer(
     new Map(presetList.map((setting) => [setting.getName(), setting]))
   );
 
-  const addAssignable = (assignable: Assignable) => {
+  const createAssignable = (assignable: Assignable) => {
     assignableDispatch({
       type: "create",
       key: assignable.getID(),
@@ -2133,10 +2208,13 @@ export default function Page() {
     groupCollection.forEach((value, key) => {
       if (value.getLeader() == assignable)
         groupDispatch({ type: "delete", key: key });
+      for (const [memberKey, member] of value.getAllMembers().entries())
+        if (member == assignable)
+          groupDispatch({ type: "delete", key: memberKey });
     });
   };
 
-  const addGroup = (group: Group, leader?: Assignable) => {
+  const createGroup = (group: Group, leader?: Assignable) => {
     groupDispatch({
       type: "create",
       key: group.getID(),
@@ -2164,6 +2242,21 @@ export default function Page() {
       type: "delete",
       key: group.getID(),
     });
+  };
+
+  const addGroupMember = (group: Group) => {
+    const newMember = unassignedList.shift();
+    if (newMember) {
+      group.getAllMembers().set(newMember.getID(), newMember);
+      groupDispatch({ type: "create", key: group.getID(), value: group });
+      unassignedDispatch({ type: "delete", key: newMember.getID() });
+    }
+  };
+
+  const removeGroupMember = (group: Group, member: Assignable) => {
+    group.getAllMembers().delete(member.getID());
+    groupDispatch({ type: "create", key: group.getID(), value: group });
+    unassignedDispatch({ type: "create", key: member.getID(), value: member });
   };
 
   const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
@@ -2230,7 +2323,7 @@ export default function Page() {
                 settings={settings}
                 settingsCallback={setSettings}
                 presets={presetCollection}
-                presetsCallback={presetCollectionDispatch}
+                presetsCallback={presetDispatch}
               />
               <hr />
               <SettingsForm
@@ -2243,12 +2336,12 @@ export default function Page() {
         <div className="grid grid-cols-2 gap-1">
           <AssignableForm
             settings={settings}
-            assignableCallback={addAssignable}
+            assignableCallback={createAssignable}
           />
           <GroupForm
             settings={settings}
-            groupCallback={addGroup}
-            assignableCollection={unassignedCollection}
+            groupCallback={createGroup}
+            unassignedCollection={unassignedCollection}
           />
           {assignableCollection.size > 0 && (
             <div className="relative rounded-md border p-1">
@@ -2277,8 +2370,16 @@ export default function Page() {
                     Leader
                   </option>
                 )}
+                {settings.getUseLeader() &&
+                  settings.getGroupSizeSource() != "groupsize" && (
+                    <option className="dark:text-black" value="size">
+                      Size
+                    </option>
+                  )}
                 {Array.from(settings.getAssignableFields().entries())
-                  .filter(([, value]) => ["text"].includes(value.getType()))
+                  .filter(([, value]) =>
+                    ["text", "number"].includes(value.getType())
+                  )
                   .map(([key, value]) =>
                     value.getType() == "select" ? (
                       <optgroup
@@ -2299,9 +2400,11 @@ export default function Page() {
                     )
                   )}
               </select>
-              {Array.from(settings.getAssignableFields().entries()).filter(
-                ([, value]) => !["contact"].includes(value.getGroup())
-              ).length > 0 && (
+              {(settings.getUseLeader() ||
+                Array.from(settings.getAssignableFields().entries()).filter(
+                  ([, value]) =>
+                    ["select", "checkbox"].includes(value.getType())
+                ).length > 0) && (
                 <select
                   className="rounded-sm border"
                   value={assignableFilter}
@@ -2360,6 +2463,11 @@ export default function Page() {
                 <option className="dark:text-black" value="name">
                   Name
                 </option>
+                {settings.getGroupUseSize() && (
+                  <option className="dark:text-black" value="size">
+                    Size
+                  </option>
+                )}
                 {settings.getUseLeader() &&
                   Array.from(settings.getAssignableFields().entries())
                     .filter(([, value]) => ["text"].includes(value.getType()))
@@ -2383,9 +2491,12 @@ export default function Page() {
                       )
                     )}
               </select>
-              {Array.from(settings.getAssignableFields().entries()).filter(
-                ([, value]) => ["text"].includes(value.getType())
-              ).length > 0 && (
+              {(settings.getGroupUseSize() ||
+                (settings.getUseLeader() &&
+                  Array.from(settings.getAssignableFields().entries()).filter(
+                    ([, value]) =>
+                      ["select", "checkbox"].includes(value.getType())
+                  ).length > 0)) && (
                 <select
                   className="rounded-sm border"
                   value={groupFilter}
@@ -2396,6 +2507,9 @@ export default function Page() {
                   }
                   multiple
                 >
+                  {settings.getGroupUseSize() && (
+                    <option value="unfull">Space Left</option>
+                  )}
                   {Array.from(settings.getAssignableFields().entries())
                     .filter(([, value]) =>
                       ["select", "checkbox"].includes(value.getType())
@@ -2419,6 +2533,8 @@ export default function Page() {
                     <GroupComponent
                       data={value}
                       deleteGroupCallback={deleteGroup}
+                      addGroupMember={addGroupMember}
+                      removeGroupMember={removeGroupMember}
                     />
                   </li>
                 ))}
