@@ -11,6 +11,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { DndProvider, useDrag, useDragLayer, useDrop } from "react-dnd";
+import { getEmptyImage, HTML5Backend } from "react-dnd-html5-backend";
 
 /* type RecursiveMap<K, V> = Map<K, V | RecursiveMap<K, V>>; */
 
@@ -100,6 +102,195 @@ function setReducer<V>() {
 function useSetReducer<V>(set?: Set<V>) {
   return useReducer(setReducer<V>(), set || new Set<V>());
 }
+
+enum DNDType {
+  ASSIGNABLE = "Assignable",
+}
+interface AssignableDragItem {
+  id: string[];
+}
+
+const AssignableDragLayer = ({
+  assignableCollection,
+}: {
+  assignableCollection: Map<string, Assignable>;
+}) => {
+  const { isDragging, item, currentOffset } = useDragLayer((monitor) => ({
+    isDragging: monitor.isDragging(),
+    item: monitor.getItem(),
+    currentOffset: monitor.getSourceClientOffset(),
+  }));
+
+  if (!isDragging || !currentOffset) {
+    return null;
+  }
+
+  const data =
+    assignableCollection.get(item.id[0]) ||
+    new Assignable({
+      id: "!ERROR!",
+      name: "!ERROR!",
+    });
+
+  return (
+    <div
+      className="fixed top-0 left-0 z-50 h-full w-full"
+      style={{
+        pointerEvents: "none",
+        transform: `translate(${currentOffset.x}px, ${currentOffset.y}px)`,
+      }}
+    >
+      <div className="my-1 max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+        <ul>
+          <div className="font-bold">{data.getName()}</div>
+          <ul className="flex flex-row place-content-between text-xs italic">
+            <li>{data.getID()}</li>
+            <li>{data.getLeader() && "Leader"}</li>
+          </ul>
+          <ul className="m-1">
+            {data.getContact() &&
+              Array.from(data.getContact() as Map<string, string>)
+                .filter(([, value]) => value)
+                .map(([key, value]) => (
+                  <li
+                    className="flex flex-row place-content-between gap-1"
+                    key={key}
+                  >
+                    <span>{key}:</span>
+                    <span>{value}</span>
+                  </li>
+                ))}
+            {data.getAvailability() &&
+              Array.from(
+                data.getAvailability() as Map<
+                  string,
+                  string | number | boolean | string[]
+                >
+              )
+                .filter(
+                  ([, value]) =>
+                    (Array.isArray(value) && value.length > 0) || value
+                )
+                .map(([key, value]) => (
+                  <li
+                    className="flex flex-row place-content-between gap-1"
+                    key={key}
+                  >
+                    <span>{key}:</span>
+                    {Array.isArray(value) ? (
+                      <ul>
+                        {value.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>{value}</span>
+                    )}
+                  </li>
+                ))}
+            {data.getLocation() &&
+              Array.from(
+                data.getLocation() as Map<
+                  string,
+                  string | number | boolean | string[]
+                >
+              )
+                .filter(
+                  ([, value]) =>
+                    (Array.isArray(value) && value.length > 0) || value
+                )
+                .map(([key, value]) => (
+                  <li
+                    className="flex flex-row place-content-between gap-1"
+                    key={key}
+                  >
+                    <span>{key}:</span>
+                    {Array.isArray(value) ? (
+                      <ul>
+                        {value.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>{value}</span>
+                    )}
+                  </li>
+                ))}
+            {data.getAffinity() &&
+              Array.from(
+                data.getAffinity() as Map<
+                  string,
+                  string | number | boolean | string[]
+                >
+              )
+                .filter(
+                  ([, value]) =>
+                    (Array.isArray(value) && value.length > 0) || value
+                )
+                .map(([key, value]) => (
+                  <li
+                    className="flex flex-row place-content-between gap-1"
+                    key={key}
+                  >
+                    <span>{key}:</span>
+                    {Array.isArray(value) ? (
+                      <ul>
+                        {value.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>{value}</span>
+                    )}
+                  </li>
+                ))}
+            {data.getMiscellaneous() &&
+              Array.from(
+                data.getMiscellaneous() as Map<
+                  string,
+                  string | number | boolean | string[]
+                >
+              )
+                .filter(
+                  ([, value]) =>
+                    (Array.isArray(value) && value.length > 0) || value
+                )
+                .map(([key, value]) => (
+                  <li
+                    className="flex flex-row place-content-between gap-1"
+                    key={key}
+                  >
+                    <span>{key}:</span>
+                    {Array.isArray(value) ? (
+                      <ul>
+                        {value.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>{value}</span>
+                    )}
+                  </li>
+                ))}
+          </ul>
+          {data.getSize() != undefined && (
+            <li className="m-1 flex flex-row place-content-between gap-1">
+              <span>Size:</span>
+              <span>{data.getSize()}</span>
+            </li>
+          )}
+          {data.getNotes() && (
+            <textarea
+              className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+              disabled
+              defaultValue={data.getNotes()}
+            />
+          )}
+        </ul>
+      </div>
+    </div>
+  );
+};
 
 class Assignable {
   private _id: string;
@@ -202,8 +393,42 @@ const AssignableComponent = ({
   data: Assignable;
   assignableCallback: (assignable: Assignable) => void;
 }) => {
+  const [{ isDragging }, drag, dragPreview] = useDrag<
+    AssignableDragItem,
+    void,
+    { isDragging: boolean }
+  >(
+    () => ({
+      type: DNDType.ASSIGNABLE,
+      item: {
+        id: /* selectedPassengers.length > 0
+              ? selectedPassengers.map((passenger) => passenger.getEmail())
+              : */ [data.getID()],
+      },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: () => {
+        /* clearSelect(); */
+      },
+    }),
+    [
+      /* selectedPassengers */
+    ]
+  );
+  const dragRef = useRef<HTMLDivElement>(null);
+  drag(dragRef);
+  dragPreview(getEmptyImage());
+
   return (
-    <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+    <div
+      className={
+        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800 " +
+        (isDragging && "opacity-50") /* +
+        (selected && " border-4 border-amber-500") */
+      }
+      ref={dragRef}
+    >
       <ul>
         <div className="flex flex-row place-content-between font-bold">
           {data.getName()}
@@ -462,18 +687,45 @@ const GroupComponent = ({
 }: {
   data: Group;
   deleteGroupCallback: (group: Group) => void;
-  addGroupMember: (group: Group) => void;
+  addGroupMember: (group: Group, memberid?: string) => void;
   removeGroupMember: (group: Group, member: Assignable) => void;
 }) => {
+  const [{ canDrop, isOver }, drop] = useDrop<
+    AssignableDragItem,
+    void,
+    { canDrop: boolean; isOver: boolean }
+  >(
+    () => ({
+      accept: DNDType.ASSIGNABLE,
+      drop: (item) => {
+        for (const id of item.id) {
+          addGroupMember(data, id);
+        }
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+      canDrop: () =>
+        data.getSize() == undefined || size > data.getAllMembers().size,
+    }),
+    [addGroupMember]
+  );
+  const dropRef = useRef<HTMLDivElement>(null);
+  drop(dropRef);
+
   const leader = data.getLeader();
-  const size = data.getSize() || -1;
+  const size = data.getSize() || 0;
 
   const removeMember = (member: Assignable) => {
     removeGroupMember(data, member);
   };
 
   return (
-    <div className="my-1 max-w-[496px] rounded-md bg-neutral-400 p-2 dark:bg-neutral-600">
+    <div
+      className="my-1 max-w-[496px] rounded-md bg-neutral-400 p-2 dark:bg-neutral-600"
+      ref={dropRef}
+    >
       <ul>
         <li className="flex flex-row place-content-between font-bold">
           {data.getName() || leader?.getName() || data.getID()}
@@ -497,10 +749,16 @@ const GroupComponent = ({
               key={value.getID()}
             />
           ))}
-          {(!data.getSize() || size > data.getAllMembers().size) && (
+          {(data.getSize() == undefined ||
+            size > data.getAllMembers().size) && (
             <li>
               <button
-                className="rounded-sm border"
+                className={
+                  "w-full rounded-sm border " +
+                  (isOver && canDrop
+                    ? "bg-amber-500"
+                    : "bg-neutral-400 dark:bg-neutral-600")
+                }
                 onClick={() => addGroupMember(data)}
               >
                 +
@@ -1874,6 +2132,13 @@ const AssignableForm = ({
                     data.get(field.getName()) || (field.getMultiple() ? [] : "")
                   }
                   multiple={field.getMultiple()}
+                  size={
+                    field.getMultiple()
+                      ? field.getOptions().size < 4
+                        ? field.getOptions().size
+                        : 4
+                      : undefined
+                  }
                   required={field.getRequired()}
                   onChange={updateDataSelect}
                 >
@@ -1947,7 +2212,7 @@ const AssignableForm = ({
             value={data.get("leadersize") || 0}
             placeholder="Size*:"
             size={7}
-            min={0}
+            min={1}
             required={true}
             onChange={updateDataInput}
           />
@@ -2086,11 +2351,12 @@ const GroupForm = ({
             ":"}
           <select
             className="rounded-sm border"
-            name="college"
+            name="groupleader"
             value={leader}
             onChange={(e) => {
               setLeader(e.target.value);
             }}
+            required={settings.getGroupIDSource() == "leader"}
           >
             <option className="dark:text-black" value="">
               ---
@@ -2183,6 +2449,77 @@ export default function Page() {
     new Map(presetList.map((setting) => [setting.getName(), setting]))
   );
 
+  const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
+  const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
+
+  const [assignableList, setAssignableList] = useState<Array<Assignable>>([]);
+  const [unassignedList, setUnassignedList] = useState<Array<Assignable>>([]);
+  const [assignableSort, setAssignableSort] = useState<string>("");
+  const [assignableReverse, setAssignableReverse] = useState<boolean>(false);
+  const [assignableFilter, setAssignableFilter] = useState<Array<string>>([]);
+
+  const [groupList, setGroupList] = useState<Array<Group>>([]);
+  const [groupSort, setGroupSort] = useState<string>("");
+  const [groupReverse, setGroupReverse] = useState<boolean>(false);
+  const [groupFilter, setGroupFilter] = useState<Array<string>>([]);
+
+  useEffect(() => {
+    setAssignableList(
+      assignableReverse
+        ? sortAssignables(
+            filterAssignables(
+              Array.from(assignableCollection.values()),
+              assignableFilter
+            ),
+            assignableSort
+          ).reverse()
+        : sortAssignables(
+            filterAssignables(
+              Array.from(assignableCollection.values()),
+              assignableFilter
+            ),
+            assignableSort
+          )
+    );
+    setUnassignedList(
+      assignableReverse
+        ? sortAssignables(
+            filterAssignables(
+              Array.from(unassignedCollection.values()),
+              assignableFilter
+            ),
+            assignableSort
+          ).reverse()
+        : sortAssignables(
+            filterAssignables(
+              Array.from(unassignedCollection.values()),
+              assignableFilter
+            ),
+            assignableSort
+          )
+    );
+  }, [
+    assignableCollection,
+    unassignedCollection,
+    assignableSort,
+    assignableReverse,
+    assignableFilter,
+  ]);
+
+  useEffect(() => {
+    setGroupList(
+      groupReverse
+        ? sortGroups(
+            filterGroups(Array.from(groupCollection.values()), groupFilter),
+            groupSort
+          ).reverse()
+        : sortGroups(
+            filterGroups(Array.from(groupCollection.values()), groupFilter),
+            groupSort
+          )
+    );
+  }, [groupCollection, groupSort, groupReverse, groupFilter]);
+
   const createAssignable = (assignable: Assignable) => {
     assignableDispatch({
       type: "create",
@@ -2244,8 +2581,10 @@ export default function Page() {
     });
   };
 
-  const addGroupMember = (group: Group) => {
-    const newMember = unassignedList.shift();
+  const addGroupMember = (group: Group, memberid?: string) => {
+    const newMember = memberid
+      ? unassignedCollection.get(memberid)
+      : unassignedList.shift();
     if (newMember) {
       group.getAllMembers().set(newMember.getID(), newMember);
       groupDispatch({ type: "create", key: group.getID(), value: group });
@@ -2259,52 +2598,9 @@ export default function Page() {
     unassignedDispatch({ type: "create", key: member.getID(), value: member });
   };
 
-  const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
-  const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
-
-  const [assignableList, setAssignableList] = useState<Array<Assignable>>([]);
-  const [unassignedList, setUnassignedList] = useState<Array<Assignable>>([]);
-  const [assignableSort, setAssignableSort] = useState<string>("");
-  const [assignableFilter, setAssignableFilter] = useState<Array<string>>([]);
-
-  const [groupList, setGroupList] = useState<Array<Group>>([]);
-  const [groupSort, setGroupSort] = useState<string>("");
-  const [groupFilter, setGroupFilter] = useState<Array<string>>([]);
-
-  useEffect(() => {
-    setAssignableList(
-      sortAssignables(
-        filterAssignables(
-          Array.from(assignableCollection.values()),
-          assignableFilter
-        ),
-        assignableSort
-      )
-    );
-    setUnassignedList(
-      sortAssignables(
-        filterAssignables(
-          Array.from(unassignedCollection.values()),
-          assignableFilter
-        ),
-        assignableSort
-      )
-    );
-  }, [
-    assignableCollection,
-    unassignedCollection,
-    assignableSort,
-    assignableFilter,
-  ]);
-
-  useEffect(() => {
-    setGroupList(
-      sortGroups(
-        filterGroups(Array.from(groupCollection.values()), groupFilter),
-        groupSort
-      )
-    );
-  }, [groupCollection, groupSort, groupFilter]);
+  const filterArray = Array.from(
+    settings.getAssignableFields().entries()
+  ).filter(([, value]) => ["select", "checkbox"].includes(value.getType()));
 
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
@@ -2333,144 +2629,55 @@ export default function Page() {
             </>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-1">
-          <AssignableForm
-            settings={settings}
-            assignableCallback={createAssignable}
-          />
-          <GroupForm
-            settings={settings}
-            groupCallback={createGroup}
-            unassignedCollection={unassignedCollection}
-          />
-          {assignableCollection.size > 0 && (
-            <div className="relative rounded-md border p-1">
-              <input
-                className="absolute top-2 right-2"
-                type="checkbox"
-                checked={showOnlyUnassigned}
-                onChange={(e) => setShowOnlyUnassigned(e.target.checked)}
-              />
-              <h1 className="text-center">
-                {!showOnlyUnassigned ? "Assignables" : "Unassigned"}
-              </h1>
-              <select
-                className="rounded-sm border"
-                value={assignableSort}
-                onChange={(e) => setAssignableSort(e.target.value)}
-              >
-                <option className="dark:text-black" value="">
-                  --Sort--
-                </option>
-                <option className="dark:text-black" value="name">
-                  Name
-                </option>
-                {settings.getUseLeader() && (
-                  <option className="dark:text-black" value="leader">
-                    Leader
-                  </option>
-                )}
-                {settings.getUseLeader() &&
-                  settings.getGroupSizeSource() != "groupsize" && (
-                    <option className="dark:text-black" value="size">
-                      Size
-                    </option>
-                  )}
-                {Array.from(settings.getAssignableFields().entries())
-                  .filter(([, value]) =>
-                    ["text", "number"].includes(value.getType())
-                  )
-                  .map(([key, value]) =>
-                    value.getType() == "select" ? (
-                      <optgroup
-                        className="dark:text-black"
-                        key={key}
-                        label={key}
-                      >
-                        {Array.from(value.getOptions()).map((option) => (
-                          <option className="dark:text-black" key={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ) : (
-                      <option className="dark:text-black" key={key}>
-                        {key}
-                      </option>
-                    )
-                  )}
-              </select>
-              {(settings.getUseLeader() ||
-                Array.from(settings.getAssignableFields().entries()).filter(
-                  ([, value]) =>
-                    ["select", "checkbox"].includes(value.getType())
-                ).length > 0) && (
+        <DndProvider backend={HTML5Backend}>
+          <AssignableDragLayer assignableCollection={assignableCollection} />
+          <div className="grid grid-cols-2 gap-1">
+            <AssignableForm
+              settings={settings}
+              assignableCallback={createAssignable}
+            />
+            <GroupForm
+              settings={settings}
+              groupCallback={createGroup}
+              unassignedCollection={unassignedCollection}
+            />
+            {assignableCollection.size > 0 && (
+              <div className="relative rounded-md border p-1">
+                <input
+                  className="absolute top-2 right-2"
+                  type="checkbox"
+                  checked={showOnlyUnassigned}
+                  onChange={(e) => setShowOnlyUnassigned(e.target.checked)}
+                />
+                <h1 className="text-center">
+                  {!showOnlyUnassigned ? "Assignables" : "Unassigned"}
+                </h1>
                 <select
                   className="rounded-sm border"
-                  value={assignableFilter}
-                  onChange={(e) =>
-                    setAssignableFilter(
-                      [...e.target.selectedOptions].map((o) => o.value)
-                    )
-                  }
-                  multiple
+                  value={assignableSort}
+                  onChange={(e) => setAssignableSort(e.target.value)}
                 >
+                  <option className="dark:text-black" value="">
+                    --Sort--
+                  </option>
+                  <option className="dark:text-black" value="name">
+                    Name
+                  </option>
                   {settings.getUseLeader() && (
-                    <option value="leader">Leader</option>
+                    <option className="dark:text-black" value="leader">
+                      Leader
+                    </option>
                   )}
+                  {settings.getUseLeader() &&
+                    settings.getGroupSizeSource() != "groupsize" && (
+                      <option className="dark:text-black" value="size">
+                        Size
+                      </option>
+                    )}
                   {Array.from(settings.getAssignableFields().entries())
                     .filter(([, value]) =>
-                      ["select", "checkbox"].includes(value.getType())
+                      ["text", "number"].includes(value.getType())
                     )
-                    .map(([key, value]) =>
-                      value.getType() == "select" ? (
-                        <optgroup key={key} label={key}>
-                          {Array.from(value.getOptions()).map((option) => (
-                            <option key={option}>{option}</option>
-                          ))}
-                        </optgroup>
-                      ) : (
-                        <option key={key}>{key}</option>
-                      )
-                    )}
-                </select>
-              )}
-              <ul className="m-1 max-h-[70svh] overflow-auto">
-                {(!showOnlyUnassigned ? assignableList : unassignedList).map(
-                  (value) => (
-                    <li key={value.getID()}>
-                      <AssignableComponent
-                        data={value}
-                        assignableCallback={deleteAssignable}
-                      />
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          )}
-          {groupCollection.size > 0 && (
-            <div className="rounded-md border p-1">
-              <h1 className="text-center">Groups</h1>
-              <select
-                className="rounded-sm border"
-                value={groupSort}
-                onChange={(e) => setGroupSort(e.target.value)}
-              >
-                <option className="dark:text-black" value="">
-                  --Sort--
-                </option>
-                <option className="dark:text-black" value="name">
-                  Name
-                </option>
-                {settings.getGroupUseSize() && (
-                  <option className="dark:text-black" value="size">
-                    Size
-                  </option>
-                )}
-                {settings.getUseLeader() &&
-                  Array.from(settings.getAssignableFields().entries())
-                    .filter(([, value]) => ["text"].includes(value.getType()))
                     .map(([key, value]) =>
                       value.getType() == "select" ? (
                         <optgroup
@@ -2490,31 +2697,37 @@ export default function Page() {
                         </option>
                       )
                     )}
-              </select>
-              {(settings.getGroupUseSize() ||
-                (settings.getUseLeader() &&
-                  Array.from(settings.getAssignableFields().entries()).filter(
-                    ([, value]) =>
-                      ["select", "checkbox"].includes(value.getType())
-                  ).length > 0)) && (
-                <select
-                  className="rounded-sm border"
-                  value={groupFilter}
-                  onChange={(e) =>
-                    setGroupFilter(
-                      [...e.target.selectedOptions].map((o) => o.value)
-                    )
-                  }
-                  multiple
+                </select>
+                <button
+                  className="ml-1 font-bold text-neutral-500"
+                  onClick={() => setAssignableReverse(!assignableReverse)}
                 >
-                  {settings.getGroupUseSize() && (
-                    <option value="unfull">Space Left</option>
+                  {assignableReverse ? (
+                    <span>&uarr;</span>
+                  ) : (
+                    <span>&darr;</span>
                   )}
-                  {Array.from(settings.getAssignableFields().entries())
-                    .filter(([, value]) =>
-                      ["select", "checkbox"].includes(value.getType())
-                    )
-                    .map(([key, value]) =>
+                </button>
+                {(settings.getUseLeader() || filterArray.length > 0) && (
+                  <select
+                    className="rounded-sm border"
+                    value={assignableFilter}
+                    onChange={(e) =>
+                      setAssignableFilter(
+                        [...e.target.selectedOptions].map((o) => o.value)
+                      )
+                    }
+                    multiple
+                    size={
+                      +settings.getUseLeader() + filterArray.length < 5
+                        ? +settings.getUseLeader() + filterArray.length
+                        : 4
+                    }
+                  >
+                    {settings.getUseLeader() && (
+                      <option value="leader">Leader</option>
+                    )}
+                    {filterArray.map(([key, value]) =>
                       value.getType() == "select" ? (
                         <optgroup key={key} label={key}>
                           {Array.from(value.getOptions()).map((option) => (
@@ -2525,23 +2738,122 @@ export default function Page() {
                         <option key={key}>{key}</option>
                       )
                     )}
+                  </select>
+                )}
+                <ul className="m-1 max-h-[70svh] overflow-auto">
+                  {(!showOnlyUnassigned ? assignableList : unassignedList).map(
+                    (value) => (
+                      <li key={value.getID()}>
+                        <AssignableComponent
+                          data={value}
+                          assignableCallback={deleteAssignable}
+                        />
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+            {groupCollection.size > 0 && (
+              <div className="rounded-md border p-1">
+                <h1 className="text-center">Groups</h1>
+                <select
+                  className="rounded-sm border"
+                  value={groupSort}
+                  onChange={(e) => setGroupSort(e.target.value)}
+                >
+                  <option className="dark:text-black" value="">
+                    --Sort--
+                  </option>
+                  <option className="dark:text-black" value="name">
+                    Name
+                  </option>
+                  {settings.getGroupUseSize() && (
+                    <option className="dark:text-black" value="size">
+                      Size
+                    </option>
+                  )}
+                  {settings.getUseLeader() &&
+                    Array.from(settings.getAssignableFields().entries())
+                      .filter(([, value]) => ["text"].includes(value.getType()))
+                      .map(([key, value]) =>
+                        value.getType() == "select" ? (
+                          <optgroup
+                            className="dark:text-black"
+                            key={key}
+                            label={key}
+                          >
+                            {Array.from(value.getOptions()).map((option) => (
+                              <option className="dark:text-black" key={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : (
+                          <option className="dark:text-black" key={key}>
+                            {key}
+                          </option>
+                        )
+                      )}
                 </select>
-              )}
-              <ul className="m-1 max-h-[70svh] overflow-auto">
-                {groupList.map((value) => (
-                  <li key={value.getID()}>
-                    <GroupComponent
-                      data={value}
-                      deleteGroupCallback={deleteGroup}
-                      addGroupMember={addGroupMember}
-                      removeGroupMember={removeGroupMember}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+                <button
+                  className="ml-1 font-bold text-neutral-500"
+                  onClick={() => setGroupReverse(!groupReverse)}
+                >
+                  {groupReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+                </button>
+                {(settings.getGroupUseSize() ||
+                  (settings.getUseLeader() && filterArray.length > 0)) && (
+                  <select
+                    className="rounded-sm border"
+                    value={groupFilter}
+                    onChange={(e) =>
+                      setGroupFilter(
+                        [...e.target.selectedOptions].map((o) => o.value)
+                      )
+                    }
+                    multiple
+                    size={
+                      +settings.getGroupUseSize() +
+                        +settings.getUseLeader() * filterArray.length <
+                      5
+                        ? +settings.getGroupUseSize() +
+                          +settings.getUseLeader() * filterArray.length
+                        : 4
+                    }
+                  >
+                    {settings.getGroupUseSize() && (
+                      <option value="unfull">Space Left</option>
+                    )}
+                    {filterArray.map(([key, value]) =>
+                      value.getType() == "select" ? (
+                        <optgroup key={key} label={key}>
+                          {Array.from(value.getOptions()).map((option) => (
+                            <option key={option}>{option}</option>
+                          ))}
+                        </optgroup>
+                      ) : (
+                        <option key={key}>{key}</option>
+                      )
+                    )}
+                  </select>
+                )}
+                <ul className="m-1 max-h-[70svh] overflow-auto">
+                  {groupList.map((value) => (
+                    <li key={value.getID()}>
+                      <GroupComponent
+                        data={value}
+                        deleteGroupCallback={deleteGroup}
+                        addGroupMember={addGroupMember}
+                        removeGroupMember={removeGroupMember}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </DndProvider>
       </main>
     </div>
   );
