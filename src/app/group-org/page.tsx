@@ -15,8 +15,15 @@ import { DndProvider, useDrag, useDragLayer, useDrop } from "react-dnd";
 import { getEmptyImage, HTML5Backend } from "react-dnd-html5-backend";
 
 /* type RecursiveMap<K, V> = Map<K, V | RecursiveMap<K, V>>; */
+function mapEquals(first: Map<string, any>, second: Map<string, any>) {
+  if (first.size != second.size) return false;
+  for (const [key, value] of first) {
+    if (value !== second.get(key)) return false;
+  }
+  return true;
+}
 
-type ArrayReducerAction<V> =
+/* type ArrayReducerAction<V> =
   | { type: "create"; value: V }
   | { type: "delete"; value: V }
   | { type: "replace"; value: Array<V> };
@@ -29,7 +36,7 @@ function arrayReducer<V>() {
       }
       case "delete": {
         const newCollection = new Array(...itemArray);
-        /* newCollection(action.value); */
+        newCollection.filter((v) => v === action.value);
         return newCollection;
       }
       case "replace": {
@@ -43,7 +50,7 @@ function arrayReducer<V>() {
 
 function useArrayReducer<V>(array?: Array<V>) {
   return useReducer(arrayReducer<V>(), array || new Array<V>());
-}
+} */
 
 type MapReducerAction<K, V> =
   | { type: "create"; key: K; value: V }
@@ -107,7 +114,7 @@ enum DNDType {
   ASSIGNABLE = "Assignable",
 }
 interface AssignableDragItem {
-  id: string[];
+  id: Array<string>;
 }
 
 const AssignableDragLayer = ({
@@ -117,7 +124,7 @@ const AssignableDragLayer = ({
 }) => {
   const { isDragging, item, currentOffset } = useDragLayer((monitor) => ({
     isDragging: monitor.isDragging(),
-    item: monitor.getItem(),
+    item: monitor.getItem() as AssignableDragItem,
     currentOffset: monitor.getSourceClientOffset(),
   }));
 
@@ -140,154 +147,313 @@ const AssignableDragLayer = ({
         transform: `translate(${currentOffset.x}px, ${currentOffset.y}px)`,
       }}
     >
-      <div className="my-1 max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
-        <ul>
-          <div className="font-bold">{data.getName()}</div>
-          <ul className="flex flex-row place-content-between text-xs italic">
-            <li>{data.getID()}</li>
-            <li>{data.getLeader() && "Leader"}</li>
+      {item.id.length <= 1 ? (
+        <div className="my-1 max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+          <ul>
+            <div className="font-bold">{data.getName()}</div>
+            <ul className="flex flex-row place-content-between text-xs italic">
+              <li>{data.getID()}</li>
+              <li>{data.getLeader() && "Leader"}</li>
+            </ul>
+            <ul className="m-1">
+              {data.getContact() &&
+                Array.from(data.getContact() as Map<string, string>)
+                  .filter(([, value]) => value)
+                  .map(([key, value]) => (
+                    <li
+                      className="flex flex-row place-content-between gap-1"
+                      key={key}
+                    >
+                      <span>{key}:</span>
+                      <span>{value}</span>
+                    </li>
+                  ))}
+              {data.getAvailability() &&
+                Array.from(
+                  data.getAvailability() as Map<
+                    string,
+                    string | number | boolean | Array<string>
+                  >
+                )
+                  .filter(
+                    ([, value]) =>
+                      (Array.isArray(value) && value.length > 0) || value
+                  )
+                  .map(([key, value]) => (
+                    <li
+                      className="flex flex-row place-content-between gap-1"
+                      key={key}
+                    >
+                      <span>{key}:</span>
+                      {Array.isArray(value) ? (
+                        <ul>
+                          {value.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>{value}</span>
+                      )}
+                    </li>
+                  ))}
+              {data.getLocation() &&
+                Array.from(
+                  data.getLocation() as Map<
+                    string,
+                    string | number | boolean | Array<string>
+                  >
+                )
+                  .filter(
+                    ([, value]) =>
+                      (Array.isArray(value) && value.length > 0) || value
+                  )
+                  .map(([key, value]) => (
+                    <li
+                      className="flex flex-row place-content-between gap-1"
+                      key={key}
+                    >
+                      <span>{key}:</span>
+                      {Array.isArray(value) ? (
+                        <ul>
+                          {value.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>{value}</span>
+                      )}
+                    </li>
+                  ))}
+              {data.getAffinity() &&
+                Array.from(
+                  data.getAffinity() as Map<
+                    string,
+                    string | number | boolean | Array<string>
+                  >
+                )
+                  .filter(
+                    ([, value]) =>
+                      (Array.isArray(value) && value.length > 0) || value
+                  )
+                  .map(([key, value]) => (
+                    <li
+                      className="flex flex-row place-content-between gap-1"
+                      key={key}
+                    >
+                      <span>{key}:</span>
+                      {Array.isArray(value) ? (
+                        <ul>
+                          {value.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>{value}</span>
+                      )}
+                    </li>
+                  ))}
+              {data.getMiscellaneous() &&
+                Array.from(
+                  data.getMiscellaneous() as Map<
+                    string,
+                    string | number | boolean | Array<string>
+                  >
+                )
+                  .filter(
+                    ([, value]) =>
+                      (Array.isArray(value) && value.length > 0) || value
+                  )
+                  .map(([key, value]) => (
+                    <li
+                      className="flex flex-row place-content-between gap-1"
+                      key={key}
+                    >
+                      <span>{key}:</span>
+                      {Array.isArray(value) ? (
+                        <ul>
+                          {value.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>{value}</span>
+                      )}
+                    </li>
+                  ))}
+            </ul>
+            {data.getSize() != undefined && (
+              <li className="m-1 flex flex-row place-content-between gap-1">
+                <span>Size:</span>
+                <span>{data.getSize()}</span>
+              </li>
+            )}
+            {data.getNotes() && (
+              <textarea
+                className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+                disabled
+                defaultValue={data.getNotes()}
+              />
+            )}
           </ul>
-          <ul className="m-1">
-            {data.getContact() &&
-              Array.from(data.getContact() as Map<string, string>)
-                .filter(([, value]) => value)
-                .map(([key, value]) => (
-                  <li
-                    className="flex flex-row place-content-between gap-1"
-                    key={key}
-                  >
-                    <span>{key}:</span>
-                    <span>{value}</span>
-                  </li>
-                ))}
-            {data.getAvailability() &&
-              Array.from(
-                data.getAvailability() as Map<
-                  string,
-                  string | number | boolean | string[]
-                >
-              )
-                .filter(
-                  ([, value]) =>
-                    (Array.isArray(value) && value.length > 0) || value
-                )
-                .map(([key, value]) => (
-                  <li
-                    className="flex flex-row place-content-between gap-1"
-                    key={key}
-                  >
-                    <span>{key}:</span>
-                    {Array.isArray(value) ? (
-                      <ul>
-                        {value.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span>{value}</span>
-                    )}
-                  </li>
-                ))}
-            {data.getLocation() &&
-              Array.from(
-                data.getLocation() as Map<
-                  string,
-                  string | number | boolean | string[]
-                >
-              )
-                .filter(
-                  ([, value]) =>
-                    (Array.isArray(value) && value.length > 0) || value
-                )
-                .map(([key, value]) => (
-                  <li
-                    className="flex flex-row place-content-between gap-1"
-                    key={key}
-                  >
-                    <span>{key}:</span>
-                    {Array.isArray(value) ? (
-                      <ul>
-                        {value.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span>{value}</span>
-                    )}
-                  </li>
-                ))}
-            {data.getAffinity() &&
-              Array.from(
-                data.getAffinity() as Map<
-                  string,
-                  string | number | boolean | string[]
-                >
-              )
-                .filter(
-                  ([, value]) =>
-                    (Array.isArray(value) && value.length > 0) || value
-                )
-                .map(([key, value]) => (
-                  <li
-                    className="flex flex-row place-content-between gap-1"
-                    key={key}
-                  >
-                    <span>{key}:</span>
-                    {Array.isArray(value) ? (
-                      <ul>
-                        {value.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span>{value}</span>
-                    )}
-                  </li>
-                ))}
-            {data.getMiscellaneous() &&
-              Array.from(
-                data.getMiscellaneous() as Map<
-                  string,
-                  string | number | boolean | string[]
-                >
-              )
-                .filter(
-                  ([, value]) =>
-                    (Array.isArray(value) && value.length > 0) || value
-                )
-                .map(([key, value]) => (
-                  <li
-                    className="flex flex-row place-content-between gap-1"
-                    key={key}
-                  >
-                    <span>{key}:</span>
-                    {Array.isArray(value) ? (
-                      <ul>
-                        {value.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span>{value}</span>
-                    )}
-                  </li>
-                ))}
-          </ul>
-          {data.getSize() != undefined && (
-            <li className="m-1 flex flex-row place-content-between gap-1">
-              <span>Size:</span>
-              <span>{data.getSize()}</span>
-            </li>
-          )}
-          {data.getNotes() && (
-            <textarea
-              className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
-              disabled
-              defaultValue={data.getNotes()}
-            />
-          )}
-        </ul>
-      </div>
+        </div>
+      ) : (
+        <>
+          <div className="w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+            <ul>
+              <div className="font-bold">{data.getName()}</div>
+              <ul className="flex flex-row place-content-between text-xs italic">
+                <li>{data.getID()}</li>
+                <li>{data.getLeader() && "Leader"}</li>
+              </ul>
+              <ul className="m-1">
+                {data.getContact() &&
+                  Array.from(data.getContact() as Map<string, string>)
+                    .filter(([, value]) => value)
+                    .map(([key, value]) => (
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        <span>{value}</span>
+                      </li>
+                    ))}
+                {data.getAvailability() &&
+                  Array.from(
+                    data.getAvailability() as Map<
+                      string,
+                      string | number | boolean | Array<string>
+                    >
+                  )
+                    .filter(
+                      ([, value]) =>
+                        (Array.isArray(value) && value.length > 0) || value
+                    )
+                    .map(([key, value]) => (
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        {Array.isArray(value) ? (
+                          <ul>
+                            {value.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>{value}</span>
+                        )}
+                      </li>
+                    ))}
+                {data.getLocation() &&
+                  Array.from(
+                    data.getLocation() as Map<
+                      string,
+                      string | number | boolean | Array<string>
+                    >
+                  )
+                    .filter(
+                      ([, value]) =>
+                        (Array.isArray(value) && value.length > 0) || value
+                    )
+                    .map(([key, value]) => (
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        {Array.isArray(value) ? (
+                          <ul>
+                            {value.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>{value}</span>
+                        )}
+                      </li>
+                    ))}
+                {data.getAffinity() &&
+                  Array.from(
+                    data.getAffinity() as Map<
+                      string,
+                      string | number | boolean | Array<string>
+                    >
+                  )
+                    .filter(
+                      ([, value]) =>
+                        (Array.isArray(value) && value.length > 0) || value
+                    )
+                    .map(([key, value]) => (
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        {Array.isArray(value) ? (
+                          <ul>
+                            {value.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>{value}</span>
+                        )}
+                      </li>
+                    ))}
+                {data.getMiscellaneous() &&
+                  Array.from(
+                    data.getMiscellaneous() as Map<
+                      string,
+                      string | number | boolean | Array<string>
+                    >
+                  )
+                    .filter(
+                      ([, value]) =>
+                        (Array.isArray(value) && value.length > 0) || value
+                    )
+                    .map(([key, value]) => (
+                      <li
+                        className="flex flex-row place-content-between gap-1"
+                        key={key}
+                      >
+                        <span>{key}:</span>
+                        {Array.isArray(value) ? (
+                          <ul>
+                            {value.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>{value}</span>
+                        )}
+                      </li>
+                    ))}
+              </ul>
+              {data.getSize() != undefined && (
+                <li className="m-1 flex flex-row place-content-between gap-1">
+                  <span>Size:</span>
+                  <span>{data.getSize()}</span>
+                </li>
+              )}
+              {data.getNotes() && (
+                <textarea
+                  className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+                  disabled
+                  defaultValue={data.getNotes()}
+                />
+              )}
+            </ul>
+          </div>
+          <div className="fixed top-10 left-2 -z-10 w-[232px] rounded-md bg-cyan-300 pl-2 dark:bg-cyan-900">
+            &hellip;
+          </div>
+          <div className="fixed top-12 left-60 rounded-full bg-amber-500 px-1 dark:text-black">
+            {item.id.length}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -296,10 +462,13 @@ class Assignable {
   private _id: string;
   private name: string;
   private contact?: Map<string, string>;
-  private availability?: Map<string, string | boolean | number | string[]>;
-  private location?: Map<string, string | boolean | number | string[]>;
-  private affinity?: Map<string, string | boolean | number | string[]>;
-  private miscellaneous?: Map<string, string | boolean | number | string[]>;
+  private availability?: Map<string, string | boolean | number | Array<string>>;
+  private location?: Map<string, string | boolean | number | Array<string>>;
+  private affinity?: Map<string, string | boolean | number | Array<string>>;
+  private miscellaneous?: Map<
+    string,
+    string | boolean | number | Array<string>
+  >;
   private leader?: boolean;
   private size?: number | string;
   private notes?: string;
@@ -319,10 +488,10 @@ class Assignable {
     id: string;
     name: string;
     contact?: Map<string, string>;
-    availability?: Map<string, string | boolean | number | string[]>;
-    location?: Map<string, string | boolean | number | string[]>;
-    affinity?: Map<string, string | boolean | number | string[]>;
-    miscellaneous?: Map<string, string | boolean | number | string[]>;
+    availability?: Map<string, string | boolean | number | Array<string>>;
+    location?: Map<string, string | boolean | number | Array<string>>;
+    affinity?: Map<string, string | boolean | number | Array<string>>;
+    miscellaneous?: Map<string, string | boolean | number | Array<string>>;
     leader?: boolean;
     size?: number | string;
     notes?: string;
@@ -384,14 +553,52 @@ class Assignable {
   getNotes() {
     return this.notes;
   }
+
+  equals(other: Assignable) {
+    return (
+      this._id == other._id &&
+      this.name == other.name &&
+      mapEquals(
+        this.contact || new Map<string, string>(),
+        other.contact || new Map<string, string>()
+      ) &&
+      mapEquals(
+        this.contact || new Map<string, string>(),
+        other.contact || new Map<string, string>()
+      ) &&
+      mapEquals(
+        this.location || new Map<string, string>(),
+        other.location || new Map<string, string>()
+      ) &&
+      mapEquals(
+        this.affinity || new Map<string, string>(),
+        other.affinity || new Map<string, string>()
+      ) &&
+      mapEquals(
+        this.miscellaneous || new Map<string, string>(),
+        other.miscellaneous || new Map<string, string>()
+      ) &&
+      this.leader == other.leader &&
+      this.size == other.size &&
+      this.notes == other.notes
+    );
+  }
 }
 
 const AssignableComponent = ({
   data,
+  index,
   assignableCallback,
+  selectedAssignables,
+  handleSelect,
+  clearSelect,
 }: {
   data: Assignable;
+  index: number;
   assignableCallback: (assignable: Assignable) => void;
+  selectedAssignables: Array<Assignable>;
+  handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
+  clearSelect: () => void;
 }) => {
   const [{ isDragging }, drag, dragPreview] = useDrag<
     AssignableDragItem,
@@ -401,33 +608,35 @@ const AssignableComponent = ({
     () => ({
       type: DNDType.ASSIGNABLE,
       item: {
-        id: /* selectedPassengers.length > 0
-              ? selectedPassengers.map((passenger) => passenger.getEmail())
-              : */ [data.getID()],
+        id:
+          selectedAssignables.length > 0
+            ? selectedAssignables.map((assignable) => assignable.getID())
+            : [data.getID()],
       },
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
       }),
       end: () => {
-        /* clearSelect(); */
+        clearSelect();
       },
     }),
-    [
-      /* selectedPassengers */
-    ]
+    [selectedAssignables]
   );
   const dragRef = useRef<HTMLDivElement>(null);
   drag(dragRef);
   dragPreview(getEmptyImage());
 
+  const selected = selectedAssignables.includes(data);
+
   return (
     <div
       className={
         "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800 " +
-        (isDragging && "opacity-50") /* +
-        (selected && " border-4 border-amber-500") */
+        (isDragging && "opacity-50") +
+        (selected && " border-4 border-amber-500")
       }
       ref={dragRef}
+      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
     >
       <ul>
         <div className="flex flex-row place-content-between font-bold">
@@ -460,7 +669,7 @@ const AssignableComponent = ({
             Array.from(
               data.getAvailability() as Map<
                 string,
-                string | number | boolean | string[]
+                string | number | boolean | Array<string>
               >
             )
               .filter(
@@ -488,7 +697,7 @@ const AssignableComponent = ({
             Array.from(
               data.getLocation() as Map<
                 string,
-                string | number | boolean | string[]
+                string | number | boolean | Array<string>
               >
             )
               .filter(
@@ -516,7 +725,7 @@ const AssignableComponent = ({
             Array.from(
               data.getAffinity() as Map<
                 string,
-                string | number | boolean | string[]
+                string | number | boolean | Array<string>
               >
             )
               .filter(
@@ -544,7 +753,7 @@ const AssignableComponent = ({
             Array.from(
               data.getMiscellaneous() as Map<
                 string,
-                string | number | boolean | string[]
+                string | number | boolean | Array<string>
               >
             )
               .filter(
@@ -587,7 +796,7 @@ const AssignableComponent = ({
   );
 };
 
-function sortAssignables(array: Assignable[], sort?: string) {
+function sortAssignables(array: Array<Assignable>, sort?: string) {
   switch (sort) {
     case "name":
       array.sort((a, b) => a.getName().localeCompare(b.getName()));
@@ -603,7 +812,7 @@ function sortAssignables(array: Assignable[], sort?: string) {
   return array;
 }
 
-function filterAssignables(array: Assignable[], filter?: string[]) {
+function filterAssignables(array: Array<Assignable>, filter?: Array<string>) {
   if (filter)
     if (filter.length > 0) {
       let newArray = [...array];
@@ -618,6 +827,135 @@ function filterAssignables(array: Assignable[], filter?: string[]) {
     }
   return array;
 }
+
+const AssignableArrayComponent = ({
+  assignableArray,
+  assignableCallback,
+  assignableCollection,
+  unassignedCollection,
+  groupCollection,
+  groupCallback,
+}: {
+  assignableArray: Array<Assignable>;
+  assignableCallback: (assignable: Assignable) => void;
+  assignableCollection: Map<string, Assignable>;
+  unassignedCollection: Map<string, Assignable>;
+  groupCollection: Map<string, Group>;
+  groupCallback: (group: Group, member: Assignable) => void;
+}) => {
+  const [selectedAssignableArray, setSelectedAssignableArray] = useState<
+    Array<Assignable>
+  >(new Array<Assignable>());
+  const [prevSelectedIndex, setPrevSelectedIndex] = useState<number>(-1);
+  const clearSelect = () => {
+    setSelectedAssignableArray(new Array<Assignable>());
+    setPrevSelectedIndex(-1);
+  };
+  const handleSelect = (index: number, shiftKey: boolean, ctrlKey: boolean) => {
+    let newSelectedAssignables = new Array<Assignable>();
+    const newSelection = assignableArray[index];
+    const newPrevSelectedIndex = index;
+    if (shiftKey) {
+      if (prevSelectedIndex >= index) {
+        newSelectedAssignables = [
+          ...selectedAssignableArray,
+          ...assignableArray.slice(index, prevSelectedIndex),
+        ];
+      } else {
+        newSelectedAssignables = [
+          ...selectedAssignableArray,
+          ...assignableArray.slice(prevSelectedIndex + 1, index + 1),
+        ];
+      }
+    } else if (ctrlKey /* || selectMode */) {
+      if (!selectedAssignableArray.includes(newSelection))
+        newSelectedAssignables = [...selectedAssignableArray, newSelection];
+      else
+        newSelectedAssignables = selectedAssignableArray.filter(
+          (a) => !a.equals(newSelection)
+        );
+    } else {
+      if (!selectedAssignableArray.includes(newSelection))
+        newSelectedAssignables.push(newSelection);
+    }
+    setSelectedAssignableArray(
+      assignableArray
+        ? assignableArray.filter((a) => newSelectedAssignables.includes(a))
+        : new Array<Assignable>()
+    );
+    setPrevSelectedIndex(newPrevSelectedIndex);
+  };
+
+  const [{ canDrop, isOver }, drop] = useDrop<
+    AssignableDragItem,
+    void,
+    { canDrop: boolean; isOver: boolean }
+  >(
+    () => ({
+      accept: DNDType.ASSIGNABLE,
+      drop: (item) => {
+        for (const id of item.id) {
+          const assignable = assignableCollection.get(id);
+          if (!!assignable) {
+            for (const group of groupCollection.values()) {
+              if (group.getAllMembers().has(assignable.getID())) {
+                groupCallback(group, assignable);
+              }
+            }
+          }
+        }
+      },
+      canDrop: (item) =>
+        item.id.filter(
+          (id) =>
+            unassignedCollection.has(id) ||
+            assignableArray.find((a) => a.getID() == id)
+        ).length == 0,
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+    }),
+    [
+      assignableArray,
+      assignableCollection,
+      groupCollection,
+      unassignedCollection,
+      groupCallback,
+    ]
+  );
+  const dropRef = useRef<HTMLDivElement>(null);
+  drop(dropRef);
+
+  return (
+    <div
+      className={
+        "size-f rounded-md " +
+        (isOver && canDrop ? "bg-amber-500" : "bg-neutral-500")
+      }
+      ref={dropRef}
+    >
+      <ul className="m-1 max-h-[70svh] overflow-auto">
+        {assignableArray.length > 0 ? (
+          assignableArray.map((value, index) => (
+            <li key={value.getID()}>
+              <AssignableComponent
+                data={value}
+                index={index}
+                assignableCallback={assignableCallback}
+                selectedAssignables={selectedAssignableArray}
+                handleSelect={handleSelect}
+                clearSelect={clearSelect}
+              />
+            </li>
+          ))
+        ) : (
+          <li className="text-center">Empty</li>
+        )}
+      </ul>
+    </div>
+  );
+};
 
 class Group {
   private _id: string;
@@ -681,15 +1019,70 @@ class Group {
 
 const GroupComponent = ({
   data,
+  groupCollection,
   deleteGroupCallback,
   addGroupMember,
   removeGroupMember,
 }: {
   data: Group;
+  groupCollection: Map<string, Group>;
   deleteGroupCallback: (group: Group) => void;
   addGroupMember: (group: Group, memberid?: string) => void;
   removeGroupMember: (group: Group, member: Assignable) => void;
 }) => {
+  const size = data.getSize() || 0;
+
+  const [selectedAssignableArray, setSelectedAssignableArray] = useState<
+    Array<Assignable>
+  >(new Array<Assignable>());
+  const [prevSelectedIndex, setPrevSelectedIndex] = useState<number>(-1);
+  const clearSelect = () => {
+    setSelectedAssignableArray(new Array<Assignable>());
+    setPrevSelectedIndex(-1);
+  };
+  const handleSelect = (index: number, shiftKey: boolean, ctrlKey: boolean) => {
+    let newSelectedAssignables = new Array<Assignable>();
+    const newSelection = assignableArray[index];
+    const newPrevSelectedIndex = index;
+    if (shiftKey) {
+      if (prevSelectedIndex >= index) {
+        newSelectedAssignables = [
+          ...selectedAssignableArray,
+          ...assignableArray.slice(index, prevSelectedIndex),
+        ];
+      } else {
+        newSelectedAssignables = [
+          ...selectedAssignableArray,
+          ...assignableArray.slice(prevSelectedIndex + 1, index + 1),
+        ];
+      }
+    } else if (ctrlKey /* || selectMode */) {
+      if (!selectedAssignableArray.includes(newSelection))
+        newSelectedAssignables = [...selectedAssignableArray, newSelection];
+      else
+        newSelectedAssignables = selectedAssignableArray.filter(
+          (p) => !p.equals(newSelection)
+        );
+    } else {
+      if (!selectedAssignableArray.includes(newSelection))
+        newSelectedAssignables.push(newSelection);
+    }
+    setSelectedAssignableArray(
+      assignableArray
+        ? assignableArray.filter((a) => newSelectedAssignables.includes(a))
+        : new Array<Assignable>()
+    );
+    setPrevSelectedIndex(newPrevSelectedIndex);
+  };
+  const [assignableArray, setAssignableArray] = useState<Array<Assignable>>(
+    new Array<Assignable>()
+  );
+  useEffect(() => {
+    setAssignableArray([
+      ...(groupCollection.get(data.getID()) || data).getAllMembers().values(),
+    ]);
+  }, [data, groupCollection]);
+
   const [{ canDrop, isOver }, drop] = useDrop<
     AssignableDragItem,
     void,
@@ -706,16 +1099,23 @@ const GroupComponent = ({
         isOver: monitor.isOver(),
         canDrop: monitor.canDrop(),
       }),
-      canDrop: () =>
-        data.getSize() == undefined || size > data.getAllMembers().size,
+      canDrop: (item) =>
+        (data.getSize() == undefined ||
+          size >= data.getAllMembers().size + item.id.length) &&
+        !item.id.filter(
+          (id) =>
+            data.getMember(id) ||
+            !![...groupCollection.values()].filter(
+              (v) => v.getLeader()?.getID() == id
+            ).length
+        ).length,
     }),
-    [addGroupMember]
+    [data, groupCollection, addGroupMember, size]
   );
   const dropRef = useRef<HTMLDivElement>(null);
   drop(dropRef);
 
   const leader = data.getLeader();
-  const size = data.getSize() || 0;
 
   const removeMember = (member: Assignable) => {
     removeGroupMember(data, member);
@@ -737,15 +1137,19 @@ const GroupComponent = ({
           </button>
         </li>
         <li className="text-xs italic">{data.getID()}</li>
-        {!!leader && <GroupMemberComponent member={leader} />}
+        {!!leader && <GroupLeaderComponent member={leader} />}
         <ul className="text-center">
           {data.getSize() != undefined && (
             <li>Size: {size - data.getAllMembers().size}</li>
           )}
-          {Array.from(data.getAllMembers().values()).map((value) => (
+          {assignableArray.map((value, index) => (
             <GroupMemberComponent
               member={value}
+              index={index}
               removeMember={removeMember}
+              selectedAssignables={selectedAssignableArray}
+              handleSelect={handleSelect}
+              clearSelect={clearSelect}
               key={value.getID()}
             />
           ))}
@@ -755,8 +1159,10 @@ const GroupComponent = ({
               <button
                 className={
                   "w-full rounded-sm border " +
-                  (isOver && canDrop
-                    ? "bg-amber-500"
+                  (isOver
+                    ? canDrop
+                      ? "bg-amber-500"
+                      : "bg-red-500"
                     : "bg-neutral-400 dark:bg-neutral-600")
                 }
                 onClick={() => addGroupMember(data)}
@@ -778,15 +1184,132 @@ const GroupComponent = ({
   );
 };
 
-const GroupMemberComponent = ({
-  member,
-  removeMember,
-}: {
-  member: Assignable;
-  removeMember?: (member: Assignable) => void;
-}) => {
+const GroupLeaderComponent = ({ member }: { member: Assignable }) => {
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+      <ul>
+        <li className="flex flex-row place-content-between font-bold">
+          {member.getName()}
+        </li>
+        <li className="text-xs italic">{member.getID()}</li>
+        <ul className="m-1">
+          {member.getContact() &&
+            Array.from(member.getContact() as Map<string, string>).map(
+              ([key, value]) => (
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  <span>{value}</span>
+                </li>
+              )
+            )}
+          {member.getAvailability() &&
+            Array.from(member.getAvailability() as Map<string, string>)
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
+              .map(([key, value]) => (
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>{value}</span>
+                  )}
+                </li>
+              ))}
+          {member.getLocation() &&
+            Array.from(member.getLocation() as Map<string, string>)
+              .filter(
+                ([, value]) =>
+                  (Array.isArray(value) && value.length > 0) || value
+              )
+              .map(([key, value]) => (
+                <li
+                  className="flex flex-row place-content-between gap-1"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-right">{value}</span>
+                  )}
+                </li>
+              ))}
+        </ul>
+      </ul>
+    </div>
+  );
+};
+
+const GroupMemberComponent = ({
+  member,
+  index,
+  removeMember,
+  selectedAssignables,
+  handleSelect,
+  clearSelect,
+}: {
+  member: Assignable;
+  index: number;
+  removeMember: (member: Assignable) => void;
+  selectedAssignables: Array<Assignable>;
+  handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
+  clearSelect: () => void;
+}) => {
+  const [{ isDragging }, drag, dragPreview] = useDrag<
+    AssignableDragItem,
+    void,
+    { isDragging: boolean }
+  >(
+    () => ({
+      type: DNDType.ASSIGNABLE,
+      item: {
+        id:
+          selectedAssignables.length > 0
+            ? selectedAssignables.map((passenger) => passenger.getID())
+            : [member.getID()],
+      },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: () => {
+        clearSelect();
+      },
+    }),
+    [selectedAssignables]
+  );
+  const dragRef = useRef<HTMLDivElement>(null);
+  drag(dragRef);
+  dragPreview(getEmptyImage());
+
+  const selected = selectedAssignables.includes(member);
+
+  return (
+    <div
+      className={
+        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800" +
+        (isDragging ? " opacity-50" : "") +
+        (selected ? " border-4 border-amber-500" : "")
+      }
+      ref={dragRef}
+      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
+    >
       <ul>
         <li className="flex flex-row place-content-between font-bold">
           {member.getName()}
@@ -865,7 +1388,7 @@ const GroupMemberComponent = ({
   );
 };
 
-function sortGroups(array: Group[], sort?: string | undefined) {
+function sortGroups(array: Array<Group>, sort?: string | undefined) {
   switch (sort) {
     case "name":
       array.sort((a, b) => a.getName()?.localeCompare(b.getName() || "") || 0);
@@ -883,7 +1406,7 @@ function sortGroups(array: Group[], sort?: string | undefined) {
   return array;
 }
 
-function filterGroups(array: Group[], filter?: string[]) {
+function filterGroups(array: Array<Group>, filter?: Array<string>) {
   if (filter)
     if (filter.length > 0) {
       let newArray = [...array];
@@ -1284,7 +1807,7 @@ const noLeaderGroupsSettings = new Setting({
   ]),
 });
 
-const presetList = [
+const presetArray = [
   defaultSettings,
   bereanCollegeRidesSettings,
   bibleStudyTablesSettings,
@@ -2032,13 +2555,19 @@ const AssignableForm = ({
     const contact = new Map<string, string>();
     const availability = new Map<
       string,
-      string | boolean | number | string[]
+      string | boolean | number | Array<string>
     >();
-    const location = new Map<string, string | boolean | number | string[]>();
-    const affinity = new Map<string, string | boolean | number | string[]>();
+    const location = new Map<
+      string,
+      string | boolean | number | Array<string>
+    >();
+    const affinity = new Map<
+      string,
+      string | boolean | number | Array<string>
+    >();
     const miscellaneous = new Map<
       string,
-      string | boolean | number | string[]
+      string | boolean | number | Array<string>
     >();
     settings.getAssignableFields().forEach((field: Field) => {
       switch (field.getGroup()) {
@@ -2129,7 +2658,8 @@ const AssignableForm = ({
                   className="rounded-sm border"
                   name={field.getName()}
                   value={
-                    data.get(field.getName()) || (field.getMultiple() ? [] : "")
+                    data.get(field.getName()) ||
+                    (field.getMultiple() ? new Array<string>() : "")
                   }
                   multiple={field.getMultiple()}
                   size={
@@ -2244,7 +2774,7 @@ const GroupForm = ({
   unassignedCollection: Map<string, Assignable>;
 }) => {
   const groupFormRef = useRef<HTMLFormElement>(null);
-  const unassignedLeaderList = [...unassignedCollection.values()].filter((a) =>
+  const unassignedLeaderArray = [...unassignedCollection.values()].filter((a) =>
     a.getLeader()
   );
 
@@ -2361,7 +2891,7 @@ const GroupForm = ({
             <option className="dark:text-black" value="">
               ---
             </option>
-            {unassignedLeaderList.map((a) => (
+            {unassignedLeaderArray.map((a) => (
               <option
                 className="dark:text-black"
                 key={a.getID()}
@@ -2446,25 +2976,36 @@ export default function Page() {
   const [settings, setSettings] = useState<Setting>(defaultSettings);
 
   const [presetCollection, presetDispatch] = useMapReducer(
-    new Map(presetList.map((setting) => [setting.getName(), setting]))
+    new Map(presetArray.map((setting) => [setting.getName(), setting]))
   );
 
   const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
-  const [assignableList, setAssignableList] = useState<Array<Assignable>>([]);
-  const [unassignedList, setUnassignedList] = useState<Array<Assignable>>([]);
+  const [assignableArray, setAssignableArray] = useState<Array<Assignable>>(
+    new Array<Assignable>()
+  );
+  const [unassignedArray, setUnassignedArray] = useState<Array<Assignable>>(
+    new Array<Assignable>()
+  );
   const [assignableSort, setAssignableSort] = useState<string>("");
   const [assignableReverse, setAssignableReverse] = useState<boolean>(false);
-  const [assignableFilter, setAssignableFilter] = useState<Array<string>>([]);
+  const [assignableFilter, setAssignableFilter] = useState<Array<string>>(
+    new Array<string>()
+  );
 
-  const [groupList, setGroupList] = useState<Array<Group>>([]);
+  const [groupArray, setGroupArray] = useState<Array<Group>>(
+    new Array<Group>()
+  );
   const [groupSort, setGroupSort] = useState<string>("");
   const [groupReverse, setGroupReverse] = useState<boolean>(false);
-  const [groupFilter, setGroupFilter] = useState<Array<string>>([]);
+  const [groupFilter, setGroupFilter] = useState<Array<string>>(
+    new Array<string>()
+  );
 
+  /**Update Assignable Array */
   useEffect(() => {
-    setAssignableList(
+    setAssignableArray(
       assignableReverse
         ? sortAssignables(
             filterAssignables(
@@ -2481,7 +3022,7 @@ export default function Page() {
             assignableSort
           )
     );
-    setUnassignedList(
+    setUnassignedArray(
       assignableReverse
         ? sortAssignables(
             filterAssignables(
@@ -2506,8 +3047,9 @@ export default function Page() {
     assignableFilter,
   ]);
 
+  /**Update Group Array */
   useEffect(() => {
-    setGroupList(
+    setGroupArray(
       groupReverse
         ? sortGroups(
             filterGroups(Array.from(groupCollection.values()), groupFilter),
@@ -2584,7 +3126,7 @@ export default function Page() {
   const addGroupMember = (group: Group, memberid?: string) => {
     const newMember = memberid
       ? unassignedCollection.get(memberid)
-      : unassignedList.shift();
+      : unassignedArray.shift();
     if (newMember) {
       group.getAllMembers().set(newMember.getID(), newMember);
       groupDispatch({ type: "create", key: group.getID(), value: group });
@@ -2740,18 +3282,16 @@ export default function Page() {
                     )}
                   </select>
                 )}
-                <ul className="m-1 max-h-[70svh] overflow-auto">
-                  {(!showOnlyUnassigned ? assignableList : unassignedList).map(
-                    (value) => (
-                      <li key={value.getID()}>
-                        <AssignableComponent
-                          data={value}
-                          assignableCallback={deleteAssignable}
-                        />
-                      </li>
-                    )
-                  )}
-                </ul>
+                <AssignableArrayComponent
+                  assignableArray={
+                    showOnlyUnassigned ? unassignedArray : assignableArray
+                  }
+                  assignableCallback={deleteAssignable}
+                  assignableCollection={assignableCollection}
+                  unassignedCollection={unassignedCollection}
+                  groupCollection={groupCollection}
+                  groupCallback={removeGroupMember}
+                />
               </div>
             )}
             {groupCollection.size > 0 && (
@@ -2838,11 +3378,12 @@ export default function Page() {
                     )}
                   </select>
                 )}
-                <ul className="m-1 max-h-[70svh] overflow-auto">
-                  {groupList.map((value) => (
+                <ul className="max-h-[70svh] overflow-auto">
+                  {groupArray.map((value) => (
                     <li key={value.getID()}>
                       <GroupComponent
                         data={value}
+                        groupCollection={groupCollection}
                         deleteGroupCallback={deleteGroup}
                         addGroupMember={addGroupMember}
                         removeGroupMember={removeGroupMember}
