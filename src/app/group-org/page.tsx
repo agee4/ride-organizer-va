@@ -3084,12 +3084,25 @@ export default function Page() {
       type: "delete",
       key: assignable.getID(),
     });
-    groupCollection.forEach((value, key) => {
-      if (value.getLeader() == assignable)
-        groupDispatch({ type: "delete", key: key });
-      for (const [memberKey, member] of value.getAllMembers().entries())
-        if (member == assignable)
+    groupCollection.forEach((group, groupKey) => {
+      if (group.getLeader() == assignable) {
+        group.getAllMembers().forEach((value, key) => {
+          unassignedDispatch({
+            type: "create",
+            key: key,
+            value: value,
+          });
+        });
+        groupDispatch({ type: "delete", key: groupKey });
+      }
+      group.getAllMembers().forEach((member, memberKey) => {
+        if (member.equals(assignable))
           groupDispatch({ type: "delete", key: memberKey });
+      });
+      if (group.getAllMembers().has(assignable.getID())) {
+        group.getAllMembers().delete(assignable.getID());
+        groupDispatch({ type: "create", key: groupKey, value: group });
+      }
     });
   };
 
@@ -3125,11 +3138,22 @@ export default function Page() {
 
   const addGroupMember = (group: Group, memberid?: string) => {
     const newMember = memberid
-      ? unassignedCollection.get(memberid)
+      ? assignableCollection.get(memberid)
       : unassignedArray.shift();
     if (newMember) {
       group.getAllMembers().set(newMember.getID(), newMember);
-      groupDispatch({ type: "create", key: group.getID(), value: group });
+      groupCollection.forEach((otherGroup) => {
+        if (group.getID() == otherGroup.getID()) {
+          groupDispatch({ type: "create", key: group.getID(), value: group });
+        } else {
+          otherGroup.getAllMembers().delete(newMember.getID());
+          groupDispatch({
+            type: "create",
+            key: otherGroup.getID(),
+            value: otherGroup,
+          });
+        }
+      });
       unassignedDispatch({ type: "delete", key: newMember.getID() });
     }
   };
