@@ -1,10 +1,8 @@
-import { Assignable } from "./Assignable";
-
 export class Group {
   private _id: string;
-  private members: Map<string, Assignable>;
+  private members: Set<string>;
   private name?: string;
-  private leader?: Assignable;
+  private leader?: string;
   private size?: number;
   private notes?: string;
 
@@ -18,13 +16,13 @@ export class Group {
   }: {
     id: string;
     name?: string;
-    leader?: Assignable;
+    leader?: string;
     size?: number;
     notes?: string;
-    members?: Map<string, Assignable>;
+    members?: Set<string>;
   }) {
     this._id = id;
-    this.members = members || new Map<string, Assignable>();
+    this.members = members || new Set<string>();
     this.name = name;
     this.leader = leader;
     this.size = size;
@@ -56,7 +54,7 @@ export class Group {
   }
 
   getMember(id: string) {
-    return this.members.get(id);
+    return this.members.has(id);
   }
 }
 

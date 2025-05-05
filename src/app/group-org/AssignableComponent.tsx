@@ -1,26 +1,38 @@
-import { useContext, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
-import { GroupOrganizerContext } from "./context";
 import { AssignableDragItem, DNDType } from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group } from "./Group";
 
 const AssignableComponent = ({
-  data,
+  assignableID,
+  assignableCollection,
   deleteAssignable,
   index,
   selectedAssignables,
   handleSelect,
   clearSelect,
 }: {
-  data: Assignable;
-  deleteAssignable: (assignable: Assignable) => void;
+  assignableID: string;
+  assignableCollection: Map<string, Assignable>;
+  deleteAssignable: (assignable: string) => void;
   index: number;
   selectedAssignables: Array<string>;
   handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
   clearSelect: () => void;
 }) => {
+  const [data, setData] = useState<Assignable>(
+    assignableCollection.get(assignableID) ||
+      new Assignable({ id: assignableID, name: "!ERROR!" })
+  );
+  useEffect(() => {
+    setData(
+      assignableCollection.get(assignableID) ||
+        new Assignable({ id: assignableID, name: "!ERROR!" })
+    );
+  }, [assignableID]);
+
   const [{ isDragging }, drag, dragPreview] = useDrag<
     AssignableDragItem,
     void,
@@ -30,7 +42,7 @@ const AssignableComponent = ({
       type: DNDType.ASSIGNABLE,
       item: {
         id:
-          selectedAssignables.length > 0 ? selectedAssignables : [data.getID()],
+          selectedAssignables.length > 0 ? selectedAssignables : [assignableID],
       },
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
@@ -45,7 +57,7 @@ const AssignableComponent = ({
   drag(dragRef);
   dragPreview(getEmptyImage());
 
-  const selected = selectedAssignables.includes(data.getID());
+  const selected = selectedAssignables.includes(assignableID);
 
   return (
     <div
@@ -57,182 +69,84 @@ const AssignableComponent = ({
       ref={dragRef}
       onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
     >
-      <ul>
-        <div className="flex flex-row place-content-between font-bold">
-          {data.getName()}
-          <button
-            className="rounded-sm border px-1"
-            onClick={() => deleteAssignable(data)}
+      <div className="flex flex-row place-content-between font-bold">
+        {data.getName()}
+        <button
+          className="rounded-sm border px-1"
+          onClick={() => deleteAssignable(assignableID)}
+        >
+          &times;
+        </button>
+      </div>
+      <div className="flex flex-row place-content-between text-xs italic">
+        <span>{assignableID}</span>
+        <span>{data.getLeader() && "Leader"}</span>
+      </div>
+      {data.getAttributes() &&
+        Array.from(
+          data.getAttributes() as Map<
+            string,
+            string | number | boolean | Array<string>
           >
-            &times;
-          </button>
+        )
+          .filter(
+            ([, value]) => (Array.isArray(value) && value.length > 0) || value
+          )
+          .map(([key, value]) => (
+            <div
+              className="m-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+              key={key}
+            >
+              {typeof value == "boolean" ? (
+                <span>{key}</span>
+              ) : (
+                <>
+                  <span>{key}:</span>
+                  {Array.isArray(value) ? (
+                    <ul>
+                      {value.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>{value}</span>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+      {data.getSize() != undefined && (
+        <div className="m-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700">
+          <span>Size:</span>
+          <span>{data.getSize()}</span>
         </div>
-        <ul className="flex flex-row place-content-between text-xs italic">
-          <li>{data.getID()}</li>
-          <li>{data.getLeader() && "Leader"}</li>
-        </ul>
-        <ul className="m-1">
-          {data.getContact() &&
-            Array.from(data.getContact() as Map<string, string>)
-              .filter(([, value]) => value)
-              .map(([key, value]) => (
-                <li
-                  className="flex flex-row place-content-between gap-1"
-                  key={key}
-                >
-                  <span>{key}:</span>
-                  <span>{value}</span>
-                </li>
-              ))}
-          {data.getAvailability() &&
-            Array.from(
-              data.getAvailability() as Map<
-                string,
-                string | number | boolean | Array<string>
-              >
-            )
-              .filter(
-                ([, value]) =>
-                  (Array.isArray(value) && value.length > 0) || value
-              )
-              .map(([key, value]) => (
-                <li
-                  className="flex flex-row place-content-between gap-1"
-                  key={key}
-                >
-                  <span>{key}:</span>
-                  {Array.isArray(value) ? (
-                    <ul>
-                      {value.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span>{value}</span>
-                  )}
-                </li>
-              ))}
-          {data.getLocation() &&
-            Array.from(
-              data.getLocation() as Map<
-                string,
-                string | number | boolean | Array<string>
-              >
-            )
-              .filter(
-                ([, value]) =>
-                  (Array.isArray(value) && value.length > 0) || value
-              )
-              .map(([key, value]) => (
-                <li
-                  className="flex flex-row place-content-between gap-1"
-                  key={key}
-                >
-                  <span>{key}:</span>
-                  {Array.isArray(value) ? (
-                    <ul>
-                      {value.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span>{value}</span>
-                  )}
-                </li>
-              ))}
-          {data.getAffinity() &&
-            Array.from(
-              data.getAffinity() as Map<
-                string,
-                string | number | boolean | Array<string>
-              >
-            )
-              .filter(
-                ([, value]) =>
-                  (Array.isArray(value) && value.length > 0) || value
-              )
-              .map(([key, value]) => (
-                <li
-                  className="flex flex-row place-content-between gap-1"
-                  key={key}
-                >
-                  <span>{key}:</span>
-                  {Array.isArray(value) ? (
-                    <ul>
-                      {value.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span>{value}</span>
-                  )}
-                </li>
-              ))}
-          {data.getMiscellaneous() &&
-            Array.from(
-              data.getMiscellaneous() as Map<
-                string,
-                string | number | boolean | Array<string>
-              >
-            )
-              .filter(
-                ([, value]) =>
-                  (Array.isArray(value) && value.length > 0) || value
-              )
-              .map(([key, value]) => (
-                <li
-                  className="flex flex-row place-content-between gap-1"
-                  key={key}
-                >
-                  <span>{key}:</span>
-                  {Array.isArray(value) ? (
-                    <ul>
-                      {value.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span>{value}</span>
-                  )}
-                </li>
-              ))}
-        </ul>
-        {data.getSize() != undefined && (
-          <li className="m-1 flex flex-row place-content-between gap-1">
-            <span>Size:</span>
-            <span>{data.getSize()}</span>
-          </li>
-        )}
-        {data.getNotes() && (
-          <textarea
-            className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
-            disabled
-            defaultValue={data.getNotes()}
-          />
-        )}
-      </ul>
+      )}
+      {data.getNotes() && (
+        <textarea
+          className="m-1 w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+          disabled
+          defaultValue={data.getNotes()}
+        />
+      )}
     </div>
   );
 };
 
 export const AssignableArrayComponent = ({
   assignableArray,
+  assignableCollection,
+  unassignedCollection,
+  groupCollection,
   deleteAssignable,
   removeGroupMember,
 }: {
   assignableArray: Array<string>;
-  deleteAssignable: (assignable: Assignable) => void;
-  removeGroupMember: (group: Group, member: Assignable) => void;
+  assignableCollection: Map<string, Assignable>;
+  unassignedCollection: Set<string>;
+  groupCollection: Map<string, Group>;
+  deleteAssignable: (assignable: string) => void;
+  removeGroupMember: (groupID: string, memberID: string) => void;
 }) => {
-  const goContext = useContext(GroupOrganizerContext);
-  if (!goContext) {
-    throw new Error(
-      "RM_PassengerComponent must be used within a RideManagerProvider"
-    );
-  }
-  const { assignableCollection, unassignedCollection, groupCollection } =
-    goContext;
-
   const [selectedAssignables, setSelectedAssignables] = useState<Array<string>>(
     new Array<string>()
   );
@@ -289,7 +203,7 @@ export const AssignableArrayComponent = ({
           if (!!assignable) {
             for (const group of groupCollection.values()) {
               if (group.getAllMembers().has(assignable.getID())) {
-                removeGroupMember(group, assignable);
+                removeGroupMember(group.getID(), id);
               }
             }
           }
@@ -328,10 +242,8 @@ export const AssignableArrayComponent = ({
           assignableArray.map((value, index) => (
             <li key={value}>
               <AssignableComponent
-                data={
-                  assignableCollection.get(value) ||
-                  new Assignable({ id: value, name: "!ERROR!" })
-                }
+                assignableID={value}
+                assignableCollection={assignableCollection}
                 deleteAssignable={deleteAssignable}
                 index={index}
                 selectedAssignables={selectedAssignables}

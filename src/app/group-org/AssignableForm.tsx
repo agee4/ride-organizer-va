@@ -5,10 +5,10 @@ import { Assignable } from "./Assignable";
 
 export const AssignableForm = ({
   settings,
-  assignableCallback,
+  createAssignable,
 }: {
   settings: Setting;
-  assignableCallback: (assignable: Assignable) => void;
+  createAssignable: (assignable: Assignable) => void;
 }) => {
   const assignableFormRef = useRef<HTMLFormElement>(null);
 
@@ -98,52 +98,21 @@ export const AssignableForm = ({
 
   const submitForm = (event: FormEvent) => {
     event.preventDefault();
-    const contact = new Map<string, string>();
-    const availability = new Map<
+    const attributes = new Map<
       string,
       string | boolean | number | Array<string>
     >();
-    const location = new Map<
-      string,
-      string | boolean | number | Array<string>
-    >();
-    const affinity = new Map<
-      string,
-      string | boolean | number | Array<string>
-    >();
-    const miscellaneous = new Map<
-      string,
-      string | boolean | number | Array<string>
-    >();
+    const attributeGroups = new Map<string, string>();
     settings.getAssignableFields().forEach((field: Field) => {
-      switch (field.getGroup()) {
-        case "contact":
-          contact.set(field.getName(), data.get(field.getName()));
-          break;
-        case "availability":
-          availability.set(field.getName(), data.get(field.getName()));
-          break;
-        case "location":
-          location.set(field.getName(), data.get(field.getName()));
-          break;
-        case "affinity":
-          affinity.set(field.getName(), data.get(field.getName()));
-          break;
-        case "leadersize":
-          break;
-        default:
-          miscellaneous.set(field.getName(), data.get(field.getName()));
-      }
+      attributeGroups.set(field.getName(), field.getGroup());
+      attributes.set(field.getName(), data.get(field.getName()));
     });
-    assignableCallback(
+    createAssignable(
       new Assignable({
         id: data.get(settings.getAssignableIDSource()) || "!ERROR!",
         name: data.get("name"),
-        contact: contact,
-        availability: availability,
-        location: location,
-        affinity: affinity,
-        miscellaneous: miscellaneous,
+        attributes: attributes,
+        attributeGroups: attributeGroups,
         leader: isLeader,
         size: isLeader
           ? settings.getGroupSizeSource() == "leadersize"
@@ -193,81 +162,121 @@ export const AssignableForm = ({
           onChange={updateDataInput}
         />
       )}
-      <ul>
-        {[...settings.getAssignableFields().values()].map((field) => (
-          <li className="whitespace-nowrap" key={field.getName()}>
-            <label className="flex flex-row place-content-between">
-              {["number", "checkbox", "select"].includes(field.getType()) &&
-                field.getName() + (field.getRequired() ? "*" : "") + ":"}
-              {field.getType() == "select" ? (
-                <select
-                  className="rounded-sm border"
-                  name={field.getName()}
-                  value={
-                    data.get(field.getName()) ||
-                    (field.getMultiple() ? new Array<string>() : "")
-                  }
-                  multiple={field.getMultiple()}
-                  size={
-                    field.getMultiple()
-                      ? field.getOptions().size < 4
-                        ? field.getOptions().size
-                        : 4
-                      : undefined
-                  }
-                  required={field.getRequired()}
-                  onChange={updateDataSelect}
-                >
-                  {!field.getMultiple() && (
-                    <option value="">-{field.getName()}-</option>
-                  )}
-                  {Array.from(field.getOptions()).map((value) => (
-                    <option
-                      className={field.getMultiple() ? "" : "text-black"}
-                      key={value}
-                      value={value}
-                    >
-                      {value}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  className="rounded-sm border"
-                  type={field.getType()}
-                  name={field.getName()}
-                  value={
-                    data.has(field.getName())
-                      ? data.get(field.getName())
-                      : field.getType() == "number"
-                        ? 0
-                        : ""
-                  }
-                  checked={data.get(field.getName()) || false}
-                  placeholder={
-                    field.getName() +
-                    (field.getRequired() ? "*" : "") +
-                    (field.getName() == settings.getAssignableIDSource()
-                      ? " (ID)"
-                      : field.getName() == settings.getAssignableIDSource()
-                        ? " (Size)"
-                        : "")
-                  }
-                  size={field.getType() == "number" ? 7 : undefined}
-                  required={field.getRequired() || undefined}
-                  minLength={
-                    !field.getRequired() &&
-                    ["text", "email", "tel"].includes(field.getType())
-                      ? 1
-                      : undefined
-                  }
-                  onChange={updateDataInput}
-                />
+      {[...settings.getAssignableFields().values()].map((field) =>
+        field.getType() == "select" ? (
+          <label
+            className="flex flex-row flex-wrap place-content-between"
+            key={field.getName()}
+          >
+            {["number", "checkbox", "select"].includes(field.getType()) &&
+              field.getName() + (field.getRequired() ? "*" : "") + ":"}
+
+            <select
+              className="rounded-sm border"
+              name={field.getName()}
+              value={
+                data.get(field.getName()) ||
+                (field.getMultiple() ? new Array<string>() : "")
+              }
+              multiple={field.getMultiple()}
+              size={
+                field.getMultiple()
+                  ? field.getOptions().size < 4
+                    ? field.getOptions().size
+                    : 4
+                  : undefined
+              }
+              required={field.getRequired()}
+              onChange={updateDataSelect}
+            >
+              {!field.getMultiple() && (
+                <option value="">-{field.getName()}-</option>
               )}
-            </label>
-          </li>
-        ))}
-      </ul>
+              {Array.from(field.getOptions()).map((value) => (
+                <option
+                  className={field.getMultiple() ? "" : "text-black"}
+                  key={value}
+                  value={value}
+                >
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : field.getType() == "checkbox" ? (
+          <label
+            className="flex flex-row flex-wrap place-content-between"
+            key={field.getName()}
+          >
+            {field.getName()}
+            <input
+              className="rounded-sm border"
+              type={field.getType()}
+              name={field.getName()}
+              value={
+                data.has(field.getName())
+                  ? data.get(field.getName())
+                  : field.getType() == "number"
+                    ? 0
+                    : ""
+              }
+              checked={data.get(field.getName()) || false}
+              placeholder={
+                field.getName() +
+                (field.getRequired() ? "*" : "") +
+                (field.getName() == settings.getAssignableIDSource()
+                  ? " (ID)"
+                  : field.getName() == settings.getAssignableIDSource()
+                    ? " (Size)"
+                    : "")
+              }
+              size={field.getType() == "number" ? 7 : undefined}
+              required={field.getRequired() || undefined}
+              minLength={
+                !field.getRequired() &&
+                ["text", "email", "tel"].includes(field.getType())
+                  ? 1
+                  : undefined
+              }
+              onChange={updateDataInput}
+              key={field.getName()}
+            />
+          </label>
+        ) : (
+          <input
+            className="rounded-sm border"
+            type={field.getType()}
+            name={field.getName()}
+            value={
+              data.has(field.getName())
+                ? data.get(field.getName())
+                : field.getType() == "number"
+                  ? 0
+                  : ""
+            }
+            checked={data.get(field.getName()) || false}
+            placeholder={
+              field.getName() +
+              (field.getRequired() ? "*" : "") +
+              (field.getName() == settings.getAssignableIDSource()
+                ? " (ID)"
+                : field.getName() == settings.getAssignableIDSource()
+                  ? " (Size)"
+                  : "")
+            }
+            size={field.getType() == "number" ? 7 : undefined}
+            required={field.getRequired() || undefined}
+            minLength={
+              !field.getRequired() &&
+              ["text", "email", "tel"].includes(field.getType())
+                ? 1
+                : undefined
+            }
+            onChange={updateDataInput}
+            key={field.getName()}
+          />
+        )
+      )}
       {settings.getUseLeader() && (
         <label className="flex flex-row place-content-between">
           Leader

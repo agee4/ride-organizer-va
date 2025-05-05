@@ -5,16 +5,18 @@ import { Group } from "./Group";
 
 export const GroupForm = ({
   settings,
-  groupCallback,
+  createGroup,
   unassignedCollection,
+  assignableCollection,
 }: {
   settings: Setting;
-  groupCallback: (group: Group, leader?: Assignable) => void;
-  unassignedCollection: Map<string, Assignable>;
+  createGroup: (group: Group) => void;
+  unassignedCollection: Set<string>;
+  assignableCollection: Map<string, Assignable>;
 }) => {
   const groupFormRef = useRef<HTMLFormElement>(null);
-  const unassignedLeaderArray = [...unassignedCollection.values()].filter((a) =>
-    a.getLeader()
+  const unassignedLeaderArray = Array.from(unassignedCollection).filter((a) =>
+    assignableCollection.get(a)?.getLeader()
   );
 
   const [data, setData] = useState<{
@@ -41,60 +43,54 @@ export const GroupForm = ({
     switch (settings.getGroupIDSource()) {
       case "leader":
         if (settings.getUseLeader())
-          if (!!unassignedCollection.get(leader)) {
+          if (!!assignableCollection.get(leader)) {
             const name = data.name && data.name.length > 0 ? data.name : leader;
-            groupCallback(
+            createGroup(
               new Group({
                 id: leader,
                 name: name,
-                leader: unassignedCollection.get(leader),
+                leader: leader,
                 size: settings.getGroupUseSize()
                   ? settings.getGroupSizeSource() == "groupsize"
                     ? data.size
-                    : unassignedCollection.get(leader)?.getSize()
+                    : assignableCollection.get(leader)?.getSize()
                   : undefined,
                 notes: data.notes,
-              }),
-              unassignedCollection.get(leader)
+              })
             );
             setLeader("");
           }
         break;
       case "name":
-        groupCallback(
+        createGroup(
           new Group({
             id: data.name as string,
             name: data.name,
-            leader: unassignedCollection.get(leader),
             size: settings.getGroupUseSize()
               ? settings.getGroupSizeSource() == "groupsize"
                 ? data.size
-                : unassignedCollection.get(leader)?.getSize()
+                : assignableCollection.get(leader)?.getSize()
               : undefined,
             notes: data.notes,
-          }),
-          unassignedCollection.get(leader)
+          })
         );
         setLeader("");
         break;
       case "id":
       default:
         const name = data.name && data.name.length > 0 ? data.name : undefined;
-        groupCallback(
+        createGroup(
           new Group({
             id: data.id,
             name: name,
-            leader: settings.getUseLeader()
-              ? unassignedCollection.get(leader)
-              : undefined,
+            leader: settings.getUseLeader() ? leader : undefined,
             size: settings.getGroupUseSize()
               ? settings.getGroupSizeSource() == "groupsize"
                 ? data.size
-                : unassignedCollection.get(leader)?.getSize()
+                : assignableCollection.get(leader)?.getSize()
               : undefined,
             notes: data.notes,
-          }),
-          unassignedCollection.get(leader)
+          })
         );
     }
     setData({
@@ -114,7 +110,7 @@ export const GroupForm = ({
     >
       <label className="text-center">New Group</label>
       {settings.getUseLeader() && (
-        <label className="flex flex-row place-content-between">
+        <label className="flex flex-row flex-wrap place-content-between">
           {"Leader" +
             (settings.getGroupIDSource() == "leader" ? " (ID)" : "") +
             ":"}
@@ -131,12 +127,8 @@ export const GroupForm = ({
               ---
             </option>
             {unassignedLeaderArray.map((a) => (
-              <option
-                className="dark:text-black"
-                key={a.getID()}
-                value={a.getID()}
-              >
-                {a.getName()}
+              <option className="dark:text-black" key={a} value={a}>
+                {assignableCollection.get(a)?.getName() || a}
               </option>
             ))}
           </select>
@@ -170,7 +162,7 @@ export const GroupForm = ({
       )}
       {settings.getGroupUseSize() &&
         settings.getGroupSizeSource() == "groupsize" && (
-          <label className="flex flex-row place-content-between">
+          <label className="flex flex-row flex-wrap place-content-between">
             Size:
             <input
               className="rounded-sm border"

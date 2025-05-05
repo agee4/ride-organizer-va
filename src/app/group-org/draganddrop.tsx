@@ -40,152 +40,73 @@ export const AssignableDragLayer = ({
     >
       {item.id.length <= 1 ? (
         <div className="my-1 max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
-          <ul>
-            <div className="font-bold">{data.getName()}</div>
-            <ul className="flex flex-row place-content-between text-xs italic">
-              <li>{data.getID()}</li>
-              <li>{data.getLeader() && "Leader"}</li>
-            </ul>
-            <ul className="m-1">
-              {data.getContact() &&
-                Array.from(data.getContact() as Map<string, string>)
-                  .filter(([, value]) => value)
-                  .map(([key, value]) => (
-                    <li
-                      className="flex flex-row place-content-between gap-1"
-                      key={key}
-                    >
-                      <span>{key}:</span>
+          <div className="font-bold">{data.getName()}</div>
+          <div className="flex flex-row place-content-between text-xs italic">
+            <span>{data.getID()}</span>
+            <span>{data.getLeader() && "Leader"}</span>
+          </div>
+          {Array.from(data.getAttributes() as Map<string, string>)
+            .filter(([key]) => data.getAttributeGroups().get(key) == "contact")
+            .map(([key, value]) => (
+              <div
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                key={key}
+              >
+                <span>{key}:</span>
+                <span>{value}</span>
+              </div>
+            ))}
+          {Array.from(
+            data.getAttributes() as Map<
+              string,
+              string | number | boolean | string[]
+            >
+          )
+            .filter(([key]) =>
+              ["availability", "location"].includes(
+                data.getAttributeGroups().get(key) || ""
+              )
+            )
+            .filter(
+              ([, value]) => (Array.isArray(value) && value.length > 0) || value
+            )
+            .map(([key, value]) => (
+              <div
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                key={key}
+              >
+                {typeof value == "boolean" ? (
+                  <span>{key}</span>
+                ) : (
+                  <>
+                    <span>{key}:</span>
+                    {Array.isArray(value) ? (
+                      <ul>
+                        {value.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
                       <span>{value}</span>
-                    </li>
-                  ))}
-              {data.getAvailability() &&
-                Array.from(
-                  data.getAvailability() as Map<
-                    string,
-                    string | number | boolean | Array<string>
-                  >
-                )
-                  .filter(
-                    ([, value]) =>
-                      (Array.isArray(value) && value.length > 0) || value
-                  )
-                  .map(([key, value]) => (
-                    <li
-                      className="flex flex-row place-content-between gap-1"
-                      key={key}
-                    >
-                      <span>{key}:</span>
-                      {Array.isArray(value) ? (
-                        <ul>
-                          {value.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span>{value}</span>
-                      )}
-                    </li>
-                  ))}
-              {data.getLocation() &&
-                Array.from(
-                  data.getLocation() as Map<
-                    string,
-                    string | number | boolean | Array<string>
-                  >
-                )
-                  .filter(
-                    ([, value]) =>
-                      (Array.isArray(value) && value.length > 0) || value
-                  )
-                  .map(([key, value]) => (
-                    <li
-                      className="flex flex-row place-content-between gap-1"
-                      key={key}
-                    >
-                      <span>{key}:</span>
-                      {Array.isArray(value) ? (
-                        <ul>
-                          {value.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span>{value}</span>
-                      )}
-                    </li>
-                  ))}
-              {data.getAffinity() &&
-                Array.from(
-                  data.getAffinity() as Map<
-                    string,
-                    string | number | boolean | Array<string>
-                  >
-                )
-                  .filter(
-                    ([, value]) =>
-                      (Array.isArray(value) && value.length > 0) || value
-                  )
-                  .map(([key, value]) => (
-                    <li
-                      className="flex flex-row place-content-between gap-1"
-                      key={key}
-                    >
-                      <span>{key}:</span>
-                      {Array.isArray(value) ? (
-                        <ul>
-                          {value.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span>{value}</span>
-                      )}
-                    </li>
-                  ))}
-              {data.getMiscellaneous() &&
-                Array.from(
-                  data.getMiscellaneous() as Map<
-                    string,
-                    string | number | boolean | Array<string>
-                  >
-                )
-                  .filter(
-                    ([, value]) =>
-                      (Array.isArray(value) && value.length > 0) || value
-                  )
-                  .map(([key, value]) => (
-                    <li
-                      className="flex flex-row place-content-between gap-1"
-                      key={key}
-                    >
-                      <span>{key}:</span>
-                      {Array.isArray(value) ? (
-                        <ul>
-                          {value.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span>{value}</span>
-                      )}
-                    </li>
-                  ))}
-            </ul>
-            {data.getSize() != undefined && (
-              <li className="m-1 flex flex-row place-content-between gap-1">
-                <span>Size:</span>
-                <span>{data.getSize()}</span>
-              </li>
-            )}
-            {data.getNotes() && (
-              <textarea
-                className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
-                disabled
-                defaultValue={data.getNotes()}
-              />
-            )}
-          </ul>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+
+          {data.getSize() != undefined && (
+            <div className="m-1 flex flex-row place-content-between gap-1">
+              <span>Size:</span>
+              <span>{data.getSize()}</span>
+            </div>
+          )}
+          {data.getNotes() && (
+            <textarea
+              className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+              disabled
+              defaultValue={data.getNotes()}
+            />
+          )}
         </div>
       ) : (
         <>
@@ -197,130 +118,46 @@ export const AssignableDragLayer = ({
                 <li>{data.getLeader() && "Leader"}</li>
               </ul>
               <ul className="m-1">
-                {data.getContact() &&
-                  Array.from(data.getContact() as Map<string, string>)
-                    .filter(([, value]) => value)
-                    .map(([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        <span>{value}</span>
-                      </li>
-                    ))}
-                {data.getAvailability() &&
-                  Array.from(
-                    data.getAvailability() as Map<
-                      string,
-                      string | number | boolean | Array<string>
-                    >
+                {Array.from(data.getAttributes() as Map<string, string>)
+                  .filter(
+                    ([key]) => data.getAttributeGroups().get(key) == "contact"
                   )
-                    .filter(
-                      ([, value]) =>
-                        (Array.isArray(value) && value.length > 0) || value
-                    )
-                    .map(([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        {Array.isArray(value) ? (
-                          <ul>
-                            {value.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <span>{value}</span>
-                        )}
-                      </li>
-                    ))}
-                {data.getLocation() &&
-                  Array.from(
-                    data.getLocation() as Map<
-                      string,
-                      string | number | boolean | Array<string>
+                  .map(([key, value]) => (
+                    <li
+                      className="flex flex-row place-content-between gap-1"
+                      key={key}
                     >
-                  )
-                    .filter(
-                      ([, value]) =>
-                        (Array.isArray(value) && value.length > 0) || value
+                      <span>{key}:</span>
+                      <span>{value}</span>
+                    </li>
+                  ))}
+                {Array.from(data.getAttributes() as Map<string, string>)
+                  .filter(([key]) =>
+                    ["availability", "location"].includes(
+                      data.getAttributeGroups().get(key) || ""
                     )
-                    .map(([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        {Array.isArray(value) ? (
-                          <ul>
-                            {value.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <span>{value}</span>
-                        )}
-                      </li>
-                    ))}
-                {data.getAffinity() &&
-                  Array.from(
-                    data.getAffinity() as Map<
-                      string,
-                      string | number | boolean | Array<string>
+                  )
+                  .filter(
+                    ([, value]) =>
+                      (Array.isArray(value) && value.length > 0) || value
+                  )
+                  .map(([key, value]) => (
+                    <li
+                      className="flex flex-row place-content-between gap-1"
+                      key={key}
                     >
-                  )
-                    .filter(
-                      ([, value]) =>
-                        (Array.isArray(value) && value.length > 0) || value
-                    )
-                    .map(([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        {Array.isArray(value) ? (
-                          <ul>
-                            {value.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <span>{value}</span>
-                        )}
-                      </li>
-                    ))}
-                {data.getMiscellaneous() &&
-                  Array.from(
-                    data.getMiscellaneous() as Map<
-                      string,
-                      string | number | boolean | Array<string>
-                    >
-                  )
-                    .filter(
-                      ([, value]) =>
-                        (Array.isArray(value) && value.length > 0) || value
-                    )
-                    .map(([key, value]) => (
-                      <li
-                        className="flex flex-row place-content-between gap-1"
-                        key={key}
-                      >
-                        <span>{key}:</span>
-                        {Array.isArray(value) ? (
-                          <ul>
-                            {value.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <span>{value}</span>
-                        )}
-                      </li>
-                    ))}
+                      <span>{key}:</span>
+                      {Array.isArray(value) ? (
+                        <ul>
+                          {value.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className="text-right">{value}</span>
+                      )}
+                    </li>
+                  ))}
               </ul>
               {data.getSize() != undefined && (
                 <li className="m-1 flex flex-row place-content-between gap-1">

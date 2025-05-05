@@ -3,14 +3,8 @@ import { mapEquals } from "./helpers";
 export class Assignable {
   private _id: string;
   private name: string;
-  private contact?: Map<string, string>;
-  private availability?: Map<string, string | boolean | number | Array<string>>;
-  private location?: Map<string, string | boolean | number | Array<string>>;
-  private affinity?: Map<string, string | boolean | number | Array<string>>;
-  private miscellaneous?: Map<
-    string,
-    string | boolean | number | Array<string>
-  >;
+  private attributes: Map<string, string | boolean | number | Array<string>>;
+  private attributeGroups: Map<string, string>;
   private leader?: boolean;
   private size?: number | string;
   private notes?: string;
@@ -18,33 +12,26 @@ export class Assignable {
   constructor({
     id,
     name,
-    contact,
-    availability,
-    location,
-    affinity,
-    miscellaneous,
+    attributes,
+    attributeGroups,
     leader,
     size,
     notes,
   }: {
     id: string;
     name: string;
-    contact?: Map<string, string>;
-    availability?: Map<string, string | boolean | number | Array<string>>;
-    location?: Map<string, string | boolean | number | Array<string>>;
-    affinity?: Map<string, string | boolean | number | Array<string>>;
-    miscellaneous?: Map<string, string | boolean | number | Array<string>>;
+    attributes?: Map<string, string | boolean | number | Array<string>>;
+    attributeGroups?: Map<string, string>;
     leader?: boolean;
     size?: number | string;
     notes?: string;
   }) {
     this._id = id;
     this.name = name;
-    this.contact = contact;
-    this.availability = availability;
-    this.location = location;
-    this.affinity = affinity;
-    this.miscellaneous = miscellaneous;
+    this.attributes =
+      attributes ||
+      new Map<string, string | boolean | number | Array<string>>();
+    this.attributeGroups = attributeGroups || new Map<string, string>();
     this.leader = leader;
     this.size = size;
     this.notes = notes;
@@ -58,24 +45,12 @@ export class Assignable {
     return this.name;
   }
 
-  getContact() {
-    return this.contact;
+  getAttributes() {
+    return this.attributes;
   }
 
-  getAvailability() {
-    return this.availability;
-  }
-
-  getLocation() {
-    return this.location;
-  }
-
-  getAffinity() {
-    return this.affinity;
-  }
-
-  getMiscellaneous() {
-    return this.miscellaneous;
+  getAttributeGroups() {
+    return this.attributeGroups;
   }
 
   getLeader() {
@@ -88,7 +63,7 @@ export class Assignable {
       case "undefined":
         return this.size;
       default:
-        return this.miscellaneous?.get(this.size) as number;
+        return this.attributes.get(this.size) as number;
     }
   }
 
@@ -101,24 +76,12 @@ export class Assignable {
       this._id == other._id &&
       this.name == other.name &&
       mapEquals(
-        this.contact || new Map<string, string>(),
-        other.contact || new Map<string, string>()
+        this.attributes || new Map<string, string>(),
+        other.attributes || new Map<string, string>()
       ) &&
       mapEquals(
-        this.contact || new Map<string, string>(),
-        other.contact || new Map<string, string>()
-      ) &&
-      mapEquals(
-        this.location || new Map<string, string>(),
-        other.location || new Map<string, string>()
-      ) &&
-      mapEquals(
-        this.affinity || new Map<string, string>(),
-        other.affinity || new Map<string, string>()
-      ) &&
-      mapEquals(
-        this.miscellaneous || new Map<string, string>(),
-        other.miscellaneous || new Map<string, string>()
+        this.attributeGroups || new Map<string, string>(),
+        other.attributeGroups || new Map<string, string>()
       ) &&
       this.leader == other.leader &&
       this.size == other.size &&
@@ -139,25 +102,38 @@ export function sortAssignables(array: Array<Assignable>, sort?: string) {
       array.sort((a, b) => (b.getSize() || -1) - (a.getSize() || -1));
       break;
     default:
+      array.sort((a, b) =>
+        (a.getAttributes().get(sort || "") as string)?.localeCompare(
+          b.getAttributes().get(sort || "") as string
+        )
+      );
   }
   return array;
 }
 
+/**Intersectional filtering: only return Assignables that meet all filter requirements */
 export function filterAssignables(
   array: Array<Assignable>,
   filter?: Array<string>
 ) {
-  if (filter)
-    if (filter.length > 0) {
-      let newArray = [...array];
-      for (const f of filter) {
-        switch (f) {
-          case "leader":
-            newArray = [...newArray].filter((value) => value.getLeader());
-            break;
-        }
+  /**ensure filter exists and has at least one element in it before processing */
+  if (filter?.length) {
+    let newArray = [...array];
+    for (const f of filter) {
+      switch (f) {
+        case "leader":
+          newArray = [...newArray].filter((value) => value.getLeader());
+          break;
+        default:
+          newArray = [...newArray].filter((value) => {
+            const data = value.getAttributes()?.get(f.split("|").shift() || "");
+            return typeof data == "boolean"
+              ? data
+              : data == (f.split("|").pop() || "");
+          });
       }
-      return newArray;
     }
+    return newArray;
+  }
   return array;
 }
