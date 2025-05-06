@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { Field, Setting } from "./settings";
 import { useMapReducer } from "./helpers";
 import { Assignable } from "./Assignable";
@@ -56,7 +56,7 @@ export const AssignableForm = ({
   };
 
   /**load fields from settings*/
-  useEffect(() => {
+  useMemo(() => {
     for (const [fieldname, field] of settings.getAssignableFields().entries()) {
       if (!data.has(fieldname))
         dataDispatch({

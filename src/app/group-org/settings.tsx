@@ -8,11 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  MapReducerAction,
-  useMapReducer,
-  useSetReducer,
-} from "./helpers";
+import { MapReducerAction, useMapReducer, useSetReducer } from "./helpers";
 
 export class Field {
   private name: string;
@@ -114,6 +110,7 @@ export class Setting {
   private groupUseSize: boolean;
   private groupSizeSource: string;
   private groupNotes: boolean;
+  private autoGroups: boolean;
 
   constructor({
     name,
@@ -126,6 +123,7 @@ export class Setting {
     groupUseSize,
     groupSizeSource,
     groupNotes,
+    autoGroups,
   }: {
     name?: string;
     assignableIDSource?: string;
@@ -137,6 +135,7 @@ export class Setting {
     groupUseSize?: boolean;
     groupSizeSource?: string;
     groupNotes?: boolean;
+    autoGroups?: boolean;
   }) {
     this.name = name;
     this.assignableIDSource = assignableIDSource || "name";
@@ -148,6 +147,7 @@ export class Setting {
     this.groupUseSize = groupUseSize || false;
     this.groupSizeSource = groupSizeSource || "groupsize";
     this.groupNotes = groupNotes || false;
+    this.autoGroups = autoGroups || false;
   }
 
   getName() {
@@ -194,6 +194,10 @@ export class Setting {
     return this.groupNotes;
   }
 
+  getAutoGroups() {
+    return this.autoGroups;
+  }
+
   equals(other: Setting | undefined) {
     function fieldsEquals(
       first: Map<string, Field>,
@@ -215,7 +219,8 @@ export class Setting {
       this.groupCustomName == other.groupCustomName &&
       this.groupUseSize == other.groupUseSize &&
       this.groupSizeSource == other.groupSizeSource &&
-      this.groupNotes == other.groupNotes
+      this.groupNotes == other.groupNotes &&
+      this.autoGroups == other.autoGroups
     );
   }
 }
@@ -315,6 +320,7 @@ const bereanCollegeRidesSettings = new Setting({
   groupIDSource: "leader",
   groupUseSize: true,
   groupSizeSource: "leadersize",
+  autoGroups: true,
 });
 
 const bibleStudyTablesSettings = new Setting({
@@ -395,17 +401,20 @@ const noLeaderGroupsSettings = new Setting({
   ]),
 });
 
+const testSettings = new Setting({
+  name: "test",
+  assignableIDSource: "name",
+  useLeader: true,
+  groupIDSource: "leader",
+  autoGroups: true,
+});
+
 export const presetArray = [
   defaultSettings,
   bereanCollegeRidesSettings,
   bibleStudyTablesSettings,
   noLeaderGroupsSettings,
-  new Setting({
-    name: "test",
-    assignableIDSource: "name",
-    useLeader: true,
-    groupIDSource: "leader",
-  }),
+  testSettings,
 ];
 
 export const PresetForm = ({
@@ -518,17 +527,25 @@ export const SettingsForm = ({
   const [assignableNotes, setAssignableNotes] = useState<boolean>(
     settings.getAssignableNotes()
   );
+
   const [useLeader, setUseLeader] = useState<boolean>(settings.getUseLeader());
   const updateUseLeader = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.checked) {
       setGroupSizeSource("groupsize");
       if (groupIDSource == "leader") setGroupIDSource("id");
+      if (autoGroups) setAutoGroups(false);
     }
     setUseLeader(e.target.checked);
   };
+
   const [groupIDSource, setGroupIDSource] = useState<string>(
     settings.getGroupIDSource()
   );
+  const updateGroupIDSource = (e: ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value != "leader" && autoGroups) setAutoGroups(false);
+    setGroupIDSource(e.target.value);
+  };
+
   const [groupCustomName, setGroupCustomName] = useState<boolean>(
     settings.getGroupCustomName()
   );
@@ -536,15 +553,30 @@ export const SettingsForm = ({
     if (!e.target.checked && groupIDSource == "name") setGroupIDSource("id");
     setGroupCustomName(e.target.checked);
   };
+
   const [groupUseSize, setGroupUseSize] = useState<boolean>(
     settings.getGroupUseSize()
   );
+  const updateGroupUseSize = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked && autoGroups && groupSizeSource == "groupsize")
+      setGroupSizeSource("leadersize");
+    setGroupUseSize(e.target.checked);
+  };
+
   const [groupSizeSource, setGroupSizeSource] = useState<string>(
     settings.getGroupSizeSource()
   );
   const [groupNotes, setGroupNotes] = useState<boolean>(
     settings.getGroupNotes()
   );
+  const [autoGroups, setAutoGroups] = useState<boolean>(
+    settings.getAutoGroups()
+  );
+  const updateAutoGroup = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked && groupUseSize && groupSizeSource == "groupsize")
+      setGroupSizeSource("leadersize");
+    setAutoGroups(e.target.checked);
+  };
 
   const [fieldName, setFieldName] = useState<string>("");
   const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
@@ -627,6 +659,7 @@ export const SettingsForm = ({
         groupUseSize: groupUseSize,
         groupSizeSource: groupUseSize ? groupSizeSource : "",
         groupNotes: groupNotes,
+        autoGroups: autoGroups,
       })
     );
   };
@@ -644,6 +677,7 @@ export const SettingsForm = ({
     setGroupUseSize(settings.getGroupUseSize());
     setGroupSizeSource(settings.getGroupSizeSource());
     setGroupNotes(settings.getGroupNotes());
+    setAutoGroups(settings.getAutoGroups());
   }, [settings, assignableFieldsDispatch]);
 
   const [showAddInputField, setShowAddInputField] = useState<boolean>(false);
@@ -661,6 +695,7 @@ export const SettingsForm = ({
       groupUseSize: groupUseSize,
       groupSizeSource: groupSizeSource,
       groupNotes: groupNotes,
+      autoGroups: autoGroups,
     })
   );
 
@@ -956,7 +991,7 @@ export const SettingsForm = ({
               className="rounded-sm border"
               name="groupidsource"
               value={groupIDSource}
-              onChange={(e) => setGroupIDSource(e.target.value)}
+              onChange={updateGroupIDSource}
             >
               <option className="text-black" value="id">
                 ID Field
@@ -988,7 +1023,7 @@ export const SettingsForm = ({
             <input
               type="checkbox"
               checked={groupUseSize}
-              onChange={(e) => setGroupUseSize(e.target.checked)}
+              onChange={updateGroupUseSize}
             />
           </label>
           {groupUseSize && (
@@ -998,9 +1033,11 @@ export const SettingsForm = ({
               value={groupSizeSource}
               onChange={(e) => setGroupSizeSource(e.target.value)}
             >
-              <option className="dark:text-black" value="groupsize">
-                Size Field
-              </option>
+              {!autoGroups && (
+                <option className="dark:text-black" value="groupsize">
+                  Size Field
+                </option>
+              )}
               {useLeader && (
                 <>
                   <option className="text-black" value="leadersize">
@@ -1030,6 +1067,19 @@ export const SettingsForm = ({
               onChange={(e) => setGroupNotes(e.target.checked)}
             />
           </label>
+          {useLeader && groupIDSource == "leader" && (
+            <>
+              <hr />
+              <label className="flex flex-row place-content-between">
+                Auto Groups
+                <input
+                  type="checkbox"
+                  checked={autoGroups}
+                  onChange={updateAutoGroup}
+                />
+              </label>
+            </>
+          )}
         </div>
       </div>
       <button

@@ -44,7 +44,10 @@ export const GroupForm = ({
       case "leader":
         if (settings.getUseLeader())
           if (!!assignableCollection.get(leader)) {
-            const name = data.name && data.name.length > 0 ? data.name : leader;
+            const name =
+              data.name && data.name.length > 0
+                ? data.name
+                : assignableCollection.get(leader)?.getName() || leader;
             createGroup(
               new Group({
                 id: leader,

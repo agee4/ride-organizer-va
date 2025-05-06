@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { AssignableDragItem, DNDType } from "./draganddrop";
@@ -22,16 +22,9 @@ const AssignableComponent = ({
   handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
   clearSelect: () => void;
 }) => {
-  const [data, setData] = useState<Assignable>(
+  const data =
     assignableCollection.get(assignableID) ||
-      new Assignable({ id: assignableID, name: "!ERROR!" })
-  );
-  useEffect(() => {
-    setData(
-      assignableCollection.get(assignableID) ||
-        new Assignable({ id: assignableID, name: "!ERROR!" })
-    );
-  }, [assignableID]);
+    new Assignable({ id: assignableID, name: "!ERROR!" });
 
   const [{ isDragging }, drag, dragPreview] = useDrag<
     AssignableDragItem,
@@ -89,8 +82,8 @@ const AssignableComponent = ({
             string | number | boolean | Array<string>
           >
         )
-          .filter(
-            ([, value]) => (Array.isArray(value) && value.length > 0) || value
+          .filter(([, value]) =>
+            Array.isArray(value) ? value.length > 0 : value
           )
           .map(([key, value]) => (
             <div

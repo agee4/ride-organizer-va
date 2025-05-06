@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useMapReducer, useSetReducer } from "./helpers";
@@ -33,96 +33,128 @@ export default function Page() {
     new Map(presetArray.map((setting) => [setting.getName(), setting]))
   );
 
-  const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
-  const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
+  useEffect(() => {
+    const storedSettingString = localStorage.getItem("settings");
+    if (storedSettingString) {
+      const preset = presetCollection.get(
+        JSON.parse(storedSettingString)["name"]
+      );
+      if (preset) setSettings(preset);
+      else {
+        const storedSettingJSON = JSON.parse(storedSettingString);
+        console.log(storedSettingJSON);
+        setSettings(defaultSettings);
+      }
+    }
+    const storedAssignableString = localStorage.getItem("assignable");
+    if (storedAssignableString) {
+      const storedAssignableJSON = JSON.parse(storedAssignableString);
+      for (const x in storedAssignableJSON) {
+        console.log(x);
+        console.log(storedAssignableJSON[x]);
+        assignableDispatch({
+          type: "create",
+          key: storedAssignableJSON[x]["_id"],
+          value: new Assignable({
+            id: storedAssignableJSON[x]["_id"],
+            name: storedAssignableJSON[x]["name"],
+            leader: storedAssignableJSON[x]["leader"],
+            notes: storedAssignableJSON[x]["notes"],
+          }),
+        });
+      }
+    }
+    const storedUnassignedString = localStorage.getItem("unassigned");
+    if (storedUnassignedString)
+      unassignedDispatch({
+        type: "replace",
+        value: new Set<string>(storedUnassignedString.split(",")),
+      });
+    const storedGroupString = localStorage.getItem("group");
+    if (storedGroupString) {
+      const storedGroupJSON = JSON.parse(storedGroupString);
+      for (const x in storedGroupJSON) {
+        groupDispatch({
+          type: "create",
+          key: storedGroupJSON[x]["_id"],
+          value: new Group({
+            id: storedGroupJSON[x]["_id"],
+            name: storedGroupJSON[x]["name"],
+            leader: storedGroupJSON[x]["leader"],
+            notes: storedGroupJSON[x]["notes"],
+          }),
+        });
+      }
+    }
+  }, []);
 
-  const [assignableArray, setAssignableArray] = useState<Array<string>>(
-    new Array<string>()
-  );
-  const [unassignedArray, setUnassignedArray] = useState<Array<string>>(
-    new Array<string>()
-  );
+  useEffect(() => {
+    localStorage.setItem("settings", JSON.stringify(settings));
+  }, [settings]);
+
+  useEffect(() => {
+    const storage: Record<string, Assignable> = {};
+    for (const [key, value] of assignableCollection) storage[key] = value;
+    localStorage.setItem("assignable", JSON.stringify(storage));
+  }, [assignableCollection]);
+  useEffect(() => {
+    localStorage.setItem(
+      "unassigned",
+      Array.from(unassignedCollection).toString()
+    );
+  }, [unassignedCollection]);
+  useEffect(() => {
+    const storage: Record<string, Group> = {};
+    for (const [key, value] of groupCollection) storage[key] = value;
+    localStorage.setItem("group", JSON.stringify(storage));
+  }, [groupCollection]);
+
+  const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
   const [assignableSort, setAssignableSort] = useState<string>("");
   const [assignableReverse, setAssignableReverse] = useState<boolean>(false);
   const [assignableFilter, setAssignableFilter] = useState<Array<string>>(
     new Array<string>()
   );
-
-  const [groupArray, setGroupArray] = useState<Array<string>>(
-    new Array<string>()
-  );
-  const [groupSort, setGroupSort] = useState<string>("");
-  const [groupReverse, setGroupReverse] = useState<boolean>(false);
-  const [groupFilter, setGroupFilter] = useState<Array<string>>(
-    new Array<string>()
-  );
-
-  /**Update Assignable Array */
-  useEffect(() => {
-    setAssignableArray(
-      assignableReverse
-        ? sortAssignables(
-            filterAssignables(
-              Array.from(assignableCollection.values()),
-              assignableFilter
-            ),
-            assignableSort
-          )
-            .map((a) => a.getID())
-            .reverse()
-        : sortAssignables(
-            filterAssignables(
-              Array.from(assignableCollection.values()),
-              assignableFilter
-            ),
-            assignableSort
-          ).map((a) => a.getID())
-    );
-    setUnassignedArray(
-      assignableReverse
-        ? sortAssignables(
-            filterAssignables(
-              Array.from(assignableCollection.values()),
-              assignableFilter
-            ),
-            assignableSort
-          )
-            .map((a) => a.getID())
-            .filter((a) => unassignedCollection.has(a))
-            .reverse()
-        : sortAssignables(
-            filterAssignables(
-              Array.from(assignableCollection.values()),
-              assignableFilter
-            ),
-            assignableSort
-          )
-            .map((a) => a.getID())
-            .filter((a) => unassignedCollection.has(a))
-    );
+  const assignableArray = useMemo(() => {
+    let newAssignableArray = sortAssignables(
+      filterAssignables(
+        Array.from(assignableCollection.values()),
+        assignableFilter
+      ),
+      assignableSort
+    ).map((a) => a.getID());
+    if (assignableReverse) newAssignableArray.reverse();
+    if (showOnlyUnassigned)
+      newAssignableArray = newAssignableArray.filter((a) =>
+        unassignedCollection.has(a)
+      );
+    return newAssignableArray;
   }, [
     assignableCollection,
     unassignedCollection,
     assignableSort,
     assignableReverse,
     assignableFilter,
+    showOnlyUnassigned,
   ]);
 
-  /**Update Group Array */
-  useEffect(() => {
-    setGroupArray(
-      groupReverse
-        ? sortGroups(
-            filterGroups(Array.from(groupCollection.values()), groupFilter),
-            groupSort
-          )
-            .map((g) => g.getID())
-            .reverse()
-        : sortGroups(
-            filterGroups(Array.from(groupCollection.values()), groupFilter),
-            groupSort
-          ).map((g) => g.getID())
-    );
+  const [groupSort, setGroupSort] = useState<string>("");
+  const [groupReverse, setGroupReverse] = useState<boolean>(false);
+  const [groupFilter, setGroupFilter] = useState<Array<string>>(
+    new Array<string>()
+  );
+  const groupArray = useMemo(() => {
+    return groupReverse
+      ? sortGroups(
+          filterGroups(Array.from(groupCollection.values()), groupFilter),
+          groupSort
+        )
+          .map((g) => g.getID())
+          .reverse()
+      : sortGroups(
+          filterGroups(Array.from(groupCollection.values()), groupFilter),
+          groupSort
+        ).map((g) => g.getID());
   }, [groupCollection, groupSort, groupReverse, groupFilter]);
 
   const createAssignable = (assignable: Assignable) => {
@@ -131,10 +163,20 @@ export default function Page() {
       key: assignable.getID(),
       value: assignable,
     });
-    unassignedDispatch({
-      type: "create",
-      value: assignable.getID(),
-    });
+    if (settings.getAutoGroups() && assignable.getLeader()) {
+      createGroup(
+        new Group({
+          id: assignable.getID(),
+          leader: assignable.getID(),
+          size: assignable.getSize(),
+        })
+      );
+    } else {
+      unassignedDispatch({
+        type: "create",
+        value: assignable.getID(),
+      });
+    }
   };
 
   const deleteAssignable = (assignableID: string) => {
@@ -203,7 +245,10 @@ export default function Page() {
   const addGroupMember = (groupID: string, memberID?: string) => {
     const group = groupCollection.get(groupID);
     const newMember = assignableCollection.get(
-      memberID ? memberID : unassignedArray.shift() || ""
+      memberID
+        ? memberID
+        : assignableArray.filter((a) => unassignedCollection.has(a)).shift() ||
+            ""
     );
     if (group && newMember) {
       group.getAllMembers().add(newMember.getID());
@@ -225,9 +270,7 @@ export default function Page() {
 
   const removeGroupMember = (groupID: string, memberID: string) => {
     const group = groupCollection.get(groupID);
-    const removedMember = assignableCollection.get(
-      memberID ? memberID : unassignedArray.shift() || ""
-    );
+    const removedMember = assignableCollection.get(memberID);
     if (group && removedMember) {
       group.getAllMembers().delete(memberID);
       groupDispatch({ type: "create", key: groupID, value: group });
@@ -238,13 +281,17 @@ export default function Page() {
     }
   };
 
-  const filterArray = Array.from(
-    settings.getAssignableFields().entries()
-  ).filter(([, value]) => ["select", "checkbox"].includes(value.getType()));
+  const filterArray = useMemo(() => {
+    return Array.from(settings.getAssignableFields().entries()).filter(
+      ([, value]) => ["select", "checkbox"].includes(value.getType())
+    );
+  }, [settings]);
+
+  const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-8 sm:items-start">
+      <main className="row-start-2 flex flex-col items-center gap-8">
         <h1>group organizer test</h1>
         <div className="relative rounded-md border p-1">
           <button
@@ -276,12 +323,19 @@ export default function Page() {
               settings={settings}
               createAssignable={createAssignable}
             />
-            <GroupForm
-              settings={settings}
-              createGroup={createGroup}
-              unassignedCollection={unassignedCollection}
-              assignableCollection={assignableCollection}
-            />
+            {settings.getGroupIDSource() != "leader" ||
+            Array.from(unassignedCollection).some((a) =>
+              assignableCollection.get(a)?.getLeader()
+            ) ? (
+              <GroupForm
+                settings={settings}
+                createGroup={createGroup}
+                unassignedCollection={unassignedCollection}
+                assignableCollection={assignableCollection}
+              />
+            ) : (
+              <div />
+            )}
             {assignableCollection.size > 0 && (
               <div className="relative rounded-md border p-1">
                 <input
@@ -386,9 +440,7 @@ export default function Page() {
                   </select>
                 )}
                 <AssignableArrayComponent
-                  assignableArray={
-                    showOnlyUnassigned ? unassignedArray : assignableArray
-                  }
+                  assignableArray={assignableArray}
                   assignableCollection={assignableCollection}
                   unassignedCollection={unassignedCollection}
                   groupCollection={groupCollection}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { Assignable } from "./Assignable";
@@ -20,21 +20,10 @@ export const GroupComponent = ({
   addGroupMember: (groupID: string, memberID?: string) => void;
   removeGroupMember: (groupID: string, memberID: string) => void;
 }) => {
-  const [data, setData] = useState<Group>(
-    groupCollection.get(groupID) || new Group({ id: "!ERROR!" })
-  );
-  const [assignableArray, setAssignableArray] = useState<Array<string>>(
-    Array.from(data.getAllMembers())
-  );
-  const [size, setSize] = useState<number>(data.getSize() || 0);
-  const leader = data.getLeader() || "";
-  useEffect(() => {
-    const newData =
-      groupCollection.get(groupID) || new Group({ id: "!ERROR!" });
-    setData(newData);
-    setAssignableArray(Array.from(newData.getAllMembers()));
-    setSize(data.getSize() || 0);
-  }, [groupID, groupCollection]);
+  const data = groupCollection.get(groupID) || new Group({ id: "!ERROR!" });
+  const assignableArray = Array.from(data.getAllMembers());
+  const size = data.getSize() || 0;
+  const leader = data.getLeader();
 
   const [selectedAssignables, setSelectedAssignables] = useState<Array<string>>(
     new Array<string>()
@@ -96,11 +85,19 @@ export const GroupComponent = ({
         canDrop: monitor.canDrop(),
       }),
       canDrop: (item) =>
+        /**ensure this group can fit all DAs (dragged assignables),
+         * either because the group has no size cap
+         * or because the amount of DAs do not
+         * overfill the size cap of the group
+         */
         (data.getSize() == undefined ||
           size >= data.getAllMembers().size + item.id.length) &&
+        /**ensure every DA meets the following: */
         item.id.every(
           (itemID) =>
+            /**1 ~ DA is not already a member of this group */
             !data.getMember(itemID) &&
+            /**2 ~ DA is not already a leader of a group */
             !groupCollection
               .values()
               .some((group) => group.getLeader() == itemID)
@@ -123,7 +120,7 @@ export const GroupComponent = ({
       <ul>
         <li className="flex flex-row place-content-between font-bold">
           {data.getName() ||
-            assignableCollection.get(leader)?.getName() ||
+            (leader && assignableCollection.get(leader)?.getName()) ||
             groupID}
           <button
             className="rounded-sm border px-1"
@@ -133,7 +130,7 @@ export const GroupComponent = ({
           </button>
         </li>
         <li className="text-xs italic">{groupID}</li>
-        {!!leader && (
+        {leader && (
           <GroupLeaderComponent
             leaderID={leader}
             assignableCollection={assignableCollection}
@@ -193,16 +190,9 @@ const GroupLeaderComponent = ({
   leaderID: string;
   assignableCollection: Map<string, Assignable>;
 }) => {
-  const [data, setData] = useState<Assignable>(
+  const data =
     assignableCollection.get(leaderID) ||
-      new Assignable({ id: leaderID, name: "!ERROR!" })
-  );
-  useEffect(() => {
-    setData(
-      assignableCollection.get(leaderID) ||
-        new Assignable({ id: leaderID, name: "!ERROR!" })
-    );
-  }, [leaderID]);
+    new Assignable({ id: leaderID, name: "!ERROR!" });
 
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
@@ -232,8 +222,8 @@ const GroupLeaderComponent = ({
             data.getAttributeGroups().get(key) || ""
           )
         )
-        .filter(
-          ([, value]) => (Array.isArray(value) && value.length > 0) || value
+        .filter(([, value]) =>
+          Array.isArray(value) ? value.length > 0 : value
         )
         .map(([key, value]) => (
           <div
@@ -279,16 +269,9 @@ const GroupMemberComponent = ({
   handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
   clearSelect: () => void;
 }) => {
-  const [data, setData] = useState<Assignable>(
+  const data =
     assignableCollection.get(memberID) ||
-      new Assignable({ id: memberID, name: "!ERROR!" })
-  );
-  useEffect(() => {
-    setData(
-      assignableCollection.get(memberID) ||
-        new Assignable({ id: memberID, name: "!ERROR!" })
-    );
-  }, [memberID]);
+    new Assignable({ id: memberID, name: "!ERROR!" });
 
   const [{ isDragging }, drag, dragPreview] = useDrag<
     AssignableDragItem,
@@ -362,8 +345,8 @@ const GroupMemberComponent = ({
             data.getAttributeGroups().get(key) || ""
           )
         )
-        .filter(
-          ([, value]) => (Array.isArray(value) && value.length > 0) || value
+        .filter(([, value]) =>
+          Array.isArray(value) ? value.length > 0 : value
         )
         .map(([key, value]) => (
           <div
