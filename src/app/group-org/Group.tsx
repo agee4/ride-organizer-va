@@ -8,18 +8,18 @@ export class Group {
 
   constructor({
     id,
+    members,
     name,
     leader,
     size,
     notes,
-    members,
   }: {
     id: string;
+    members?: Set<string>;
     name?: string;
     leader?: string;
     size?: number;
     notes?: string;
-    members?: Set<string>;
   }) {
     this._id = id;
     this.members = members || new Set<string>();
@@ -31,6 +31,14 @@ export class Group {
 
   getID() {
     return this._id;
+  }
+
+  getAllMembers() {
+    return this.members;
+  }
+
+  getMember(id: string) {
+    return this.members.has(id);
   }
 
   getName() {
@@ -47,14 +55,6 @@ export class Group {
 
   getNotes() {
     return this.notes;
-  }
-
-  getAllMembers() {
-    return this.members;
-  }
-
-  getMember(id: string) {
-    return this.members.has(id);
   }
 }
 
@@ -94,4 +94,13 @@ export function filterGroups(array: Array<Group>, filter?: Array<string>) {
       return newArray;
     }
   return array;
+}
+
+export interface GroupJSON {
+  id: string;
+  members?: Array<string>;
+  name?: string;
+  leader?: string;
+  size?: number;
+  notes?: string;
 }

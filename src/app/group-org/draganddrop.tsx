@@ -1,5 +1,6 @@
 import { useDragLayer } from "react-dnd";
 import { Assignable } from "./Assignable";
+import { SetStateAction } from "react";
 
 export enum DNDType {
   ASSIGNABLE = "Assignable",
@@ -7,6 +8,50 @@ export enum DNDType {
 export interface AssignableDragItem {
   id: Array<string>;
 }
+
+export const handleSelectHelper = (
+  index: number,
+  shiftKey: boolean,
+  ctrlKey: boolean,
+  assignableArray: Array<string>,
+  prevSelectedIndex: number,
+  selectedAssignables: Array<string>,
+  setSelectedAssignables: (value: SetStateAction<string[]>) => void,
+  setPrevSelectedIndex: (value: SetStateAction<number>) => void
+) => {
+  let newSelectedAssignables = new Array<string>();
+  const newSelection = assignableArray[index];
+  const newPrevSelectedIndex = index;
+  if (shiftKey) {
+    if (prevSelectedIndex >= index) {
+      newSelectedAssignables = [
+        ...selectedAssignables,
+        ...assignableArray.slice(index, prevSelectedIndex),
+      ];
+    } else {
+      newSelectedAssignables = [
+        ...selectedAssignables,
+        ...assignableArray.slice(prevSelectedIndex + 1, index + 1),
+      ];
+    }
+  } else if (ctrlKey /* || selectMode */) {
+    if (!selectedAssignables.includes(newSelection))
+      newSelectedAssignables = [...selectedAssignables, newSelection];
+    else
+      newSelectedAssignables = selectedAssignables.filter(
+        (p) => p !== newSelection
+      );
+  } else {
+    if (!selectedAssignables.includes(newSelection))
+      newSelectedAssignables.push(newSelection);
+  }
+  setSelectedAssignables(
+    assignableArray
+      ? assignableArray.filter((a) => newSelectedAssignables.includes(a))
+      : new Array<string>()
+  );
+  setPrevSelectedIndex(newPrevSelectedIndex);
+};
 
 export const AssignableDragLayer = ({
   assignableCollection,

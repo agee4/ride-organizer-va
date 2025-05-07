@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
-import { AssignableDragItem, DNDType } from "./draganddrop";
+import { AssignableDragItem, DNDType, handleSelectHelper } from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group } from "./Group";
 
@@ -149,38 +149,16 @@ export const AssignableArrayComponent = ({
     setPrevSelectedIndex(-1);
   };
   const handleSelect = (index: number, shiftKey: boolean, ctrlKey: boolean) => {
-    let newSelectedAssignables = new Array<string>();
-    const newSelection = assignableArray[index];
-    const newPrevSelectedIndex = index;
-    if (shiftKey) {
-      if (prevSelectedIndex >= index) {
-        newSelectedAssignables = [
-          ...selectedAssignables,
-          ...assignableArray.slice(index, prevSelectedIndex),
-        ];
-      } else {
-        newSelectedAssignables = [
-          ...selectedAssignables,
-          ...assignableArray.slice(prevSelectedIndex + 1, index + 1),
-        ];
-      }
-    } else if (ctrlKey /* || selectMode */) {
-      if (!selectedAssignables.includes(newSelection))
-        newSelectedAssignables = [...selectedAssignables, newSelection];
-      else
-        newSelectedAssignables = selectedAssignables.filter(
-          (a) => a !== newSelection
-        );
-    } else {
-      if (!selectedAssignables.includes(newSelection))
-        newSelectedAssignables.push(newSelection);
-    }
-    setSelectedAssignables(
-      assignableArray
-        ? assignableArray.filter((a) => newSelectedAssignables.includes(a))
-        : new Array<string>()
+    handleSelectHelper(
+      index,
+      shiftKey,
+      ctrlKey,
+      assignableArray,
+      prevSelectedIndex,
+      selectedAssignables,
+      setSelectedAssignables,
+      setPrevSelectedIndex
     );
-    setPrevSelectedIndex(newPrevSelectedIndex);
   };
 
   const [{ canDrop, isOver }, drop] = useDrop<

@@ -3,17 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { useMapReducer, useSetReducer } from "./helpers";
-import {
-  defaultSettings,
-  presetArray,
-  PresetForm,
-  Setting,
-  SettingsForm,
-} from "./settings";
+import { convertToType, useMapReducer, useSetReducer } from "./helpers";
+import { defaultSettings, presetArray, Setting, SettingJSON } from "./settings";
 import { AssignableDragLayer } from "./draganddrop";
-import { Assignable, filterAssignables, sortAssignables } from "./Assignable";
-import { filterGroups, Group, sortGroups } from "./Group";
+import {
+  Assignable,
+  AssignableJSON,
+  filterAssignables,
+  sortAssignables,
+} from "./Assignable";
+import { filterGroups, Group, GroupJSON, sortGroups } from "./Group";
+import { PresetForm, SettingsForm } from "./SettingComponent";
 import { AssignableArrayComponent } from "./AssignableComponent";
 import { GroupComponent } from "./GroupComponent";
 import { AssignableForm } from "./AssignableForm";
@@ -29,37 +29,76 @@ export default function Page() {
 
   const [settings, setSettings] = useState<Setting>(defaultSettings);
 
-  const [presetCollection, presetDispatch] = useMapReducer(
-    new Map(presetArray.map((setting) => [setting.getName(), setting]))
+  const [presetCollection, presetDispatch] = useMapReducer<
+    string | undefined,
+    Setting
+  >(
+    new Map<string | undefined, Setting>(
+      presetArray.map((setting) => [setting.getName(), setting])
+    )
   );
 
   useEffect(() => {
     const storedSettingString = localStorage.getItem("settings");
     if (storedSettingString) {
-      const preset = presetCollection.get(
-        JSON.parse(storedSettingString)["name"]
-      );
+      const storedSettingJSON: SettingJSON = JSON.parse(storedSettingString);
+      console.log(storedSettingJSON);
+      const preset = presetCollection.get(storedSettingJSON["name"]);
       if (preset) setSettings(preset);
       else {
-        const storedSettingJSON = JSON.parse(storedSettingString);
-        console.log(storedSettingJSON);
-        setSettings(defaultSettings);
+        const newSetting = new Setting({
+          name: storedSettingJSON["name"],
+          assignableIDSource: storedSettingJSON["assignableIDSource"],
+          assignableNotes: storedSettingJSON["assignableNotes"],
+          useLeader: storedSettingJSON["useLeader"],
+          groupIDSource: storedSettingJSON["groupIDSource"],
+          groupCustomName: storedSettingJSON["groupCustomName"],
+          groupUseSize: storedSettingJSON["groupUseSize"],
+          groupSizeSource: storedSettingJSON["groupSizeSource"],
+          groupNotes: storedSettingJSON["groupNotes"],
+          autoGroups: storedSettingJSON["autoGroups"],
+        });
+        setSettings(newSetting);
+        if (storedSettingJSON["name"])
+          presetDispatch({
+            type: "create",
+            key: storedSettingJSON["name"],
+            value: newSetting,
+          });
       }
     }
     const storedAssignableString = localStorage.getItem("assignable");
     if (storedAssignableString) {
-      const storedAssignableJSON = JSON.parse(storedAssignableString);
-      for (const x in storedAssignableJSON) {
-        console.log(x);
-        console.log(storedAssignableJSON[x]);
+      const storedAssignableJSONCollection = JSON.parse(storedAssignableString);
+      for (const assignable in storedAssignableJSONCollection) {
+        const storedAssignableJSON: AssignableJSON =
+          storedAssignableJSONCollection[assignable];
         assignableDispatch({
           type: "create",
-          key: storedAssignableJSON[x]["_id"],
+          key: storedAssignableJSON["id"],
           value: new Assignable({
-            id: storedAssignableJSON[x]["_id"],
-            name: storedAssignableJSON[x]["name"],
-            leader: storedAssignableJSON[x]["leader"],
-            notes: storedAssignableJSON[x]["notes"],
+            id: storedAssignableJSON["id"],
+            name: storedAssignableJSON["name"],
+            attributes: new Map<string, string | number | boolean | string[]>(
+              storedAssignableJSON["attributekey"]?.map((key, index) => [
+                key,
+                convertToType(
+                  storedAssignableJSON["attributedata"]?.at(index) || "!ERROR!",
+                  storedAssignableJSON["attributetype"]?.at(index) || "!ERROR!"
+                ),
+              ])
+            ),
+            attributeGroups: new Map<string, string>(
+              storedAssignableJSON["attributekey"]?.map((key, index) => [
+                key,
+                storedAssignableJSON["attributegroup"]?.at(index) || "!ERROR!",
+              ])
+            ),
+            leader: storedAssignableJSON["leader"],
+            size: storedAssignableJSON["size"]
+              ? (storedAssignableJSON["size"] as number)
+              : undefined,
+            notes: storedAssignableJSON["notes"],
           }),
         });
       }
@@ -72,16 +111,19 @@ export default function Page() {
       });
     const storedGroupString = localStorage.getItem("group");
     if (storedGroupString) {
-      const storedGroupJSON = JSON.parse(storedGroupString);
-      for (const x in storedGroupJSON) {
+      const storedGroupJSONCollection = JSON.parse(storedGroupString);
+      for (const group in storedGroupJSONCollection) {
+        const storedGroupJSON: GroupJSON = storedGroupJSONCollection[group];
         groupDispatch({
           type: "create",
-          key: storedGroupJSON[x]["_id"],
+          key: storedGroupJSON["id"],
           value: new Group({
-            id: storedGroupJSON[x]["_id"],
-            name: storedGroupJSON[x]["name"],
-            leader: storedGroupJSON[x]["leader"],
-            notes: storedGroupJSON[x]["notes"],
+            id: storedGroupJSON["id"],
+            members: new Set<string>(storedGroupJSON["members"]),
+            name: storedGroupJSON["name"],
+            leader: storedGroupJSON["leader"],
+            size: storedGroupJSON["size"],
+            notes: storedGroupJSON["notes"],
           }),
         });
       }
@@ -89,13 +131,45 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("settings", JSON.stringify(settings));
+    localStorage.setItem(
+      "settings",
+      JSON.stringify({
+        name: settings.getName(),
+        assignableIDSource: settings.getAssignableIDSource(),
+        /* assignableFields: settings.getAssignableFields(), */
+        assignableNotes: settings.getAssignableNotes(),
+        useLeader: settings.getUseLeader(),
+        groupIDSource: settings.getGroupIDSource(),
+        groupCustomName: settings.getGroupCustomName(),
+        groupUseSize: settings.getGroupUseSize(),
+        groupSizeSource: settings.getGroupSizeSource(),
+        groupNotes: settings.getGroupNotes(),
+        autoGroups: settings.getAutoGroups(),
+      })
+    );
   }, [settings]);
 
   useEffect(() => {
-    const storage: Record<string, Assignable> = {};
-    for (const [key, value] of assignableCollection) storage[key] = value;
-    localStorage.setItem("assignable", JSON.stringify(storage));
+    const assignableStorage: Record<string, AssignableJSON> = {};
+    for (const [key, value] of assignableCollection) {
+      const assignableJSON: AssignableJSON = {
+        id: value.getID(),
+        name: value.getName(),
+        attributekey: Array.from(value.getAttributes().keys()),
+        attributedata: Array.from(value.getAttributes().values()).map((value) =>
+          value.toString()
+        ),
+        attributetype: Array.from(value.getAttributes().values()).map(
+          (value) => (Array.isArray(value) ? "array" : typeof value)
+        ),
+        attributegroup: Array.from(value.getAttributeGroups().values()),
+        leader: value.getLeader(),
+        size: value.getSize(),
+        notes: value.getNotes(),
+      };
+      assignableStorage[key] = assignableJSON;
+    }
+    localStorage.setItem("assignable", JSON.stringify(assignableStorage));
   }, [assignableCollection]);
   useEffect(() => {
     localStorage.setItem(
@@ -104,9 +178,19 @@ export default function Page() {
     );
   }, [unassignedCollection]);
   useEffect(() => {
-    const storage: Record<string, Group> = {};
-    for (const [key, value] of groupCollection) storage[key] = value;
-    localStorage.setItem("group", JSON.stringify(storage));
+    const groupStorage: Record<string, GroupJSON> = {};
+    for (const [key, value] of groupCollection) {
+      const groupJSON: GroupJSON = {
+        id: value.getID(),
+        members: Array.from(value.getAllMembers()),
+        name: value.getName(),
+        leader: value.getLeader(),
+        size: value.getSize(),
+        notes: value.getNotes(),
+      };
+      groupStorage[key] = groupJSON;
+    }
+    localStorage.setItem("group", JSON.stringify(groupStorage));
   }, [groupCollection]);
 
   const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);

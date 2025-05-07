@@ -1,14 +1,5 @@
 import { useReducer } from "react";
 
-/* type RecursiveMap<K, V> = Map<K, V | RecursiveMap<K, V>>; */
-export function mapEquals(first: Map<string, any>, second: Map<string, any>) {
-  if (first.size != second.size) return false;
-  for (const [key, value] of first) {
-    if (value !== second.get(key)) return false;
-  }
-  return true;
-}
-
 type ArrayReducerAction<V> =
   | { type: "create"; value: V }
   | { type: "delete"; value: V }
@@ -94,4 +85,28 @@ function setReducer<V>() {
 
 export function useSetReducer<V>(set?: Set<V>) {
   return useReducer(setReducer<V>(), set || new Set<V>());
+}
+
+/* type RecursiveMap<K, V> = Map<K, V | RecursiveMap<K, V>>; */
+export function mapEquals(first: Map<string, any>, second: Map<string, any>) {
+  if (first.size != second.size) return false;
+  for (const [key, value] of first) {
+    if (value !== second.get(key)) return false;
+  }
+  return true;
+}
+
+export function convertToType(value: string, type: string) {
+  switch (type) {
+    case "string":
+      return value as string;
+    case "number":
+      return Number.parseInt(value);
+    case "boolean":
+      return !!value;
+    case "array":
+      return value.split(",");
+    default:
+      throw new Error("Invalid type!");
+  }
 }

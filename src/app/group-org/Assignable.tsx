@@ -137,3 +137,15 @@ export function filterAssignables(
   }
   return array;
 }
+
+export interface AssignableJSON {
+  id: string;
+  name: string;
+  attributekey?: Array<string>;
+  attributedata?: Array<string>;
+  attributetype?: Array<string>;
+  attributegroup?: Array<string>;
+  leader?: boolean;
+  size?: number;
+  notes?: string;
+}
