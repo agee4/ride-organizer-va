@@ -127,9 +127,11 @@ export function filterAssignables(
         default:
           newArray = [...newArray].filter((value) => {
             const data = value.getAttributes()?.get(f.split("|").shift() || "");
-            return typeof data == "boolean"
-              ? data
-              : data == (f.split("|").pop() || "");
+            return Array.isArray(data)
+              ? data.includes(f.split("|").pop() || "")
+              : typeof data == "boolean"
+                ? data
+                : data == (f.split("|").pop() || "");
           });
       }
     }
@@ -141,11 +143,14 @@ export function filterAssignables(
 export interface AssignableJSON {
   id: string;
   name: string;
-  attributekey?: Array<string>;
-  attributedata?: Array<string>;
-  attributetype?: Array<string>;
-  attributegroup?: Array<string>;
+  attributes?: Array<string>;
   leader?: boolean;
   size?: number;
   notes?: string;
+}
+
+export interface AssignableAttrJSON {
+  key: string;
+  value: string | number | boolean | string[];
+  group: string;
 }

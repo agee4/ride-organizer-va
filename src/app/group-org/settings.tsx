@@ -5,7 +5,6 @@ export class Field {
   private required: boolean;
   private options: Set<string>;
   private multiple: boolean;
-  private preset: boolean;
 
   constructor({
     name,
@@ -14,7 +13,6 @@ export class Field {
     required,
     options,
     multiple,
-    preset,
   }: {
     name: string;
     type: string;
@@ -22,7 +20,6 @@ export class Field {
     required?: boolean;
     options?: Set<string>;
     multiple?: boolean;
-    preset?: boolean;
   }) {
     this.name = name;
     this.type = type;
@@ -30,7 +27,6 @@ export class Field {
     this.required = required || false;
     this.options = options || new Set<string>();
     this.multiple = multiple || false;
-    this.preset = preset || false;
   }
 
   getName() {
@@ -57,10 +53,6 @@ export class Field {
     return this.multiple;
   }
 
-  getPreset() {
-    return this.preset;
-  }
-
   getPlaceholderName() {
     return (
       this.name +
@@ -81,8 +73,7 @@ export class Field {
       this.group == other.group &&
       this.required == other.required &&
       optionsEquals(this.getOptions(), other.getOptions()) &&
-      this.multiple == other.multiple &&
-      this.preset == other.preset
+      this.multiple == other.multiple
     );
   }
 }
@@ -226,7 +217,6 @@ const bereanCollegeRidesSettings = new Setting({
         type: "email",
         group: "contact",
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -236,7 +226,6 @@ const bereanCollegeRidesSettings = new Setting({
         type: "tel",
         group: "contact",
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -253,7 +242,6 @@ const bereanCollegeRidesSettings = new Setting({
         ]),
         multiple: true,
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -263,7 +251,6 @@ const bereanCollegeRidesSettings = new Setting({
         type: "text",
         group: "location",
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -273,7 +260,6 @@ const bereanCollegeRidesSettings = new Setting({
         type: "select",
         group: "location",
         options: new Set<string>(["UCI", "CSULB", "Biola", "Chapman"]),
-        preset: true,
       }),
     ],
     [
@@ -283,7 +269,6 @@ const bereanCollegeRidesSettings = new Setting({
         type: "select",
         group: "affinity",
         options: new Set<string>(["Freshman", "Sophomore", "Junior", "Senior"]),
-        preset: true,
       }),
     ],
     [
@@ -299,7 +284,6 @@ const bereanCollegeRidesSettings = new Setting({
           "Sunday Third",
         ]),
         multiple: true,
-        preset: true,
       }),
     ],
   ]),
@@ -322,7 +306,6 @@ const bibleStudyTablesSettings = new Setting({
         type: "email",
         group: "contact",
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -332,7 +315,6 @@ const bibleStudyTablesSettings = new Setting({
         type: "tel",
         group: "contact",
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -342,7 +324,6 @@ const bibleStudyTablesSettings = new Setting({
         type: "select",
         group: "affinity",
         options: new Set<string>(["College", "BAM", "FAM"]),
-        preset: true,
       }),
     ],
   ]),
@@ -363,7 +344,6 @@ const noLeaderGroupsSettings = new Setting({
         type: "email",
         group: "contact",
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -373,7 +353,6 @@ const noLeaderGroupsSettings = new Setting({
         type: "tel",
         group: "contact",
         required: true,
-        preset: true,
       }),
     ],
     [
@@ -383,7 +362,6 @@ const noLeaderGroupsSettings = new Setting({
         type: "select",
         group: "affinity",
         options: new Set<string>(["College", "BAM", "FAM"]),
-        preset: true,
       }),
     ],
   ]),
@@ -408,7 +386,7 @@ export const presetArray = [
 export interface SettingJSON {
   name?: string;
   assignableIDSource?: string;
-  assignableFields?: Map<string, Field>;
+  assignableFields?: Array<string>;
   assignableNotes?: boolean;
   useLeader?: boolean;
   groupIDSource?: string;
@@ -417,4 +395,13 @@ export interface SettingJSON {
   groupSizeSource?: string;
   groupNotes?: boolean;
   autoGroups?: boolean;
+}
+
+export interface FieldJSON {
+  name: string;
+  type: string;
+  group: string;
+  required: boolean;
+  options: Array<string>;
+  multiple: boolean;
 }

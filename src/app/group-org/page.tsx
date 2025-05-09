@@ -4,10 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { convertToType, useMapReducer, useSetReducer } from "./helpers";
-import { defaultSettings, presetArray, Setting, SettingJSON } from "./settings";
+import {
+  defaultSettings,
+  Field,
+  FieldJSON,
+  presetArray,
+  Setting,
+  SettingJSON,
+} from "./settings";
 import { AssignableDragLayer } from "./draganddrop";
 import {
   Assignable,
+  AssignableAttrJSON,
   AssignableJSON,
   filterAssignables,
   sortAssignables,
@@ -42,13 +50,29 @@ export default function Page() {
     const storedSettingString = localStorage.getItem("settings");
     if (storedSettingString) {
       const storedSettingJSON: SettingJSON = JSON.parse(storedSettingString);
-      console.log(storedSettingJSON);
       const preset = presetCollection.get(storedSettingJSON["name"]);
       if (preset) setSettings(preset);
       else {
+        const newSettingFields = new Map<string, Field>();
+        if (storedSettingJSON["assignableFields"])
+          for (const FieldJSONString of storedSettingJSON["assignableFields"]) {
+            const storedField: FieldJSON = JSON.parse(FieldJSONString);
+            newSettingFields.set(
+              storedField["name"],
+              new Field({
+                name: storedField["name"],
+                type: storedField["type"],
+                group: storedField["group"],
+                required: storedField["required"],
+                options: new Set<string>(storedField["options"]),
+                multiple: storedField["multiple"],
+              })
+            );
+          }
         const newSetting = new Setting({
           name: storedSettingJSON["name"],
           assignableIDSource: storedSettingJSON["assignableIDSource"],
+          assignableFields: newSettingFields,
           assignableNotes: storedSettingJSON["assignableNotes"],
           useLeader: storedSettingJSON["useLeader"],
           groupIDSource: storedSettingJSON["groupIDSource"],
@@ -69,39 +93,35 @@ export default function Page() {
     }
     const storedAssignableString = localStorage.getItem("assignable");
     if (storedAssignableString) {
-      const storedAssignableJSONCollection = JSON.parse(storedAssignableString);
-      for (const assignable in storedAssignableJSONCollection) {
-        const storedAssignableJSON: AssignableJSON =
-          storedAssignableJSONCollection[assignable];
+      const storedAssignableArray: Array<AssignableJSON> = JSON.parse(
+        storedAssignableString
+      );
+      for (const storedAssignable of storedAssignableArray)
         assignableDispatch({
           type: "create",
-          key: storedAssignableJSON["id"],
+          key: storedAssignable["id"],
           value: new Assignable({
-            id: storedAssignableJSON["id"],
-            name: storedAssignableJSON["name"],
+            id: storedAssignable["id"],
+            name: storedAssignable["name"],
             attributes: new Map<string, string | number | boolean | string[]>(
-              storedAssignableJSON["attributekey"]?.map((key, index) => [
-                key,
-                convertToType(
-                  storedAssignableJSON["attributedata"]?.at(index) || "!ERROR!",
-                  storedAssignableJSON["attributetype"]?.at(index) || "!ERROR!"
-                ),
-              ])
+              storedAssignable["attributes"]?.map((value) => {
+                const test: AssignableAttrJSON = JSON.parse(value);
+                return [test["key"], test["value"]];
+              })
             ),
             attributeGroups: new Map<string, string>(
-              storedAssignableJSON["attributekey"]?.map((key, index) => [
-                key,
-                storedAssignableJSON["attributegroup"]?.at(index) || "!ERROR!",
-              ])
+              storedAssignable["attributes"]?.map((value) => {
+                const test: AssignableAttrJSON = JSON.parse(value);
+                return [test["key"], test["group"]];
+              })
             ),
-            leader: storedAssignableJSON["leader"],
-            size: storedAssignableJSON["size"]
-              ? (storedAssignableJSON["size"] as number)
+            leader: storedAssignable["leader"],
+            size: storedAssignable["size"]
+              ? (storedAssignable["size"] as number)
               : undefined,
-            notes: storedAssignableJSON["notes"],
+            notes: storedAssignable["notes"],
           }),
         });
-      }
     }
     const storedUnassignedString = localStorage.getItem("unassigned");
     if (storedUnassignedString)
@@ -111,19 +131,18 @@ export default function Page() {
       });
     const storedGroupString = localStorage.getItem("group");
     if (storedGroupString) {
-      const storedGroupJSONCollection = JSON.parse(storedGroupString);
-      for (const group in storedGroupJSONCollection) {
-        const storedGroupJSON: GroupJSON = storedGroupJSONCollection[group];
+      const storedGroupArray: Array<GroupJSON> = JSON.parse(storedGroupString);
+      for (const storedGroup of storedGroupArray) {
         groupDispatch({
           type: "create",
-          key: storedGroupJSON["id"],
+          key: storedGroup["id"],
           value: new Group({
-            id: storedGroupJSON["id"],
-            members: new Set<string>(storedGroupJSON["members"]),
-            name: storedGroupJSON["name"],
-            leader: storedGroupJSON["leader"],
-            size: storedGroupJSON["size"],
-            notes: storedGroupJSON["notes"],
+            id: storedGroup["id"],
+            members: new Set<string>(storedGroup["members"]),
+            name: storedGroup["name"],
+            leader: storedGroup["leader"],
+            size: storedGroup["size"],
+            notes: storedGroup["notes"],
           }),
         });
       }
@@ -131,12 +150,24 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
+    const settingFields = new Array<string>();
+    for (const field of settings.getAssignableFields().values()) {
+      const fieldString = JSON.stringify({
+        name: field.getName(),
+        type: field.getType(),
+        group: field.getGroup(),
+        required: field.getRequired(),
+        options: Array.from(field.getOptions()),
+        multiple: field.getMultiple(),
+      });
+      settingFields.push(fieldString);
+    }
     localStorage.setItem(
       "settings",
       JSON.stringify({
         name: settings.getName(),
         assignableIDSource: settings.getAssignableIDSource(),
-        /* assignableFields: settings.getAssignableFields(), */
+        assignableFields: settingFields,
         assignableNotes: settings.getAssignableNotes(),
         useLeader: settings.getUseLeader(),
         groupIDSource: settings.getGroupIDSource(),
@@ -148,26 +179,26 @@ export default function Page() {
       })
     );
   }, [settings]);
-
   useEffect(() => {
-    const assignableStorage: Record<string, AssignableJSON> = {};
-    for (const [key, value] of assignableCollection) {
-      const assignableJSON: AssignableJSON = {
-        id: value.getID(),
-        name: value.getName(),
-        attributekey: Array.from(value.getAttributes().keys()),
-        attributedata: Array.from(value.getAttributes().values()).map((value) =>
-          value.toString()
-        ),
-        attributetype: Array.from(value.getAttributes().values()).map(
-          (value) => (Array.isArray(value) ? "array" : typeof value)
-        ),
-        attributegroup: Array.from(value.getAttributeGroups().values()),
-        leader: value.getLeader(),
-        size: value.getSize(),
-        notes: value.getNotes(),
-      };
-      assignableStorage[key] = assignableJSON;
+    const assignableStorage = new Array<AssignableJSON>();
+    for (const assignable of assignableCollection.values()) {
+      const assignableAttributes = new Array<string>();
+      for (const [attrkey, attrval] of assignable.getAttributes().entries())
+        assignableAttributes.push(
+          JSON.stringify({
+            key: attrkey,
+            value: attrval,
+            group: assignable.getAttributeGroups().get(attrkey) || "!ERROR!",
+          })
+        );
+      assignableStorage.push({
+        id: assignable.getID(),
+        name: assignable.getName(),
+        attributes: assignableAttributes,
+        leader: assignable.getLeader(),
+        size: assignable.getSize(),
+        notes: assignable.getNotes(),
+      });
     }
     localStorage.setItem("assignable", JSON.stringify(assignableStorage));
   }, [assignableCollection]);
@@ -178,17 +209,16 @@ export default function Page() {
     );
   }, [unassignedCollection]);
   useEffect(() => {
-    const groupStorage: Record<string, GroupJSON> = {};
-    for (const [key, value] of groupCollection) {
-      const groupJSON: GroupJSON = {
-        id: value.getID(),
-        members: Array.from(value.getAllMembers()),
-        name: value.getName(),
-        leader: value.getLeader(),
-        size: value.getSize(),
-        notes: value.getNotes(),
-      };
-      groupStorage[key] = groupJSON;
+    const groupStorage = new Array<GroupJSON>();
+    for (const group of groupCollection.values()) {
+      groupStorage.push({
+        id: group.getID(),
+        members: Array.from(group.getAllMembers()),
+        name: group.getName(),
+        leader: group.getLeader(),
+        size: group.getSize(),
+        notes: group.getNotes(),
+      });
     }
     localStorage.setItem("group", JSON.stringify(groupStorage));
   }, [groupCollection]);
@@ -367,11 +397,25 @@ export default function Page() {
 
   const filterArray = useMemo(() => {
     return Array.from(settings.getAssignableFields().entries()).filter(
-      ([, value]) => ["select", "checkbox"].includes(value.getType())
+      ([, field]) => ["select", "checkbox"].includes(field.getType())
     );
   }, [settings]);
 
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
+
+  const assignableFilterSize =
+    +settings.getUseLeader() +
+    filterArray.length +
+    filterArray
+      .map(([, field]) => field.getOptions().size)
+      .reduce((prev, curr) => prev + curr, 0);
+  const groupFilterSize =
+    +settings.getGroupUseSize() +
+    +settings.getUseLeader() *
+      (filterArray.length +
+        filterArray
+          .map(([, field]) => field.getOptions().size)
+          .reduce((prev, curr) => prev + curr, 0));
 
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
@@ -497,11 +541,7 @@ export default function Page() {
                       )
                     }
                     multiple
-                    size={
-                      +settings.getUseLeader() + filterArray.length < 5
-                        ? +settings.getUseLeader() + filterArray.length
-                        : 4
-                    }
+                    size={assignableFilterSize < 5 ? assignableFilterSize : 4}
                   >
                     {settings.getUseLeader() && (
                       <option value="leader">Leader</option>
@@ -592,14 +632,7 @@ export default function Page() {
                       )
                     }
                     multiple
-                    size={
-                      +settings.getGroupUseSize() +
-                        +settings.getUseLeader() * filterArray.length <
-                      5
-                        ? +settings.getGroupUseSize() +
-                          +settings.getUseLeader() * filterArray.length
-                        : 4
-                    }
+                    size={groupFilterSize < 5 ? groupFilterSize : 4}
                   >
                     {settings.getGroupUseSize() && (
                       <option value="unfull">Space Left</option>

@@ -219,7 +219,6 @@ export const SettingsForm = ({
           required: requiredField,
           options: fieldType == "select" ? selectOptions : undefined,
           multiple: fieldType == "select" ? multipleSelect : undefined,
-          preset: true,
         }),
       });
       setFieldName("");
