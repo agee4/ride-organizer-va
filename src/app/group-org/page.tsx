@@ -223,7 +223,6 @@ export default function Page() {
     localStorage.setItem("group", JSON.stringify(groupStorage));
   }, [groupCollection]);
 
-  const [showOnlyUnassigned, setShowOnlyUnassigned] = useState<boolean>(false);
   const [assignableSort, setAssignableSort] = useState<string>("");
   const [assignableReverse, setAssignableReverse] = useState<boolean>(false);
   const [assignableFilter, setAssignableFilter] = useState<Array<string>>(
@@ -233,15 +232,12 @@ export default function Page() {
     let newAssignableArray = sortAssignables(
       filterAssignables(
         Array.from(assignableCollection.values()),
+        unassignedCollection,
         assignableFilter
       ),
       assignableSort
     ).map((a) => a.getID());
     if (assignableReverse) newAssignableArray.reverse();
-    if (showOnlyUnassigned)
-      newAssignableArray = newAssignableArray.filter((a) =>
-        unassignedCollection.has(a)
-      );
     return newAssignableArray;
   }, [
     assignableCollection,
@@ -249,7 +245,6 @@ export default function Page() {
     assignableSort,
     assignableReverse,
     assignableFilter,
-    showOnlyUnassigned,
   ]);
 
   const [groupSort, setGroupSort] = useState<string>("");
@@ -258,18 +253,23 @@ export default function Page() {
     new Array<string>()
   );
   const groupArray = useMemo(() => {
-    return groupReverse
-      ? sortGroups(
-          filterGroups(Array.from(groupCollection.values()), groupFilter),
-          groupSort
-        )
-          .map((g) => g.getID())
-          .reverse()
-      : sortGroups(
-          filterGroups(Array.from(groupCollection.values()), groupFilter),
-          groupSort
-        ).map((g) => g.getID());
-  }, [groupCollection, groupSort, groupReverse, groupFilter]);
+    let newGroupArray = sortGroups(
+      filterGroups(
+        Array.from(groupCollection.values()),
+        assignableCollection,
+        groupFilter
+      ),
+      groupSort
+    ).map((g) => g.getID());
+    if (groupReverse) newGroupArray.reverse();
+    return newGroupArray;
+  }, [
+    groupCollection,
+    assignableCollection,
+    groupSort,
+    groupReverse,
+    groupFilter,
+  ]);
 
   const createAssignable = (assignable: Assignable) => {
     assignableDispatch({
@@ -395,13 +395,13 @@ export default function Page() {
     }
   };
 
+  const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
+
   const filterArray = useMemo(() => {
     return Array.from(settings.getAssignableFields().entries()).filter(
       ([, field]) => ["select", "checkbox"].includes(field.getType())
     );
   }, [settings]);
-
-  const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
   const assignableFilterSize =
     +settings.getUseLeader() +
@@ -466,15 +466,7 @@ export default function Page() {
             )}
             {assignableCollection.size > 0 && (
               <div className="relative rounded-md border p-1">
-                <input
-                  className="absolute top-2 right-2"
-                  type="checkbox"
-                  checked={showOnlyUnassigned}
-                  onChange={(e) => setShowOnlyUnassigned(e.target.checked)}
-                />
-                <h1 className="text-center">
-                  {!showOnlyUnassigned ? "Assignables" : "Unassigned"}
-                </h1>
+                <h1 className="text-center">Assignables</h1>
                 <select
                   className="rounded-sm border"
                   value={assignableSort}
@@ -543,8 +535,9 @@ export default function Page() {
                     multiple
                     size={assignableFilterSize < 5 ? assignableFilterSize : 4}
                   >
+                    <option value="_unassigned">Unassigned</option>
                     {settings.getUseLeader() && (
-                      <option value="leader">Leader</option>
+                      <option value="_leader">Leader</option>
                     )}
                     {filterArray.map(([key, value]) =>
                       value.getType() == "select" ? (
@@ -635,13 +628,15 @@ export default function Page() {
                     size={groupFilterSize < 5 ? groupFilterSize : 4}
                   >
                     {settings.getGroupUseSize() && (
-                      <option value="unfull">Space Left</option>
+                      <option value="_unfull">Space Left</option>
                     )}
                     {filterArray.map(([key, value]) =>
                       value.getType() == "select" ? (
                         <optgroup key={key} label={key}>
                           {Array.from(value.getOptions()).map((option) => (
-                            <option key={option}>{option}</option>
+                            <option value={key + "|" + option} key={option}>
+                              {option}
+                            </option>
                           ))}
                         </optgroup>
                       ) : (

@@ -114,6 +114,7 @@ export function sortAssignables(array: Array<Assignable>, sort?: string) {
 /**Intersectional filtering: only return Assignables that meet all filter requirements */
 export function filterAssignables(
   array: Array<Assignable>,
+  unassigned: Set<string>,
   filter?: Array<string>
 ) {
   /**ensure filter exists and has at least one element in it before processing */
@@ -121,7 +122,10 @@ export function filterAssignables(
     let newArray = [...array];
     for (const f of filter) {
       switch (f) {
-        case "leader":
+        case "_unassigned":
+          newArray = [...newArray].filter((value) => unassigned.has(value.getID()));
+          break;
+        case "_leader":
           newArray = [...newArray].filter((value) => value.getLeader());
           break;
         default:

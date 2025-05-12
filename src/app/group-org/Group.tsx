@@ -1,3 +1,5 @@
+import { Assignable } from "./Assignable";
+
 export class Group {
   private _id: string;
   private members: Set<string>;
@@ -76,19 +78,39 @@ export function sortGroups(array: Array<Group>, sort?: string | undefined) {
   return array;
 }
 
-export function filterGroups(array: Array<Group>, filter?: Array<string>) {
+export function filterGroups(
+  array: Array<Group>,
+  assignableCollection: Map<string, Assignable>,
+  filter?: Array<string>
+) {
   if (filter)
     if (filter.length > 0) {
       let newArray = [...array];
       for (const f of filter) {
         switch (f) {
-          case "unfull":
+          case "_unfull":
             newArray = [...newArray].filter(
               (value) =>
                 value.getSize() == undefined ||
                 (value.getSize() || 0) > value.getAllMembers().size
             );
             break;
+          default:
+            newArray = [...newArray].filter((value) => {
+              const leader = assignableCollection.get(
+                value.getLeader() || "!ERROR!"
+              );
+              if (leader) {
+                const data = leader
+                  .getAttributes()
+                  ?.get(f.split("|").shift() || "");
+                return Array.isArray(data)
+                  ? data.includes(f.split("|").pop() || "")
+                  : typeof data == "boolean"
+                    ? data
+                    : data == (f.split("|").pop() || "");
+              } else return false;
+            });
         }
       }
       return newArray;

@@ -170,7 +170,6 @@ export const AssignableForm = ({
           >
             {["number", "checkbox", "select"].includes(field.getType()) &&
               field.getName() + (field.getRequired() ? "*" : "") + ":"}
-
             <select
               className="rounded-sm border"
               name={field.getName()}
@@ -272,6 +271,7 @@ export const AssignableForm = ({
                 ? 1
                 : undefined
             }
+            min={field.getType() == "number" ? 0 : undefined}
             onChange={updateDataInput}
             key={field.getName()}
           />
@@ -288,7 +288,7 @@ export const AssignableForm = ({
         </label>
       )}
       {isLeader && settings.getGroupSizeSource() == "leadersize" && (
-        <label className="flex flex-row place-content-between">
+        <label className="flex flex-row flex-wrap place-content-between">
           Size*:
           <input
             className="rounded-sm border"
