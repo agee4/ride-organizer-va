@@ -1,9 +1,15 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
+import {
+  AssignableDragItem,
+  DNDType,
+  handleSelectHelper,
+  useDNDRef,
+} from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group } from "./Group";
-import { AssignableDragItem, DNDType, handleSelectHelper } from "./draganddrop";
+import { AssignableComponent } from "./AssignableComponent";
 
 export const GroupComponent = ({
   groupID,
@@ -83,8 +89,7 @@ export const GroupComponent = ({
     }),
     [data, groupCollection, addGroupMember, size]
   );
-  const dropRef = useRef<HTMLDivElement>(null);
-  drop(dropRef);
+  const dropRef = useDNDRef(drop);
 
   const removeMember = (memberID: string) => {
     removeGroupMember(groupID, memberID);
@@ -173,7 +178,7 @@ const GroupLeaderComponent = ({
     new Assignable({ id: leaderID, name: "!ERROR!" });
 
   return (
-    <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+    <div className="my-1 max-w-[496px] rounded-md bg-emerald-200 p-2 dark:bg-emerald-800">
       <div className="flex flex-row place-content-between font-bold">
         {data.getName()}
       </div>
@@ -182,7 +187,7 @@ const GroupLeaderComponent = ({
         .filter(([key]) => data.getAttributeGroups().get(key) == "contact")
         .map(([key, value]) => (
           <div
-            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
             key={key}
           >
             <span>{key}:</span>
@@ -259,10 +264,7 @@ const GroupMemberComponent = ({
     () => ({
       type: DNDType.ASSIGNABLE,
       item: {
-        id:
-          selectedAssignables.length > 0
-            ? selectedAssignables.map((passenger) => passenger)
-            : [memberID],
+        id: selectedAssignables.length > 0 ? selectedAssignables : [memberID],
       },
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
@@ -273,8 +275,7 @@ const GroupMemberComponent = ({
     }),
     [selectedAssignables]
   );
-  const dragRef = useRef<HTMLDivElement>(null);
-  drag(dragRef);
+  const dragRef = useDNDRef(drag);
   dragPreview(getEmptyImage());
 
   const selected = selectedAssignables.includes(memberID);
@@ -291,14 +292,12 @@ const GroupMemberComponent = ({
     >
       <div className="flex flex-row place-content-between font-bold">
         {data.getName()}
-        {removeMember && (
-          <button
-            className="rounded-sm border px-1"
-            onClick={() => removeMember(memberID)}
-          >
-            &times;
-          </button>
-        )}
+        <button
+          className="rounded-sm border px-1"
+          onClick={() => removeMember(memberID)}
+        >
+          &times;
+        </button>
       </div>
       <div className="text-xs italic">{memberID}</div>
       {Array.from(data.getAttributes() as Map<string, string>)

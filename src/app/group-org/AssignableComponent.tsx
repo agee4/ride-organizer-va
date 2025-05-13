@@ -1,11 +1,16 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
-import { AssignableDragItem, DNDType, handleSelectHelper } from "./draganddrop";
+import {
+  AssignableDragItem,
+  DNDType,
+  handleSelectHelper,
+  useDNDRef,
+} from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group } from "./Group";
 
-const AssignableComponent = ({
+export const AssignableComponent = ({
   assignableID,
   assignableCollection,
   deleteAssignable,
@@ -46,8 +51,7 @@ const AssignableComponent = ({
     }),
     [selectedAssignables]
   );
-  const dragRef = useRef<HTMLDivElement>(null);
-  drag(dragRef);
+  const dragRef = useDNDRef(drag);
   dragPreview(getEmptyImage());
 
   const selected = selectedAssignables.includes(assignableID);
@@ -197,8 +201,7 @@ export const AssignableArrayComponent = ({
       removeGroupMember,
     ]
   );
-  const dropRef = useRef<HTMLDivElement>(null);
-  drop(dropRef);
+  const dropRef = useDNDRef(drop);
 
   return (
     <div

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { convertToType, useMapReducer, useSetReducer } from "./helpers";
+import { useMapReducer, useSetReducer } from "./helpers";
 import {
   defaultSettings,
   Field,
@@ -396,6 +396,9 @@ export default function Page() {
   };
 
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
+  const [showAssignableFilter, setShowAssignableFilter] =
+    useState<boolean>(false);
+  const [showGroupFilter, setShowGroupFilter] = useState<boolean>(false);
 
   const filterArray = useMemo(() => {
     return Array.from(settings.getAssignableFields().entries()).filter(
@@ -403,24 +406,38 @@ export default function Page() {
     );
   }, [settings]);
 
-  const assignableFilterSize =
-    +settings.getUseLeader() +
-    filterArray.length +
-    filterArray
-      .map(([, field]) => field.getOptions().size)
-      .reduce((prev, curr) => prev + curr, 0);
-  const groupFilterSize =
-    +settings.getGroupUseSize() +
-    +settings.getUseLeader() *
-      (filterArray.length +
-        filterArray
-          .map(([, field]) => field.getOptions().size)
-          .reduce((prev, curr) => prev + curr, 0));
+  const assignableFilterSize = useMemo(() => {
+    const fullAssignableFilterSize =
+      +settings.getUseLeader() +
+      filterArray.length +
+      filterArray
+        .map(([, field]) => field.getOptions().size)
+        .reduce((prev, curr) => prev + curr, 0);
+    return fullAssignableFilterSize < 5 ? fullAssignableFilterSize : 4;
+  }, [settings, filterArray]);
+  const groupFilterSize = useMemo(() => {
+    const fullGroupFilterSize =
+      +settings.getGroupUseSize() +
+      +settings.getUseLeader() *
+        (filterArray.length +
+          filterArray
+            .map(([, field]) => field.getOptions().size)
+            .reduce((prev, curr) => prev + curr, 0));
+    return fullGroupFilterSize < 5 ? fullGroupFilterSize : 4;
+  }, [settings, filterArray]);
+  const showGroupForm = useMemo(() => {
+    return (
+      settings.getGroupIDSource() != "leader" ||
+      Array.from(unassignedCollection).some((a) =>
+        assignableCollection.get(a)?.getLeader()
+      )
+    );
+  }, [settings, assignableCollection, unassignedCollection]);
 
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
       <main className="row-start-2 flex flex-col items-center gap-8">
-        <h1>group organizer test</h1>
+        <h1>GroupU Org ~ Group Organizer</h1>
         <div className="relative rounded-md border p-1">
           <button
             className={showSettingsForm ? "absolute top-1 right-2" : ""}
@@ -451,10 +468,7 @@ export default function Page() {
               settings={settings}
               createAssignable={createAssignable}
             />
-            {settings.getGroupIDSource() != "leader" ||
-            Array.from(unassignedCollection).some((a) =>
-              assignableCollection.get(a)?.getLeader()
-            ) ? (
+            {showGroupForm ? (
               <GroupForm
                 settings={settings}
                 createGroup={createGroup}
@@ -464,130 +478,39 @@ export default function Page() {
             ) : (
               <div />
             )}
-            {assignableCollection.size > 0 && (
+            {!!assignableCollection.size && (
               <div className="relative rounded-md border p-1">
                 <h1 className="text-center">Assignables</h1>
-                <select
-                  className="rounded-sm border"
-                  value={assignableSort}
-                  onChange={(e) => setAssignableSort(e.target.value)}
-                >
-                  <option className="dark:text-black" value="">
-                    --Sort--
-                  </option>
-                  <option className="dark:text-black" value="name">
-                    Name
-                  </option>
-                  {settings.getUseLeader() && (
-                    <option className="dark:text-black" value="leader">
-                      Leader
+                <div className="flex flex-row place-content-end">
+                  <select
+                    className={
+                      "rounded-sm border " +
+                      (!assignableSort && "text-neutral-500")
+                    }
+                    value={assignableSort}
+                    onChange={(e) => setAssignableSort(e.target.value)}
+                  >
+                    <option className="dark:text-black" value="">
+                      --Sort--
                     </option>
-                  )}
-                  {settings.getUseLeader() &&
-                    settings.getGroupSizeSource() != "groupsize" && (
-                      <option className="dark:text-black" value="size">
-                        Size
+                    <option className="dark:text-black" value="name">
+                      Name
+                    </option>
+                    {settings.getUseLeader() && (
+                      <option className="dark:text-black" value="leader">
+                        Leader
                       </option>
                     )}
-                  {Array.from(settings.getAssignableFields().entries())
-                    .filter(([, value]) =>
-                      ["text", "number"].includes(value.getType())
-                    )
-                    .map(([key, value]) =>
-                      value.getType() == "select" ? (
-                        <optgroup
-                          className="dark:text-black"
-                          key={key}
-                          label={key}
-                        >
-                          {Array.from(value.getOptions()).map((option) => (
-                            <option className="dark:text-black" key={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ) : (
-                        <option className="dark:text-black" key={key}>
-                          {key}
+                    {settings.getUseLeader() &&
+                      settings.getGroupSizeSource() != "groupsize" && (
+                        <option className="dark:text-black" value="size">
+                          Size
                         </option>
+                      )}
+                    {Array.from(settings.getAssignableFields().entries())
+                      .filter(([, value]) =>
+                        ["text", "number"].includes(value.getType())
                       )
-                    )}
-                </select>
-                <button
-                  className="ml-1 font-bold text-neutral-500"
-                  onClick={() => setAssignableReverse(!assignableReverse)}
-                >
-                  {assignableReverse ? (
-                    <span>&uarr;</span>
-                  ) : (
-                    <span>&darr;</span>
-                  )}
-                </button>
-                {(settings.getUseLeader() || filterArray.length > 0) && (
-                  <select
-                    className="rounded-sm border"
-                    value={assignableFilter}
-                    onChange={(e) =>
-                      setAssignableFilter(
-                        [...e.target.selectedOptions].map((o) => o.value)
-                      )
-                    }
-                    multiple
-                    size={assignableFilterSize < 5 ? assignableFilterSize : 4}
-                  >
-                    <option value="_unassigned">Unassigned</option>
-                    {settings.getUseLeader() && (
-                      <option value="_leader">Leader</option>
-                    )}
-                    {filterArray.map(([key, value]) =>
-                      value.getType() == "select" ? (
-                        <optgroup key={key} label={key}>
-                          {Array.from(value.getOptions()).map((option) => (
-                            <option value={key + "|" + option} key={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ) : (
-                        <option value={key} key={key}>
-                          {key}
-                        </option>
-                      )
-                    )}
-                  </select>
-                )}
-                <AssignableArrayComponent
-                  assignableArray={assignableArray}
-                  assignableCollection={assignableCollection}
-                  unassignedCollection={unassignedCollection}
-                  groupCollection={groupCollection}
-                  deleteAssignable={deleteAssignable}
-                  removeGroupMember={removeGroupMember}
-                />
-              </div>
-            )}
-            {groupCollection.size > 0 && (
-              <div className="rounded-md border p-1">
-                <h1 className="text-center">Groups</h1>
-                <select
-                  className="rounded-sm border"
-                  value={groupSort}
-                  onChange={(e) => setGroupSort(e.target.value)}
-                >
-                  <option className="dark:text-black" value="">
-                    --Sort--
-                  </option>
-                  <option className="dark:text-black" value="name">
-                    Name
-                  </option>
-                  {settings.getGroupUseSize() && (
-                    <option className="dark:text-black" value="size">
-                      Size
-                    </option>
-                  )}
-                  {settings.getUseLeader() &&
-                    Array.from(settings.getAssignableFields().entries())
-                      .filter(([, value]) => ["text"].includes(value.getType()))
                       .map(([key, value]) =>
                         value.getType() == "select" ? (
                           <optgroup
@@ -607,43 +530,205 @@ export default function Page() {
                           </option>
                         )
                       )}
-                </select>
-                <button
-                  className="ml-1 font-bold text-neutral-500"
-                  onClick={() => setGroupReverse(!groupReverse)}
-                >
-                  {groupReverse ? <span>&uarr;</span> : <span>&darr;</span>}
-                </button>
-                {(settings.getGroupUseSize() ||
-                  (settings.getUseLeader() && filterArray.length > 0)) && (
-                  <select
-                    className="rounded-sm border"
-                    value={groupFilter}
-                    onChange={(e) =>
-                      setGroupFilter(
-                        [...e.target.selectedOptions].map((o) => o.value)
-                      )
-                    }
-                    multiple
-                    size={groupFilterSize < 5 ? groupFilterSize : 4}
-                  >
-                    {settings.getGroupUseSize() && (
-                      <option value="_unfull">Space Left</option>
-                    )}
-                    {filterArray.map(([key, value]) =>
-                      value.getType() == "select" ? (
-                        <optgroup key={key} label={key}>
-                          {Array.from(value.getOptions()).map((option) => (
-                            <option value={key + "|" + option} key={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ) : (
-                        <option key={key}>{key}</option>
-                      )
-                    )}
                   </select>
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={() => setAssignableReverse(!assignableReverse)}
+                  >
+                    {assignableReverse ? (
+                      <span>&uarr;</span>
+                    ) : (
+                      <span>&darr;</span>
+                    )}
+                  </button>
+                </div>
+                {!!assignableFilterSize && (
+                  <div className="flex flex-row place-content-end">
+                    {showAssignableFilter ? (
+                      <select
+                        className="rounded-sm border"
+                        value={assignableFilter}
+                        onChange={(e) =>
+                          setAssignableFilter(
+                            [...e.target.selectedOptions].map((o) => o.value)
+                          )
+                        }
+                        multiple
+                        size={assignableFilterSize}
+                      >
+                        <option value="_unassigned">Unassigned</option>
+                        {settings.getUseLeader() && (
+                          <option value="_leader">Leader</option>
+                        )}
+                        {filterArray.map(([key, value]) =>
+                          value.getType() == "select" ? (
+                            <optgroup key={key} label={key}>
+                              {Array.from(value.getOptions()).map((option) => (
+                                <option value={key + "|" + option} key={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ) : (
+                            <option value={key} key={key}>
+                              {key}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    ) : (
+                      <p
+                        className={
+                          "rounded-sm border " +
+                          (assignableFilter.length < 1 &&
+                            " border-neutral-500 text-neutral-500")
+                        }
+                        onClick={() =>
+                          setShowAssignableFilter(!showAssignableFilter)
+                        }
+                      >
+                        {assignableFilter.length < 1
+                          ? "-Filter-"
+                          : assignableFilter.toLocaleString()}
+                      </p>
+                    )}
+                    <button
+                      className="ml-1 font-bold text-neutral-500"
+                      onClick={() =>
+                        setShowAssignableFilter(!showAssignableFilter)
+                      }
+                    >
+                      {showAssignableFilter ? (
+                        <span>&times;</span>
+                      ) : (
+                        <span>&hellip;</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+                <AssignableArrayComponent
+                  assignableArray={assignableArray}
+                  assignableCollection={assignableCollection}
+                  unassignedCollection={unassignedCollection}
+                  groupCollection={groupCollection}
+                  deleteAssignable={deleteAssignable}
+                  removeGroupMember={removeGroupMember}
+                />
+              </div>
+            )}
+            {groupCollection.size > 0 && (
+              <div className="rounded-md border p-1">
+                <h1 className="text-center">Groups</h1>
+                <div className="flex flex-row place-content-end">
+                  <select
+                    className={
+                      "rounded-sm border " + (!groupSort && "text-neutral-500")
+                    }
+                    value={groupSort}
+                    onChange={(e) => setGroupSort(e.target.value)}
+                  >
+                    <option className="dark:text-black" value="">
+                      --Sort--
+                    </option>
+                    <option className="dark:text-black" value="name">
+                      Name
+                    </option>
+                    {settings.getGroupUseSize() && (
+                      <option className="dark:text-black" value="size">
+                        Size
+                      </option>
+                    )}
+                    {settings.getUseLeader() &&
+                      Array.from(settings.getAssignableFields().entries())
+                        .filter(([, value]) =>
+                          ["text"].includes(value.getType())
+                        )
+                        .map(([key, value]) =>
+                          value.getType() == "select" ? (
+                            <optgroup
+                              className="dark:text-black"
+                              key={key}
+                              label={key}
+                            >
+                              {Array.from(value.getOptions()).map((option) => (
+                                <option
+                                  className="dark:text-black"
+                                  key={option}
+                                >
+                                  {option}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ) : (
+                            <option className="dark:text-black" key={key}>
+                              {key}
+                            </option>
+                          )
+                        )}
+                  </select>
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={() => setGroupReverse(!groupReverse)}
+                  >
+                    {groupReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+                  </button>
+                </div>
+                {!!groupFilterSize && (
+                  <div className="flex flex-row place-content-end">
+                    {showGroupFilter ? (
+                      <select
+                        className="rounded-sm border"
+                        value={groupFilter}
+                        onChange={(e) =>
+                          setGroupFilter(
+                            [...e.target.selectedOptions].map((o) => o.value)
+                          )
+                        }
+                        multiple
+                        size={groupFilterSize}
+                      >
+                        {settings.getGroupUseSize() && (
+                          <option value="_unfull">Space Left</option>
+                        )}
+                        {filterArray.map(([key, value]) =>
+                          value.getType() == "select" ? (
+                            <optgroup key={key} label={key}>
+                              {Array.from(value.getOptions()).map((option) => (
+                                <option value={key + "|" + option} key={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ) : (
+                            <option key={key}>{key}</option>
+                          )
+                        )}
+                      </select>
+                    ) : (
+                      <p
+                        className={
+                          "rounded-sm border " +
+                          (groupFilter.length < 1 &&
+                            " border-neutral-500 text-neutral-500")
+                        }
+                        onClick={() => setShowGroupFilter(!showGroupFilter)}
+                      >
+                        {groupFilter.length < 1
+                          ? "-Filter-"
+                          : groupFilter.toLocaleString()}
+                      </p>
+                    )}
+                    <button
+                      className="ml-1 font-bold text-neutral-500"
+                      onClick={() => setShowGroupFilter(!showGroupFilter)}
+                    >
+                      {showGroupFilter ? (
+                        <span>&times;</span>
+                      ) : (
+                        <span>&hellip;</span>
+                      )}
+                    </button>
+                  </div>
                 )}
                 <ul className="max-h-[70svh] overflow-auto">
                   {groupArray.map((value) => (

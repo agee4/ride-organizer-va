@@ -1,6 +1,6 @@
-import { useDragLayer } from "react-dnd";
+import { ConnectDragSource, ConnectDropTarget, useDragLayer } from "react-dnd";
 import { Assignable } from "./Assignable";
-import { SetStateAction } from "react";
+import { SetStateAction, useRef } from "react";
 
 export enum DNDType {
   ASSIGNABLE = "Assignable",
@@ -51,6 +51,13 @@ export const handleSelectHelper = (
       : new Array<string>()
   );
   setPrevSelectedIndex(newPrevSelectedIndex);
+};
+
+/**Generate and connect a ref to a drop target or drag source. */
+export const useDNDRef = (connect: ConnectDropTarget | ConnectDragSource) => {
+  const dndRef = useRef<HTMLDivElement>(null);
+  connect(dndRef);
+  return dndRef;
 };
 
 export const AssignableDragLayer = ({
