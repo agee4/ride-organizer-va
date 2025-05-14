@@ -118,7 +118,10 @@ export const GroupForm = ({
             (settings.getGroupIDSource() == "leader" ? " (ID)" : "") +
             ":"}
           <select
-            className="rounded-sm border"
+            className={
+                    "rounded-sm border " +
+                    (!leader && "text-neutral-500")
+                  }
             name="groupleader"
             value={leader}
             onChange={(e) => {
@@ -127,7 +130,7 @@ export const GroupForm = ({
             required={settings.getGroupIDSource() == "leader"}
           >
             <option className="dark:text-black" value="">
-              ---
+              --Leader--
             </option>
             {unassignedLeaderArray.map((a) => (
               <option className="dark:text-black" key={a} value={a}>

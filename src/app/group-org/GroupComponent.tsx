@@ -9,7 +9,6 @@ import {
 } from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group } from "./Group";
-import { AssignableComponent } from "./AssignableComponent";
 
 export const GroupComponent = ({
   groupID,
@@ -210,7 +209,7 @@ const GroupLeaderComponent = ({
         )
         .map(([key, value]) => (
           <div
-            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
             key={key}
           >
             {typeof value == "boolean" ? (
