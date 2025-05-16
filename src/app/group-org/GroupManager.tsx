@@ -4,7 +4,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { AssignableDragLayer } from "./draganddrop";
 import { Setting } from "./settings";
 import { Assignable, filterAssignables, sortAssignables } from "./Assignable";
-import { filterGroups, Group, sortGroups } from "./Group";
+import { filterGroups, Group, GroupManagerAction, sortGroups } from "./Group";
 import { UnassignedArrayComponent } from "./UnassignedComponent";
 import { GroupComponent } from "./GroupComponent";
 import { GroupForm } from "./GroupForm";
@@ -14,36 +14,31 @@ export const GroupManager = ({
   assignableCollection,
   unassignedCollection,
   groupCollection,
-  createGroup,
-  deleteGroup,
-  addGroupMember,
-  removeGroupMember,
+  groupDispatch,
 }: {
   settings: Setting;
   assignableCollection: Map<string, Assignable>;
   unassignedCollection: Set<string>;
   groupCollection: Map<string, Group>;
-  createGroup: (group: Group) => void;
-  deleteGroup: (groupID: string) => void;
-  addGroupMember: (groupID: string, memberID: string) => void;
-  removeGroupMember: (groupID: string, memberID: string) => void;
+  groupDispatch: (action: GroupManagerAction) => void;
 }) => {
   const [assignableSort, setAssignableSort] = useState<string>("");
   const [assignableReverse, setAssignableReverse] = useState<boolean>(false);
   const [assignableFilter, setAssignableFilter] = useState<Array<string>>(
     new Array<string>()
   );
-  const assignableArray = useMemo(() => {
-    let newAssignableArray = sortAssignables(
+  const unassignedArray = useMemo(() => {
+    let newUnassignedArray = sortAssignables(
       filterAssignables(
-        Array.from(assignableCollection.values()),
-        unassignedCollection,
+        Array.from(assignableCollection.values()).filter((value) =>
+          unassignedCollection.has(value.getID())
+        ),
         assignableFilter
       ),
       assignableSort
     ).map((a) => a.getID());
-    if (assignableReverse) newAssignableArray.reverse();
-    return newAssignableArray;
+    if (assignableReverse) newUnassignedArray.reverse();
+    return newUnassignedArray;
   }, [
     assignableCollection,
     unassignedCollection,
@@ -109,14 +104,12 @@ export const GroupManager = ({
     useState<boolean>(false);
   const [showGroupFilter, setShowGroupFilter] = useState<boolean>(false);
 
-  const addGroupMemberHelper = (groupID: string, memberID?: string) => {
-    addGroupMember(
-      groupID,
-      memberID
-        ? memberID
-        : assignableArray.filter((a) => unassignedCollection.has(a)).shift() ||
-            ""
-    );
+  const addGroupMember = (groupID: string, memberID?: string) => {
+    groupDispatch({
+      type: "addmember",
+      groupID: groupID,
+      memberID: memberID ? memberID : unassignedArray.shift() || "",
+    });
   };
   return (
     <DndProvider backend={HTML5Backend}>
@@ -125,7 +118,7 @@ export const GroupManager = ({
         {showGroupForm ? (
           <GroupForm
             settings={settings}
-            createGroup={createGroup}
+            groupDispatch={groupDispatch}
             unassignedCollection={unassignedCollection}
             assignableCollection={assignableCollection}
           />
@@ -136,66 +129,71 @@ export const GroupManager = ({
           {!!assignableCollection.size && (
             <div className="relative rounded-md border p-1">
               <h1 className="text-center">Unassigned</h1>
-              <div className="flex flex-row place-content-end">
-                <select
-                  className={
-                    "rounded-sm border " +
-                    (!assignableSort && "text-neutral-500")
-                  }
-                  value={assignableSort}
-                  onChange={(e) => setAssignableSort(e.target.value)}
-                >
-                  <option className="dark:text-black" value="">
-                    --Sort--
-                  </option>
-                  <option className="dark:text-black" value="name">
-                    Name
-                  </option>
-                  {settings.getUseLeader() && (
-                    <option className="dark:text-black" value="leader">
-                      Leader
+              <div className="flex flex-row place-content-between">
+                <span className="rounded-full bg-cyan-500 px-1">
+                  {unassignedArray.length} / {unassignedCollection.size}
+                </span>
+                <div className="flex flex-row place-content-end">
+                  <select
+                    className={
+                      "rounded-sm border " +
+                      (!assignableSort && "text-neutral-500")
+                    }
+                    value={assignableSort}
+                    onChange={(e) => setAssignableSort(e.target.value)}
+                  >
+                    <option className="dark:text-black" value="">
+                      --Sort--
                     </option>
-                  )}
-                  {settings.getUseLeader() &&
-                    settings.getGroupSizeSource() != "groupsize" && (
-                      <option className="dark:text-black" value="size">
-                        Size
+                    <option className="dark:text-black" value="name">
+                      Name
+                    </option>
+                    {settings.getUseLeader() && (
+                      <option className="dark:text-black" value="leader">
+                        Leader
                       </option>
                     )}
-                  {Array.from(settings.getAssignableFields().entries())
-                    .filter(([, value]) =>
-                      ["text", "number"].includes(value.getType())
-                    )
-                    .map(([key, value]) =>
-                      value.getType() == "select" ? (
-                        <optgroup
-                          className="dark:text-black"
-                          key={key}
-                          label={key}
-                        >
-                          {Array.from(value.getOptions()).map((option) => (
-                            <option className="dark:text-black" key={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ) : (
-                        <option className="dark:text-black" key={key}>
-                          {key}
+                    {settings.getUseLeader() &&
+                      settings.getGroupSizeSource() != "groupsize" && (
+                        <option className="dark:text-black" value="size">
+                          Size
                         </option>
+                      )}
+                    {Array.from(settings.getAssignableFields().entries())
+                      .filter(([, value]) =>
+                        ["text", "number"].includes(value.getType())
                       )
+                      .map(([key, value]) =>
+                        value.getType() == "select" ? (
+                          <optgroup
+                            className="dark:text-black"
+                            key={key}
+                            label={key}
+                          >
+                            {Array.from(value.getOptions()).map((option) => (
+                              <option className="dark:text-black" key={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : (
+                          <option className="dark:text-black" key={key}>
+                            {key}
+                          </option>
+                        )
+                      )}
+                  </select>
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={() => setAssignableReverse(!assignableReverse)}
+                  >
+                    {assignableReverse ? (
+                      <span>&uarr;</span>
+                    ) : (
+                      <span>&darr;</span>
                     )}
-                </select>
-                <button
-                  className="ml-1 font-bold text-neutral-500"
-                  onClick={() => setAssignableReverse(!assignableReverse)}
-                >
-                  {assignableReverse ? (
-                    <span>&uarr;</span>
-                  ) : (
-                    <span>&darr;</span>
-                  )}
-                </button>
+                  </button>
+                </div>
               </div>
               {!!unassignedFilterSize && (
                 <div className="flex flex-row place-content-end">
@@ -261,67 +259,74 @@ export const GroupManager = ({
                 </div>
               )}
               <UnassignedArrayComponent
-                assignableArray={assignableArray.filter((value) =>
-                  unassignedCollection.has(value)
-                )}
+                unassignedArray={unassignedArray}
                 assignableCollection={assignableCollection}
-                unassignedCollection={unassignedCollection}
                 groupCollection={groupCollection}
-                removeGroupMember={removeGroupMember}
+                groupDispatch={groupDispatch}
               />
             </div>
           )}
           {groupCollection.size > 0 && (
             <div className="rounded-md border p-1">
               <h1 className="text-center">Groups</h1>
-              <div className="flex flex-row place-content-end">
-                <select
-                  className={
-                    "rounded-sm border " + (!groupSort && "text-neutral-500")
-                  }
-                  value={groupSort}
-                  onChange={(e) => setGroupSort(e.target.value)}
-                >
-                  <option className="dark:text-black" value="">
-                    --Sort--
-                  </option>
-                  <option className="dark:text-black" value="name">
-                    Name
-                  </option>
-                  {settings.getGroupUseSize() && (
-                    <option className="dark:text-black" value="size">
-                      Size
+              <div className="flex flex-row place-content-between">
+                <span className="rounded-full bg-emerald-500 px-1">
+                  {groupArray.length} / {groupCollection.size}
+                </span>
+                <div className="flex flex-row place-content-end">
+                  <select
+                    className={
+                      "rounded-sm border " + (!groupSort && "text-neutral-500")
+                    }
+                    value={groupSort}
+                    onChange={(e) => setGroupSort(e.target.value)}
+                  >
+                    <option className="dark:text-black" value="">
+                      --Sort--
                     </option>
-                  )}
-                  {settings.getUseLeader() &&
-                    Array.from(settings.getAssignableFields().entries())
-                      .filter(([, value]) => ["text"].includes(value.getType()))
-                      .map(([key, value]) =>
-                        value.getType() == "select" ? (
-                          <optgroup
-                            className="dark:text-black"
-                            key={key}
-                            label={key}
-                          >
-                            {Array.from(value.getOptions()).map((option) => (
-                              <option className="dark:text-black" key={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ) : (
-                          <option className="dark:text-black" key={key}>
-                            {key}
-                          </option>
+                    <option className="dark:text-black" value="name">
+                      Name
+                    </option>
+                    {settings.getGroupUseSize() && (
+                      <option className="dark:text-black" value="size">
+                        Size
+                      </option>
+                    )}
+                    {settings.getUseLeader() &&
+                      Array.from(settings.getAssignableFields().entries())
+                        .filter(([, value]) =>
+                          ["text"].includes(value.getType())
                         )
-                      )}
-                </select>
-                <button
-                  className="ml-1 font-bold text-neutral-500"
-                  onClick={() => setGroupReverse(!groupReverse)}
-                >
-                  {groupReverse ? <span>&uarr;</span> : <span>&darr;</span>}
-                </button>
+                        .map(([key, value]) =>
+                          value.getType() == "select" ? (
+                            <optgroup
+                              className="dark:text-black"
+                              key={key}
+                              label={key}
+                            >
+                              {Array.from(value.getOptions()).map((option) => (
+                                <option
+                                  className="dark:text-black"
+                                  key={option}
+                                >
+                                  {option}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ) : (
+                            <option className="dark:text-black" key={key}>
+                              {key}
+                            </option>
+                          )
+                        )}
+                  </select>
+                  <button
+                    className="ml-1 font-bold text-neutral-500"
+                    onClick={() => setGroupReverse(!groupReverse)}
+                  >
+                    {groupReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+                  </button>
+                </div>
               </div>
               {!!groupFilterSize && (
                 <div className="flex flex-row place-content-end">
@@ -387,9 +392,8 @@ export const GroupManager = ({
                       groupID={value}
                       groupCollection={groupCollection}
                       assignableCollection={assignableCollection}
-                      deleteGroup={deleteGroup}
-                      addGroupMember={addGroupMemberHelper}
-                      removeGroupMember={removeGroupMember}
+                      addGroupMember={addGroupMember}
+                      groupDispatch={groupDispatch}
                     />
                   </li>
                 ))}

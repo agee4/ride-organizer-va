@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { Setting } from "./settings";
-import { Assignable, filterAssignables, sortAssignables } from "./Assignable";
+import {
+  Assignable,
+  AssignableManagerAction,
+  filterAssignables,
+  sortAssignables,
+} from "./Assignable";
 import { AssignableArrayComponent } from "./AssignableComponent";
 import { AssignableForm } from "./AssignableForm";
 
@@ -8,14 +13,12 @@ export const AssignableManager = ({
   settings,
   assignableCollection,
   unassignedCollection,
-  createAssignable,
-  deleteAssignable,
+  assignableDispatch,
 }: {
   settings: Setting;
   assignableCollection: Map<string, Assignable>;
   unassignedCollection: Set<string>;
-  createAssignable: (assignable: Assignable) => void;
-  deleteAssignable: (assignable: string) => void;
+  assignableDispatch: (action: AssignableManagerAction) => void;
 }) => {
   const [assignableSort, setAssignableSort] = useState<string>("");
   const [assignableReverse, setAssignableReverse] = useState<boolean>(false);
@@ -26,8 +29,8 @@ export const AssignableManager = ({
     let newAssignableArray = sortAssignables(
       filterAssignables(
         Array.from(assignableCollection.values()),
-        unassignedCollection,
-        assignableFilter
+        assignableFilter,
+        unassignedCollection
       ),
       assignableSort
     ).map((a) => a.getID());
@@ -80,63 +83,68 @@ export const AssignableManager = ({
         {showForm && (
           <AssignableForm
             settings={settings}
-            createAssignable={createAssignable}
+            assignableDispatch={assignableDispatch}
           />
         )}
       </div>
-      <div className="relative rounded-md border p-1">
+      <div className="relative max-w-xl rounded-md border p-1">
         <h1 className="text-center">Assignables</h1>
-        <div className="flex flex-row place-content-end">
-          <select
-            className={
-              "rounded-sm border " + (!assignableSort && "text-neutral-500")
-            }
-            value={assignableSort}
-            onChange={(e) => setAssignableSort(e.target.value)}
-          >
-            <option className="dark:text-black" value="">
-              --Sort--
-            </option>
-            <option className="dark:text-black" value="name">
-              Name
-            </option>
-            {settings.getUseLeader() && (
-              <option className="dark:text-black" value="leader">
-                Leader
+        <div className="flex flex-row place-content-between">
+          <span className="rounded-full bg-cyan-500 px-1">
+            {assignableArray.length} / {assignableCollection.size}
+          </span>
+          <div className="flex flex-row place-content-end">
+            <select
+              className={
+                "rounded-sm border " + (!assignableSort && "text-neutral-500")
+              }
+              value={assignableSort}
+              onChange={(e) => setAssignableSort(e.target.value)}
+            >
+              <option className="dark:text-black" value="">
+                --Sort--
               </option>
-            )}
-            {settings.getUseLeader() &&
-              settings.getGroupSizeSource() != "groupsize" && (
-                <option className="dark:text-black" value="size">
-                  Size
+              <option className="dark:text-black" value="name">
+                Name
+              </option>
+              {settings.getUseLeader() && (
+                <option className="dark:text-black" value="leader">
+                  Leader
                 </option>
               )}
-            {Array.from(settings.getAssignableFields().entries())
-              .filter(([, value]) =>
-                ["text", "number"].includes(value.getType())
-              )
-              .map(([key, value]) =>
-                value.getType() == "select" ? (
-                  <optgroup className="dark:text-black" key={key} label={key}>
-                    {Array.from(value.getOptions()).map((option) => (
-                      <option className="dark:text-black" key={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : (
-                  <option className="dark:text-black" key={key}>
-                    {key}
+              {settings.getUseLeader() &&
+                settings.getGroupSizeSource() != "groupsize" && (
+                  <option className="dark:text-black" value="size">
+                    Size
                   </option>
+                )}
+              {Array.from(settings.getAssignableFields().entries())
+                .filter(([, value]) =>
+                  ["text", "number"].includes(value.getType())
                 )
-              )}
-          </select>
-          <button
-            className="ml-1 font-bold text-neutral-500"
-            onClick={() => setAssignableReverse(!assignableReverse)}
-          >
-            {assignableReverse ? <span>&uarr;</span> : <span>&darr;</span>}
-          </button>
+                .map(([key, value]) =>
+                  value.getType() == "select" ? (
+                    <optgroup className="dark:text-black" key={key} label={key}>
+                      {Array.from(value.getOptions()).map((option) => (
+                        <option className="dark:text-black" key={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : (
+                    <option className="dark:text-black" key={key}>
+                      {key}
+                    </option>
+                  )
+                )}
+            </select>
+            <button
+              className="ml-1 font-bold text-neutral-500"
+              onClick={() => setAssignableReverse(!assignableReverse)}
+            >
+              {assignableReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+            </button>
+          </div>
         </div>
         {!!assignableFilterSize && (
           <div className="flex flex-row place-content-end">
@@ -203,7 +211,7 @@ export const AssignableManager = ({
         <AssignableArrayComponent
           assignableArray={assignableArray}
           assignableCollection={assignableCollection}
-          deleteAssignable={deleteAssignable}
+          assignableDispatch={assignableDispatch}
         />
       </div>
     </div>

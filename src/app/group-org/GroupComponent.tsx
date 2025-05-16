@@ -8,22 +8,20 @@ import {
   useDNDRef,
 } from "./draganddrop";
 import { Assignable } from "./Assignable";
-import { Group } from "./Group";
+import { Group, GroupManagerAction } from "./Group";
 
 export const GroupComponent = ({
   groupID,
   groupCollection,
   assignableCollection,
-  deleteGroup,
   addGroupMember,
-  removeGroupMember,
+  groupDispatch,
 }: {
   groupID: string;
   groupCollection: Map<string, Group>;
   assignableCollection: Map<string, Assignable>;
-  deleteGroup: (groupID: string) => void;
   addGroupMember: (groupID: string, memberID?: string) => void;
-  removeGroupMember: (groupID: string, memberID: string) => void;
+  groupDispatch: (action: GroupManagerAction) => void;
 }) => {
   const data = groupCollection.get(groupID) || new Group({ id: "!ERROR!" });
   const assignableArray = Array.from(data.getAllMembers());
@@ -91,7 +89,11 @@ export const GroupComponent = ({
   const dropRef = useDNDRef(drop);
 
   const removeMember = (memberID: string) => {
-    removeGroupMember(groupID, memberID);
+    groupDispatch({
+      type: "removemember",
+      groupID: groupID,
+      memberID: memberID,
+    });
   };
 
   return (
@@ -106,7 +108,7 @@ export const GroupComponent = ({
             groupID}
           <button
             className="rounded-sm border px-1"
-            onClick={() => deleteGroup(groupID)}
+            onClick={() => groupDispatch({ type: "delete", groupID: groupID })}
           >
             &times;
           </button>

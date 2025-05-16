@@ -114,8 +114,8 @@ export function sortAssignables(array: Array<Assignable>, sort?: string) {
 /**Intersectional filtering: only return Assignables that meet all filter requirements */
 export function filterAssignables(
   array: Array<Assignable>,
-  unassigned: Set<string>,
-  filter?: Array<string>
+  filter?: Array<string>,
+  unassigned?: Set<string>
 ) {
   /**ensure filter exists and has at least one element in it before processing */
   if (filter?.length) {
@@ -123,7 +123,9 @@ export function filterAssignables(
     for (const f of filter) {
       switch (f) {
         case "_unassigned":
-          newArray = [...newArray].filter((value) => unassigned.has(value.getID()));
+          newArray = [...newArray].filter((value) =>
+            unassigned ? unassigned.has(value.getID()) : true
+          );
           break;
         case "_leader":
           newArray = [...newArray].filter((value) => value.getLeader());
@@ -158,3 +160,7 @@ export interface AssignableAttrJSON {
   value: string | number | boolean | string[];
   group: string;
 }
+
+export type AssignableManagerAction =
+  | { type: "create"; assignable: Assignable }
+  | { type: "delete"; assignableID: string };

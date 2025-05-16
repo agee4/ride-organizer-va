@@ -1,28 +1,33 @@
-import { Assignable } from "./Assignable";
+import { Assignable, AssignableManagerAction } from "./Assignable";
 
 const AssignableComponent = ({
   assignableID,
   assignableCollection,
-  deleteAssignable,
+  assignableDispatch,
 }: {
   assignableID: string;
   assignableCollection: Map<string, Assignable>;
-  deleteAssignable: (assignable: string) => void;
+  assignableDispatch: (action: AssignableManagerAction) => void;
 }) => {
   const data =
     assignableCollection.get(assignableID) ||
     new Assignable({ id: assignableID, name: "!ERROR!" });
 
   return (
-    <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+    <div className="rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800">
       <div className="flex flex-row place-content-between font-bold">
         {data.getName()}
-        <button
-          className="rounded-sm border px-1"
-          onClick={() => deleteAssignable(assignableID)}
-        >
-          &times;
-        </button>
+        <div className="flex flex-row gap-1">
+          <button className="rounded-sm border px-1">&hellip;</button>
+          <button
+            className="rounded-sm border px-1"
+            onClick={() =>
+              assignableDispatch({ type: "delete", assignableID: assignableID })
+            }
+          >
+            &times;
+          </button>
+        </div>
       </div>
       <div className="flex flex-row place-content-between text-xs italic">
         <span>{assignableID}</span>
@@ -81,21 +86,21 @@ const AssignableComponent = ({
 export const AssignableArrayComponent = ({
   assignableArray,
   assignableCollection,
-  deleteAssignable,
+  assignableDispatch,
 }: {
   assignableArray: Array<string>;
   assignableCollection: Map<string, Assignable>;
-  deleteAssignable: (assignable: string) => void;
+  assignableDispatch: (action: AssignableManagerAction) => void;
 }) => {
   return (
-    <ul className="m-1 max-h-[70svh] overflow-auto">
+    <ul className="flex max-h-[70svh] flex-col gap-1 overflow-auto sm:flex-row">
       {assignableArray.length > 0 ? (
-        assignableArray.map((value, index) => (
+        assignableArray.map((value) => (
           <li key={value}>
             <AssignableComponent
               assignableID={value}
               assignableCollection={assignableCollection}
-              deleteAssignable={deleteAssignable}
+              assignableDispatch={assignableDispatch}
             />
           </li>
         ))

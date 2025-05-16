@@ -1,14 +1,14 @@
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { Field, Setting } from "./settings";
 import { useMapReducer } from "./helpers";
-import { Assignable } from "./Assignable";
+import { Assignable, AssignableManagerAction } from "./Assignable";
 
 export const AssignableForm = ({
   settings,
-  createAssignable,
+  assignableDispatch,
 }: {
   settings: Setting;
-  createAssignable: (assignable: Assignable) => void;
+  assignableDispatch: (action: AssignableManagerAction) => void;
 }) => {
   const assignableFormRef = useRef<HTMLFormElement>(null);
 
@@ -107,8 +107,9 @@ export const AssignableForm = ({
       attributeGroups.set(field.getName(), field.getGroup());
       attributes.set(field.getName(), data.get(field.getName()));
     });
-    createAssignable(
-      new Assignable({
+    assignableDispatch({
+      type: "create",
+      assignable: new Assignable({
         id: data.get(settings.getAssignableIDSource()) || "!ERROR!",
         name: data.get("name"),
         attributes: attributes,
@@ -121,7 +122,7 @@ export const AssignableForm = ({
           : undefined,
         notes: data.get("notes"),
       })
-    );
+    });
 
     /**reset form fields */
     data.forEach((_, key) => {

@@ -8,7 +8,7 @@ import {
   useDNDRef,
 } from "./draganddrop";
 import { Assignable } from "./Assignable";
-import { Group } from "./Group";
+import { Group, GroupManagerAction } from "./Group";
 
 const UnassignedComponent = ({
   assignableID,
@@ -120,17 +120,15 @@ const UnassignedComponent = ({
 };
 
 export const UnassignedArrayComponent = ({
-  assignableArray,
+  unassignedArray,
   assignableCollection,
-  unassignedCollection,
   groupCollection,
-  removeGroupMember,
+  groupDispatch,
 }: {
-  assignableArray: Array<string>;
+  unassignedArray: Array<string>;
   assignableCollection: Map<string, Assignable>;
-  unassignedCollection: Set<string>;
   groupCollection: Map<string, Group>;
-  removeGroupMember: (groupID: string, memberID: string) => void;
+  groupDispatch: (action: GroupManagerAction) => void;
 }) => {
   const [selectedAssignables, setSelectedAssignables] = useState<Array<string>>(
     new Array<string>()
@@ -145,7 +143,7 @@ export const UnassignedArrayComponent = ({
       index,
       shiftKey,
       ctrlKey,
-      assignableArray,
+      unassignedArray,
       prevSelectedIndex,
       selectedAssignables,
       setSelectedAssignables,
@@ -166,7 +164,11 @@ export const UnassignedArrayComponent = ({
           if (!!assignable) {
             for (const group of groupCollection.values()) {
               if (group.getAllMembers().has(assignable.getID())) {
-                removeGroupMember(group.getID(), id);
+                groupDispatch({
+                  type: "removemember",
+                  groupID: group.getID(),
+                  memberID: id,
+                });
               }
             }
           }
@@ -174,7 +176,7 @@ export const UnassignedArrayComponent = ({
       },
       canDrop: (item) =>
         item.id.every(
-          (id) => !unassignedCollection.has(id) && !assignableArray.includes(id)
+          (id) => !unassignedArray.includes(id)
         ),
       collect: (monitor) => ({
         isOver: monitor.isOver(),
@@ -182,11 +184,9 @@ export const UnassignedArrayComponent = ({
       }),
     }),
     [
-      assignableArray,
+      unassignedArray,
       assignableCollection,
       groupCollection,
-      unassignedCollection,
-      removeGroupMember,
     ]
   );
   const dropRef = useDNDRef(drop);
@@ -200,8 +200,8 @@ export const UnassignedArrayComponent = ({
       ref={dropRef}
     >
       <ul className="m-1 max-h-[70svh] overflow-auto">
-        {assignableArray.length > 0 ? (
-          assignableArray.map((value, index) => (
+        {unassignedArray.length > 0 ? (
+          unassignedArray.map((value, index) => (
             <li key={value}>
               <UnassignedComponent
                 assignableID={value}

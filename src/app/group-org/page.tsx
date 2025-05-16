@@ -10,8 +10,13 @@ import {
   Setting,
   SettingJSON,
 } from "./settings";
-import { Assignable, AssignableAttrJSON, AssignableJSON } from "./Assignable";
-import { Group, GroupJSON } from "./Group";
+import {
+  Assignable,
+  AssignableAttrJSON,
+  AssignableJSON,
+  AssignableManagerAction,
+} from "./Assignable";
+import { Group, GroupJSON, GroupManagerAction } from "./Group";
 import { PresetForm, SettingsForm } from "./SettingComponent";
 import { AssignableManager } from "./AssignableManager";
 import { GroupManager } from "./GroupManager";
@@ -218,122 +223,142 @@ export default function Page() {
     localStorage.setItem("group", JSON.stringify(groupStorage));
   }, [groupCollection]);
 
-  const createAssignable = (assignable: Assignable) => {
-    assignableDispatch({
-      type: "create",
-      key: assignable.getID(),
-      value: assignable,
-    });
-    if (settings.getAutoGroups() && assignable.getLeader()) {
-      createGroup(
-        new Group({
-          id: assignable.getID(),
-          leader: assignable.getID(),
-          size: assignable.getSize(),
-        })
-      );
-    } else {
-      unassignedDispatch({
-        type: "create",
-        value: assignable.getID(),
-      });
-    }
-  };
-
-  const deleteAssignable = (assignableID: string) => {
-    assignableDispatch({
-      type: "delete",
-      key: assignableID,
-    });
-    unassignedDispatch({
-      type: "delete",
-      value: assignableID,
-    });
-    /**ensure assignable is removed from any groups */
-    groupCollection.forEach((group, groupKey) => {
-      if (group.getLeader() == assignableID) {
-        group.getAllMembers().forEach((memberID) => {
+  const assignableManagerDispatch = (action: AssignableManagerAction) => {
+    switch (action.type) {
+      case "create":
+        assignableDispatch({
+          type: "create",
+          key: action.assignable.getID(),
+          value: action.assignable,
+        });
+        if (settings.getAutoGroups() && action.assignable.getLeader()) {
+          groupManagerDispatch({
+            type: "create",
+            group: new Group({
+              id: action.assignable.getID(),
+              leader: action.assignable.getID(),
+              size: action.assignable.getSize(),
+            }),
+          });
+        } else {
           unassignedDispatch({
             type: "create",
-            value: memberID,
-          });
-        });
-        groupDispatch({ type: "delete", key: groupKey });
-      }
-      group.getAllMembers().forEach((memberID) => {
-        if (memberID == assignableID)
-          groupDispatch({ type: "delete", key: memberID });
-      });
-      if (group.getAllMembers().has(assignableID)) {
-        group.getAllMembers().delete(assignableID);
-        groupDispatch({ type: "create", key: groupKey, value: group });
-      }
-    });
-  };
-
-  const createGroup = (group: Group) => {
-    groupDispatch({
-      type: "create",
-      key: group.getID(),
-      value: group,
-    });
-    const leader = group.getLeader();
-    if (leader) unassignedDispatch({ type: "delete", value: leader });
-  };
-
-  const deleteGroup = (groupID: string) => {
-    const group = groupCollection.get(groupID);
-    if (group) {
-      const leaderID = group.getLeader();
-      if (leaderID)
-        unassignedDispatch({
-          type: "create",
-          value: leaderID,
-        });
-      group.getAllMembers().forEach((memberID) => {
-        unassignedDispatch({
-          type: "create",
-          value: memberID,
-        });
-      });
-      groupDispatch({
-        type: "delete",
-        key: groupID,
-      });
-    }
-  };
-
-  const addGroupMember = (groupID: string, memberID: string) => {
-    const group = groupCollection.get(groupID);
-    const newMember = assignableCollection.get(memberID);
-    if (group && newMember) {
-      group.getAllMembers().add(newMember.getID());
-      groupCollection.forEach((otherGroup) => {
-        if (groupID == otherGroup.getID()) {
-          groupDispatch({ type: "create", key: groupID, value: group });
-        } else {
-          otherGroup.getAllMembers().delete(newMember.getID());
-          groupDispatch({
-            type: "create",
-            key: otherGroup.getID(),
-            value: otherGroup,
+            value: action.assignable.getID(),
           });
         }
-      });
-      unassignedDispatch({ type: "delete", value: newMember.getID() });
+        break;
+      case "delete":
+        assignableDispatch({
+          type: "delete",
+          key: action.assignableID,
+        });
+        unassignedDispatch({
+          type: "delete",
+          value: action.assignableID,
+        });
+        /**ensure assignable is removed from any groups */
+        groupCollection.forEach((group, groupKey) => {
+          if (group.getLeader() == action.assignableID) {
+            group.getAllMembers().forEach((memberID) => {
+              unassignedDispatch({
+                type: "create",
+                value: memberID,
+              });
+            });
+            groupDispatch({ type: "delete", key: groupKey });
+          }
+          group.getAllMembers().forEach((memberID) => {
+            if (memberID == action.assignableID)
+              groupDispatch({ type: "delete", key: memberID });
+          });
+          if (group.getAllMembers().has(action.assignableID)) {
+            group.getAllMembers().delete(action.assignableID);
+            groupDispatch({ type: "create", key: groupKey, value: group });
+          }
+        });
+        break;
+      default:
+        throw Error("Unknown action");
     }
   };
 
-  const removeGroupMember = (groupID: string, memberID: string) => {
-    const group = groupCollection.get(groupID);
-    const removedMember = assignableCollection.get(memberID);
-    if (group && removedMember) {
-      group.getAllMembers().delete(memberID);
-      groupDispatch({ type: "create", key: groupID, value: group });
-      unassignedDispatch({
-        type: "create",
-        value: memberID,
-      });
+  const groupManagerDispatch = (action: GroupManagerAction) => {
+    switch (action.type) {
+      case "create":
+        groupDispatch({
+          type: "create",
+          key: action.group.getID(),
+          value: action.group,
+        });
+        const leader = action.group.getLeader();
+        if (leader) unassignedDispatch({ type: "delete", value: leader });
+        break;
+      case "delete":
+      case "addmember":
+      case "removemember":
+        const group = groupCollection.get(action.groupID);
+        if (group)
+          switch (action.type) {
+            case "delete":
+              const leaderID = group.getLeader();
+              if (leaderID)
+                unassignedDispatch({
+                  type: "create",
+                  value: leaderID,
+                });
+              group.getAllMembers().forEach((memberID) => {
+                unassignedDispatch({
+                  type: "create",
+                  value: memberID,
+                });
+              });
+              groupDispatch({
+                type: "delete",
+                key: action.groupID,
+              });
+              break;
+            case "addmember":
+            case "removemember":
+              const member = assignableCollection.get(action.memberID);
+              if (member)
+                switch (action.type) {
+                  case "addmember":
+                    group.getAllMembers().add(action.memberID);
+                    groupCollection.forEach((otherGroup) => {
+                      if (action.groupID == otherGroup.getID()) {
+                        groupDispatch({
+                          type: "create",
+                          key: action.groupID,
+                          value: group,
+                        });
+                      } else {
+                        otherGroup.getAllMembers().delete(action.memberID);
+                        groupDispatch({
+                          type: "create",
+                          key: otherGroup.getID(),
+                          value: otherGroup,
+                        });
+                      }
+                    });
+                    unassignedDispatch({
+                      type: "delete",
+                      value: member.getID(),
+                    });
+                    break;
+                  case "removemember":
+                    group.getAllMembers().delete(action.memberID);
+                    groupDispatch({
+                      type: "create",
+                      key: action.groupID,
+                      value: group,
+                    });
+                    unassignedDispatch({
+                      type: "create",
+                      value: action.memberID,
+                    });
+                    break;
+                }
+          }
     }
   };
 
@@ -349,7 +374,7 @@ export default function Page() {
     groupCollection.size > 0;
 
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
+    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)]">
       <main className="row-start-2 flex flex-col items-center gap-8">
         <h1>GroupU Org ~ Group Organizer</h1>
         <div className="relative rounded-md border p-1">
@@ -389,8 +414,7 @@ export default function Page() {
               settings={settings}
               assignableCollection={assignableCollection}
               unassignedCollection={unassignedCollection}
-              createAssignable={createAssignable}
-              deleteAssignable={deleteAssignable}
+              assignableDispatch={assignableManagerDispatch}
             />
           ) : (
             <GroupManager
@@ -398,10 +422,7 @@ export default function Page() {
               assignableCollection={assignableCollection}
               unassignedCollection={unassignedCollection}
               groupCollection={groupCollection}
-              createGroup={createGroup}
-              deleteGroup={deleteGroup}
-              addGroupMember={addGroupMember}
-              removeGroupMember={removeGroupMember}
+              groupDispatch={groupManagerDispatch}
             />
           )}
         </div>

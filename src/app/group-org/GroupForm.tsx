@@ -1,16 +1,16 @@
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { Setting } from "./settings";
 import { Assignable } from "./Assignable";
-import { Group } from "./Group";
+import { Group, GroupManagerAction } from "./Group";
 
 export const GroupForm = ({
   settings,
-  createGroup,
+  groupDispatch,
   unassignedCollection,
   assignableCollection,
 }: {
   settings: Setting;
-  createGroup: (group: Group) => void;
+  groupDispatch: (action: GroupManagerAction) => void;
   unassignedCollection: Set<string>;
   assignableCollection: Map<string, Assignable>;
 }) => {
@@ -48,8 +48,9 @@ export const GroupForm = ({
               data.name && data.name.length > 0
                 ? data.name
                 : assignableCollection.get(leader)?.getName() || leader;
-            createGroup(
-              new Group({
+            groupDispatch({
+              type: "create",
+              group: new Group({
                 id: leader,
                 name: name,
                 leader: leader,
@@ -59,14 +60,15 @@ export const GroupForm = ({
                     : assignableCollection.get(leader)?.getSize()
                   : undefined,
                 notes: data.notes,
-              })
-            );
+              }),
+            });
             setLeader("");
           }
         break;
       case "name":
-        createGroup(
-          new Group({
+        groupDispatch({
+          type: "create",
+          group: new Group({
             id: data.name as string,
             name: data.name,
             size: settings.getGroupUseSize()
@@ -75,15 +77,16 @@ export const GroupForm = ({
                 : assignableCollection.get(leader)?.getSize()
               : undefined,
             notes: data.notes,
-          })
-        );
+          }),
+        });
         setLeader("");
         break;
       case "id":
       default:
         const name = data.name && data.name.length > 0 ? data.name : undefined;
-        createGroup(
-          new Group({
+        groupDispatch({
+          type: "create",
+          group: new Group({
             id: data.id,
             name: name,
             leader: settings.getUseLeader() ? leader : undefined,
@@ -93,8 +96,8 @@ export const GroupForm = ({
                 : assignableCollection.get(leader)?.getSize()
               : undefined,
             notes: data.notes,
-          })
-        );
+          }),
+        });
     }
     setData({
       id: "",
@@ -118,10 +121,7 @@ export const GroupForm = ({
             (settings.getGroupIDSource() == "leader" ? " (ID)" : "") +
             ":"}
           <select
-            className={
-                    "rounded-sm border " +
-                    (!leader && "text-neutral-500")
-                  }
+            className={"rounded-sm border " + (!leader && "text-neutral-500")}
             name="groupleader"
             value={leader}
             onChange={(e) => {

@@ -126,3 +126,9 @@ export interface GroupJSON {
   size?: number;
   notes?: string;
 }
+
+export type GroupManagerAction =
+  | { type: "create"; group: Group }
+  | { type: "delete"; groupID: string }
+  | { type: "addmember"; groupID: string; memberID: string }
+  | { type: "removemember"; groupID: string; memberID: string };
