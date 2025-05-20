@@ -9,7 +9,8 @@ import {
   useState,
 } from "react";
 import { MapReducerAction, useMapReducer, useSetReducer } from "./helpers";
-import { defaultSettings, Field, Setting } from "./settings";
+import { defaultSettings, Field, Setting, SIZESOURCE } from "./settings";
+import { DEFAULTASSIGNABLEFIELDS } from "./Assignable";
 
 export const PresetForm = ({
   settings,
@@ -164,8 +165,8 @@ export const SettingsForm = ({
     settings.getGroupUseSize()
   );
   const updateGroupUseSize = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked && autoGroups && groupSizeSource == "groupsize")
-      setGroupSizeSource("leadersize");
+    if (e.target.checked && autoGroups && groupSizeSource == SIZESOURCE.GROUP)
+      setGroupSizeSource(SIZESOURCE.LEADER);
     setGroupUseSize(e.target.checked);
   };
 
@@ -179,8 +180,8 @@ export const SettingsForm = ({
     settings.getAutoGroups()
   );
   const updateAutoGroup = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked && groupUseSize && groupSizeSource == "groupsize")
-      setGroupSizeSource("leadersize");
+    if (e.target.checked && groupUseSize && groupSizeSource == SIZESOURCE.GROUP)
+      setGroupSizeSource(SIZESOURCE.LEADER);
     setAutoGroups(e.target.checked);
   };
 
@@ -207,7 +208,8 @@ export const SettingsForm = ({
   const createField = () => {
     const cleanedFieldName = fieldName.trim().toLocaleLowerCase();
     if (
-      !["", "id", "name", ...assignableFields.keys()].includes(cleanedFieldName)
+      !(cleanedFieldName in DEFAULTASSIGNABLEFIELDS) &&
+      !["", ...assignableFields.keys()].includes(cleanedFieldName)
     ) {
       assignableFieldsDispatch({
         type: "create",
@@ -314,6 +316,7 @@ export const SettingsForm = ({
       <div className="flex flex-row">
         <div className="flex flex-col gap-1">
           <h1 className="text-center">Assignable</h1>
+          {/**Assignable ID Source */}
           <label className="flex flex-row place-content-between gap-1">
             ID Source:
             <select
@@ -342,7 +345,9 @@ export const SettingsForm = ({
             </select>
           </label>
           <hr />
-          <ul className="flex flex-col border p-1">
+          {/**Assignable Fields */}
+          <div className="flex flex-col border p-1">
+            {/**Toggle Assignable Field Visibility */}
             <label className="flex flex-row place-content-between gap-1">
               <span>
                 Fields{" "}
@@ -357,11 +362,13 @@ export const SettingsForm = ({
                 {showAssignableFields ? <>&uarr;</> : <>&darr;</>}
               </button>
             </label>
+            {/**View & Edit Assignable Fields */}
             {showAssignableFields && (
               <>
                 <hr />
+                {/**View & Remove Assignable Fields */}
                 {[...assignableFields.entries()].map(([key, value]) => (
-                  <li key={key}>
+                  <div key={key}>
                     <label className="flex flex-row place-content-between gap-1">
                       {value.getPlaceholderName()}
                       <button
@@ -389,9 +396,10 @@ export const SettingsForm = ({
                       </ul>
                     )}
                     <hr />
-                  </li>
+                  </div>
                 ))}
-                <li className="flex flex-col border p-1">
+                {/**Add Assignable Field */}
+                <div className="flex flex-col border p-1">
                   <label className="flex flex-row place-content-between">
                     Add Input Field
                     <button
@@ -564,10 +572,10 @@ export const SettingsForm = ({
                       </button>
                     </>
                   )}
-                </li>
+                </div>
               </>
             )}
-          </ul>
+          </div>
           <hr />
           <label className="flex flex-row place-content-between">
             Notes
@@ -631,6 +639,7 @@ export const SettingsForm = ({
               onChange={updateGroupUseSize}
             />
           </label>
+          {/**Group Size Source */}
           {groupUseSize && (
             <select
               className="rounded-sm border"
@@ -639,13 +648,13 @@ export const SettingsForm = ({
               onChange={(e) => setGroupSizeSource(e.target.value)}
             >
               {!autoGroups && (
-                <option className="dark:text-black" value="groupsize">
+                <option className="dark:text-black" value={SIZESOURCE.GROUP}>
                   Size Field
                 </option>
               )}
               {useLeader && (
                 <>
-                  <option className="text-black" value="leadersize">
+                  <option className="text-black" value={SIZESOURCE.LEADER}>
                     Leader Size
                   </option>
                   {[...assignableFields.entries()]

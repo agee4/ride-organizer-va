@@ -405,3 +405,8 @@ export interface FieldJSON {
   options: Array<string>;
   multiple: boolean;
 }
+
+export enum SIZESOURCE {
+  GROUP = "groupsize",
+  LEADER = "leadersize",
+}

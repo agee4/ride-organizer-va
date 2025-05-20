@@ -20,6 +20,7 @@ import { Group, GroupJSON, GroupManagerAction } from "./Group";
 import { PresetForm, SettingsForm } from "./SettingComponent";
 import { AssignableManager } from "./AssignableManager";
 import { GroupManager } from "./GroupManager";
+import { LoadFile } from "./LoadFile";
 
 export default function Page() {
   const [assignableCollection, assignableDispatch] = useMapReducer<
@@ -292,6 +293,8 @@ export default function Page() {
         });
         const leader = action.group.getLeader();
         if (leader) unassignedDispatch({ type: "delete", value: leader });
+        for (const member of Array.from(action.group.getAllMembers()))
+          unassignedDispatch({ type: "delete", value: member });
         break;
       case "delete":
       case "addmember":
@@ -377,6 +380,7 @@ export default function Page() {
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)]">
       <main className="row-start-2 flex flex-col items-center gap-8">
         <h1>GroupU Org ~ Group Organizer</h1>
+        {/**Settings Form */}
         <div className="relative rounded-md border p-1">
           <button
             className={showSettingsForm ? "absolute top-1 right-2" : ""}
@@ -400,7 +404,15 @@ export default function Page() {
             </>
           )}
         </div>
+        {/**Load Form */}
+        <LoadFile
+          assignableCollection={assignableCollection}
+          assignableDispatch={assignableManagerDispatch}
+          groupDispatch={groupManagerDispatch}
+        />
+        {/**Assignable & Group Managers */}
         <div className="flex flex-col gap-1">
+          {/**Assignable/Group Manager Toggle */}
           {allowShowGroupManager && (
             <button
               className="rounded-sm border px-1"
@@ -409,6 +421,7 @@ export default function Page() {
               Manage {!showGroupManager ? "Groups" : "Assignables"}
             </button>
           )}
+          {/**Assignable or Group Manager */}
           {!showGroupManager ? (
             <AssignableManager
               settings={settings}

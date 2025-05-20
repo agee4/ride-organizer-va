@@ -1,7 +1,11 @@
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { Field, Setting } from "./settings";
 import { useMapReducer } from "./helpers";
-import { Assignable, AssignableManagerAction } from "./Assignable";
+import {
+  Assignable,
+  AssignableManagerAction,
+  DEFAULTASSIGNABLEFIELDS,
+} from "./Assignable";
 
 export const AssignableForm = ({
   settings,
@@ -14,9 +18,9 @@ export const AssignableForm = ({
 
   const [data, dataDispatch] = useMapReducer<string, any>(
     new Map([
-      ["name", ""],
-      ["id", ""],
-      ["notes", ""],
+      [DEFAULTASSIGNABLEFIELDS.NAME, ""],
+      [DEFAULTASSIGNABLEFIELDS.ID, ""],
+      [DEFAULTASSIGNABLEFIELDS.NOTES, ""],
     ])
   );
   const updateDataInput = (event: ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +88,7 @@ export const AssignableForm = ({
     for (const field of data.keys()) {
       if (
         !settings.getAssignableFields().get(field) &&
-        !["name", "id", "notes", "leadersize"].includes(field)
+        !Object.values<string>(DEFAULTASSIGNABLEFIELDS).includes(field)
       ) {
         dataDispatch({
           type: "delete",
@@ -111,7 +115,7 @@ export const AssignableForm = ({
       type: "create",
       assignable: new Assignable({
         id: data.get(settings.getAssignableIDSource()) || "!ERROR!",
-        name: data.get("name"),
+        name: data.get(DEFAULTASSIGNABLEFIELDS.NAME),
         attributes: attributes,
         attributeGroups: attributeGroups,
         leader: isLeader,
@@ -120,8 +124,8 @@ export const AssignableForm = ({
             ? data.get(settings.getGroupSizeSource())
             : settings.getGroupSizeSource()
           : undefined,
-        notes: data.get("notes"),
-      })
+        notes: data.get(DEFAULTASSIGNABLEFIELDS.NOTES),
+      }),
     });
 
     /**reset form fields */
@@ -134,43 +138,51 @@ export const AssignableForm = ({
 
   return (
     <form
-      className="flex flex-col rounded-md border p-2"
+      className="flex flex-col rounded-md border bg-cyan-200 p-2 dark:bg-cyan-800"
       onSubmit={submitForm}
       ref={assignableFormRef}
     >
       <label className="text-center">New Assignable</label>
-      <input
-        className="rounded-sm border"
-        type="text"
-        name="name"
-        value={data.get("name")}
-        placeholder={
-          "Name*" + (settings.getAssignableIDSource() == "name" ? " (ID)" : "")
-        }
-        required
-        minLength={1}
-        onChange={updateDataInput}
-      />
-      {settings.getAssignableIDSource() == "id" && (
+      <label className="flex flex-row flex-wrap place-content-between gap-1">
+        {"Name*" +
+          (settings.getAssignableIDSource() == "name" ? " (ID)" : "") +
+          ":"}
         <input
           className="rounded-sm border"
           type="text"
-          name="id"
-          value={data.get("id")}
-          placeholder="ID*"
+          name={DEFAULTASSIGNABLEFIELDS.NAME}
+          value={data.get(DEFAULTASSIGNABLEFIELDS.NAME)}
+          placeholder={
+            "Name*" +
+            (settings.getAssignableIDSource() == "name" ? " (ID)" : "")
+          }
           required
           minLength={1}
           onChange={updateDataInput}
         />
+      </label>
+      {settings.getAssignableIDSource() == "id" && (
+        <label className="flex flex-row flex-wrap place-content-between gap-1">
+          ID*:
+          <input
+            className="rounded-sm border"
+            type="text"
+            name={DEFAULTASSIGNABLEFIELDS.ID}
+            value={data.get(DEFAULTASSIGNABLEFIELDS.ID)}
+            placeholder="ID*"
+            required
+            minLength={1}
+            onChange={updateDataInput}
+          />
+        </label>
       )}
       {[...settings.getAssignableFields().values()].map((field) =>
         field.getType() == "select" ? (
           <label
-            className="flex flex-row flex-wrap place-content-between"
+            className="flex flex-row flex-wrap place-content-between gap-1"
             key={field.getName()}
           >
-            {["number", "checkbox", "select"].includes(field.getType()) &&
-              field.getName() + (field.getRequired() ? "*" : "") + ":"}
+            {field.getName() + (field.getRequired() ? "*" : "") + ":"}
             <select
               className="rounded-sm border"
               name={field.getName()}
@@ -181,9 +193,7 @@ export const AssignableForm = ({
               multiple={field.getMultiple()}
               size={
                 field.getMultiple()
-                  ? field.getOptions().size < 4
-                    ? field.getOptions().size
-                    : 4
+                  ? Math.min(field.getOptions().size, 4)
                   : undefined
               }
               required={field.getRequired()}
@@ -205,7 +215,7 @@ export const AssignableForm = ({
           </label>
         ) : field.getType() == "checkbox" ? (
           <label
-            className="flex flex-row flex-wrap place-content-between"
+            className="flex flex-row flex-wrap place-content-between gap-1"
             key={field.getName()}
           >
             {field.getName()}
@@ -243,39 +253,51 @@ export const AssignableForm = ({
             />
           </label>
         ) : (
-          <input
-            className="rounded-sm border"
-            type={field.getType()}
-            name={field.getName()}
-            value={
-              data.has(field.getName())
-                ? data.get(field.getName())
-                : field.getType() == "number"
-                  ? 0
-                  : ""
-            }
-            checked={data.get(field.getName()) || false}
-            placeholder={
-              field.getName() +
+          <label
+            className="flex flex-row flex-wrap place-content-between gap-1"
+            key={field.getName()}
+          >
+            {field.getName() +
               (field.getRequired() ? "*" : "") +
               (field.getName() == settings.getAssignableIDSource()
                 ? " (ID)"
                 : field.getName() == settings.getAssignableIDSource()
                   ? " (Size)"
-                  : "")
-            }
-            size={field.getType() == "number" ? 7 : undefined}
-            required={field.getRequired() || undefined}
-            minLength={
-              !field.getRequired() &&
-              ["text", "email", "tel"].includes(field.getType())
-                ? 1
-                : undefined
-            }
-            min={field.getType() == "number" ? 0 : undefined}
-            onChange={updateDataInput}
-            key={field.getName()}
-          />
+                  : "") +
+              ":"}
+            <input
+              className="rounded-sm border"
+              type={field.getType()}
+              name={field.getName()}
+              value={
+                data.has(field.getName())
+                  ? data.get(field.getName())
+                  : field.getType() == "number"
+                    ? 0
+                    : ""
+              }
+              checked={data.get(field.getName()) || false}
+              placeholder={
+                field.getName() +
+                (field.getRequired() ? "*" : "") +
+                (field.getName() == settings.getAssignableIDSource()
+                  ? " (ID)"
+                  : field.getName() == settings.getAssignableIDSource()
+                    ? " (Size)"
+                    : "")
+              }
+              size={field.getType() == "number" ? 7 : undefined}
+              required={field.getRequired() || undefined}
+              minLength={
+                !field.getRequired() &&
+                ["text", "email", "tel"].includes(field.getType())
+                  ? 1
+                  : undefined
+              }
+              min={field.getType() == "number" ? 0 : undefined}
+              onChange={updateDataInput}
+            />
+          </label>
         )
       )}
       {settings.getUseLeader() && (
@@ -294,8 +316,8 @@ export const AssignableForm = ({
           <input
             className="rounded-sm border"
             type="number"
-            name="leadersize"
-            value={data.get("leadersize") || 0}
+            name={DEFAULTASSIGNABLEFIELDS.SIZE}
+            value={data.get(DEFAULTASSIGNABLEFIELDS.SIZE) || 1}
             placeholder="Size*:"
             size={7}
             min={1}
@@ -306,10 +328,10 @@ export const AssignableForm = ({
       )}
       {settings.getAssignableNotes() && (
         <textarea
-          name="notes"
+          name={DEFAULTASSIGNABLEFIELDS.NOTES}
           className="rounded-sm border"
           placeholder="Notes"
-          value={data.get("notes")}
+          value={data.get(DEFAULTASSIGNABLEFIELDS.NOTES)}
           onChange={updateNotes}
         />
       )}

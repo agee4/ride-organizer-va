@@ -1,36 +1,23 @@
+import { ChangeEvent, useState } from "react";
 import { Assignable, AssignableManagerAction } from "./Assignable";
 
-const AssignableComponent = ({
-  assignableID,
-  assignableCollection,
-  assignableDispatch,
+const AssignableDisplay = ({
+  data,
+  toggleEdit,
 }: {
-  assignableID: string;
-  assignableCollection: Map<string, Assignable>;
-  assignableDispatch: (action: AssignableManagerAction) => void;
+  data: Assignable;
+  toggleEdit: () => void;
 }) => {
-  const data =
-    assignableCollection.get(assignableID) ||
-    new Assignable({ id: assignableID, name: "!ERROR!" });
-
   return (
-    <div className="rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800">
-      <div className="flex flex-row place-content-between font-bold">
+    <>
+      <div className="flex flex-row place-content-between gap-1 font-bold">
         {data.getName()}
-        <div className="flex flex-row gap-1">
-          <button className="rounded-sm border px-1">&hellip;</button>
-          <button
-            className="rounded-sm border px-1"
-            onClick={() =>
-              assignableDispatch({ type: "delete", assignableID: assignableID })
-            }
-          >
-            &times;
-          </button>
-        </div>
+        <button className="rounded-sm border px-1" onClick={toggleEdit}>
+          &hellip;
+        </button>
       </div>
       <div className="flex flex-row place-content-between text-xs italic">
-        <span>{assignableID}</span>
+        <span>{data.getID()}</span>
         <span>{data.getLeader() && "Leader"}</span>
       </div>
       {data.getAttributes() &&
@@ -45,7 +32,7 @@ const AssignableComponent = ({
           )
           .map(([key, value]) => (
             <div
-              className="m-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+              className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
               key={key}
             >
               {typeof value == "boolean" ? (
@@ -67,46 +54,166 @@ const AssignableComponent = ({
             </div>
           ))}
       {data.getSize() != undefined && (
-        <div className="m-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700">
+        <div className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700">
           <span>Size:</span>
           <span>{data.getSize()}</span>
         </div>
       )}
       {data.getNotes() && (
         <textarea
-          className="m-1 w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+          className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
           disabled
           defaultValue={data.getNotes()}
         />
       )}
-    </div>
+    </>
   );
 };
 
-export const AssignableArrayComponent = ({
-  assignableArray,
+const AssignableEdit = ({
+  data,
+  toggleEdit,
+  assignableDispatch,
+}: {
+  data: Assignable;
+  toggleEdit: () => void;
+  assignableDispatch: (action: AssignableManagerAction) => void;
+}) => {
+  const [name, setName] = useState<string>(data.getName());
+  const [newData, setNewData] = useState<
+    Map<string, string | number | boolean | string[]>
+  >(data.getAttributes());
+  const updateName = (event: ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
+
+  const removeAssignable = () =>
+    assignableDispatch({ type: "delete", assignableID: data.getID() });
+  const updateAssignable = () => {
+    assignableDispatch({
+      type: "create",
+      assignable: new Assignable({ id: data.getID(), name: name }),
+    });
+    toggleEdit();
+  };
+
+  return (
+    <>
+      <div className="flex flex-row place-content-between gap-1 font-bold">
+        <div>
+          Editing <span className="italic">{data.getID()}</span>
+        </div>
+        <button className="rounded-sm border px-1" onClick={toggleEdit}>
+          &hellip;
+        </button>
+      </div>
+      <label className="flex flex-row place-content-between">
+        Name*
+        <input
+          className="rounded-sm border"
+          type="text"
+          name="name"
+          value={name}
+          placeholder="Name"
+          required
+          minLength={1}
+          onChange={updateName}
+        />
+      </label>
+      {Array.from(newData).map(([name, value]) => (
+        <label key={name} className="flex flex-row place-content-between">
+          {name}
+          {Array.isArray(value) ? (
+            <select
+              className="rounded-sm border"
+              name={name}
+              defaultValue={value}
+              multiple
+              size={Math.min(value.length, 4)}
+            >
+              {value.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className="rounded-sm border"
+              type={typeof value == "number" ? "number" : "text"}
+              name={name}
+              defaultValue={
+                typeof value != "boolean"
+                  ? (newData.get(name) as string)
+                  : undefined
+              }
+              placeholder={name}
+              required
+              minLength={1}
+              /* onChange={updateName} */
+            />
+          )}
+        </label>
+      ))}
+      {data.getSize() && <label className="flex flex-row place-content-between">
+        Size*
+        <input
+          className="rounded-sm border"
+          type="number"
+          name="leadersize"
+          defaultValue={data.getSize()}
+          placeholder="Size"
+          required
+          minLength={1}
+        />
+      </label>}
+      <textarea
+          className="m-1 w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+          defaultValue={data.getNotes()}
+        />
+      <div className="flex flex-row place-content-evenly">
+        <button
+          className="m-1 rounded-full border px-2 text-lg font-bold"
+          onClick={removeAssignable}
+        >
+          &times; DELETE
+        </button>
+        <button
+          className="m-1 rounded-full border px-2 text-lg font-bold"
+          onClick={updateAssignable}
+        >
+          SAVE
+        </button>
+      </div>
+    </>
+  );
+};
+
+export const AssignableComponent = ({
+  assignableID,
   assignableCollection,
   assignableDispatch,
 }: {
-  assignableArray: Array<string>;
+  assignableID: string;
   assignableCollection: Map<string, Assignable>;
   assignableDispatch: (action: AssignableManagerAction) => void;
 }) => {
+  const data =
+    assignableCollection.get(assignableID) ||
+    new Assignable({ id: assignableID, name: "!ERROR!" });
+
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const toggleEditMode = () => setEditMode(!editMode);
+
   return (
-    <ul className="flex max-h-[70svh] flex-col gap-1 overflow-auto sm:flex-row">
-      {assignableArray.length > 0 ? (
-        assignableArray.map((value) => (
-          <li key={value}>
-            <AssignableComponent
-              assignableID={value}
-              assignableCollection={assignableCollection}
-              assignableDispatch={assignableDispatch}
-            />
-          </li>
-        ))
+    <div className="rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800">
+      {editMode ? (
+        <AssignableEdit
+          data={data}
+          toggleEdit={toggleEditMode}
+          assignableDispatch={assignableDispatch}
+        />
       ) : (
-        <li className="text-center">Empty</li>
+        <AssignableDisplay data={data} toggleEdit={toggleEditMode} />
       )}
-    </ul>
+    </div>
   );
 };

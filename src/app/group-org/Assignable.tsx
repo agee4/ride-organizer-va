@@ -90,15 +90,25 @@ export class Assignable {
   }
 }
 
+export enum DEFAULTASSIGNABLESORT {
+  ID = "ID",
+  NAME = "Name",
+  LEADER = "Leader",
+  SIZE = "Size",
+}
+
 export function sortAssignables(array: Array<Assignable>, sort?: string) {
   switch (sort) {
-    case "name":
+    case DEFAULTASSIGNABLESORT.ID:
+      array.sort((a, b) => a.getID().localeCompare(b.getID()));
+      break;
+    case DEFAULTASSIGNABLESORT.NAME:
       array.sort((a, b) => a.getName().localeCompare(b.getName()));
       break;
-    case "leader":
+    case DEFAULTASSIGNABLESORT.LEADER:
       array.sort((a, b) => +!!b.getLeader() - +!!a.getLeader());
       break;
-    case "size":
+    case DEFAULTASSIGNABLESORT.SIZE:
       array.sort((a, b) => (b.getSize() || -1) - (a.getSize() || -1));
       break;
     default:
@@ -109,6 +119,11 @@ export function sortAssignables(array: Array<Assignable>, sort?: string) {
       );
   }
   return array;
+}
+
+export enum DEFAULTASSIGNABLEFILT {
+  UNASSIGNED = "Unassigned",
+  LEADER = "Leader",
 }
 
 /**Intersectional filtering: only return Assignables that meet all filter requirements */
@@ -122,12 +137,12 @@ export function filterAssignables(
     let newArray = [...array];
     for (const f of filter) {
       switch (f) {
-        case "_unassigned":
+        case DEFAULTASSIGNABLEFILT.UNASSIGNED:
           newArray = [...newArray].filter((value) =>
             unassigned ? unassigned.has(value.getID()) : true
           );
           break;
-        case "_leader":
+        case DEFAULTASSIGNABLEFILT.LEADER:
           newArray = [...newArray].filter((value) => value.getLeader());
           break;
         default:
@@ -164,3 +179,12 @@ export interface AssignableAttrJSON {
 export type AssignableManagerAction =
   | { type: "create"; assignable: Assignable }
   | { type: "delete"; assignableID: string };
+
+export enum DEFAULTASSIGNABLEFIELDS {
+  ID = "id",
+  NAME = "name",
+  LEADER = "leader",
+  NOTES = "notes",
+  SIZE = "leadersize",
+  _SIZE = "size"
+}

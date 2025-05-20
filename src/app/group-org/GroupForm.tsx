@@ -118,7 +118,7 @@ export const GroupForm = ({
       {settings.getUseLeader() && (
         <label className="flex flex-row flex-wrap place-content-between">
           {"Leader" +
-            (settings.getGroupIDSource() == "leader" ? " (ID)" : "") +
+            (settings.getGroupIDSource() == "leader" ? "* (ID)" : "") +
             ":"}
           <select
             className={"rounded-sm border " + (!leader && "text-neutral-500")}
@@ -141,30 +141,38 @@ export const GroupForm = ({
         </label>
       )}
       {settings.getGroupIDSource() == "id" && (
-        <input
-          className="rounded-sm border"
-          type="text"
-          name="id"
-          value={data.id}
-          placeholder="ID*"
-          required
-          min={1}
-          onChange={updateData}
-        />
+        <label className="flex flex-row flex-wrap place-content-between gap-1">
+          ID*:
+          <input
+            className="rounded-sm border"
+            type="text"
+            name="id"
+            value={data.id}
+            placeholder="ID*"
+            required
+            min={1}
+            onChange={updateData}
+          />
+        </label>
       )}
       {settings.getGroupCustomName() && (
-        <input
-          className="rounded-sm border"
-          type="text"
-          name="name"
-          value={data.name}
-          placeholder={
-            "Name*" + (settings.getGroupIDSource() == "name" ? " (ID)" : "")
-          }
-          required
-          min={1}
-          onChange={updateData}
-        />
+        <label className="flex flex-row flex-wrap place-content-between gap-1">
+          {"Name*" +
+            (settings.getAssignableIDSource() == "name" ? " (ID)" : "") +
+            ":"}
+          <input
+            className="rounded-sm border"
+            type="text"
+            name="name"
+            value={data.name}
+            placeholder={
+              "Name*" + (settings.getGroupIDSource() == "name" ? " (ID)" : "")
+            }
+            required
+            min={1}
+            onChange={updateData}
+          />
+        </label>
       )}
       {settings.getGroupUseSize() &&
         settings.getGroupSizeSource() == "groupsize" && (

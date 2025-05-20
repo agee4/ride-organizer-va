@@ -3,8 +3,21 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { AssignableDragLayer } from "./draganddrop";
 import { Setting } from "./settings";
-import { Assignable, filterAssignables, sortAssignables } from "./Assignable";
-import { filterGroups, Group, GroupManagerAction, sortGroups } from "./Group";
+import {
+  Assignable,
+  DEFAULTASSIGNABLEFILT,
+  DEFAULTASSIGNABLESORT,
+  filterAssignables,
+  sortAssignables,
+} from "./Assignable";
+import {
+  DEFAULTGROUPFILT,
+  DEFAULTGROUPSORT,
+  filterGroups,
+  Group,
+  GroupManagerAction,
+  sortGroups,
+} from "./Group";
 import { UnassignedArrayComponent } from "./UnassignedComponent";
 import { GroupComponent } from "./GroupComponent";
 import { GroupForm } from "./GroupForm";
@@ -126,6 +139,7 @@ export const GroupManager = ({
           <div />
         )}
         <div className="grid grid-cols-2 gap-1">
+          {/**Unassigned */}
           {!!assignableCollection.size && (
             <div className="relative rounded-md border p-1">
               <h1 className="text-center">Unassigned</h1>
@@ -133,7 +147,9 @@ export const GroupManager = ({
                 <span className="rounded-full bg-cyan-500 px-1">
                   {unassignedArray.length} / {unassignedCollection.size}
                 </span>
+                {/**Unassigned Sort & Reverse */}
                 <div className="flex flex-row place-content-end">
+                  {/**Unassigned Sort */}
                   <select
                     className={
                       "rounded-sm border " +
@@ -145,17 +161,26 @@ export const GroupManager = ({
                     <option className="dark:text-black" value="">
                       --Sort--
                     </option>
-                    <option className="dark:text-black" value="name">
+                    <option
+                      className="dark:text-black"
+                      value={DEFAULTASSIGNABLESORT.NAME}
+                    >
                       Name
                     </option>
                     {settings.getUseLeader() && (
-                      <option className="dark:text-black" value="leader">
+                      <option
+                        className="dark:text-black"
+                        value={DEFAULTASSIGNABLESORT.LEADER}
+                      >
                         Leader
                       </option>
                     )}
                     {settings.getUseLeader() &&
                       settings.getGroupSizeSource() != "groupsize" && (
-                        <option className="dark:text-black" value="size">
+                        <option
+                          className="dark:text-black"
+                          value={DEFAULTASSIGNABLESORT.SIZE}
+                        >
                           Size
                         </option>
                       )}
@@ -183,6 +208,7 @@ export const GroupManager = ({
                         )
                       )}
                   </select>
+                  {/**Unassigned Reverse */}
                   <button
                     className="ml-1 font-bold text-neutral-500"
                     onClick={() => setAssignableReverse(!assignableReverse)}
@@ -195,6 +221,7 @@ export const GroupManager = ({
                   </button>
                 </div>
               </div>
+              {/**Unassigned Filter */}
               {!!unassignedFilterSize && (
                 <div className="flex flex-row place-content-end">
                   {showAssignableFilter ? (
@@ -210,7 +237,9 @@ export const GroupManager = ({
                       size={unassignedFilterSize}
                     >
                       {settings.getUseLeader() && (
-                        <option value="_leader">Leader</option>
+                        <option value={DEFAULTASSIGNABLEFILT.LEADER}>
+                          Leader
+                        </option>
                       )}
                       {filterArray.map(([key, value]) =>
                         value.getType() == "select" ? (
@@ -258,6 +287,7 @@ export const GroupManager = ({
                   </button>
                 </div>
               )}
+              {/**Unassigned List */}
               <UnassignedArrayComponent
                 unassignedArray={unassignedArray}
                 assignableCollection={assignableCollection}
@@ -266,6 +296,7 @@ export const GroupManager = ({
               />
             </div>
           )}
+          {/**Group */}
           {groupCollection.size > 0 && (
             <div className="rounded-md border p-1">
               <h1 className="text-center">Groups</h1>
@@ -273,7 +304,9 @@ export const GroupManager = ({
                 <span className="rounded-full bg-emerald-500 px-1">
                   {groupArray.length} / {groupCollection.size}
                 </span>
+                {/**Group Sort & Reverse */}
                 <div className="flex flex-row place-content-end">
+                  {/**Group Sort */}
                   <select
                     className={
                       "rounded-sm border " + (!groupSort && "text-neutral-500")
@@ -284,11 +317,17 @@ export const GroupManager = ({
                     <option className="dark:text-black" value="">
                       --Sort--
                     </option>
-                    <option className="dark:text-black" value="name">
+                    <option
+                      className="dark:text-black"
+                      value={DEFAULTGROUPSORT.NAME}
+                    >
                       Name
                     </option>
                     {settings.getGroupUseSize() && (
-                      <option className="dark:text-black" value="size">
+                      <option
+                        className="dark:text-black"
+                        value={DEFAULTGROUPSORT.SIZE}
+                      >
                         Size
                       </option>
                     )}
@@ -320,6 +359,7 @@ export const GroupManager = ({
                           )
                         )}
                   </select>
+                  {/**Group Reverse */}
                   <button
                     className="ml-1 font-bold text-neutral-500"
                     onClick={() => setGroupReverse(!groupReverse)}
@@ -328,6 +368,7 @@ export const GroupManager = ({
                   </button>
                 </div>
               </div>
+              {/**Group Filter */}
               {!!groupFilterSize && (
                 <div className="flex flex-row place-content-end">
                   {showGroupFilter ? (
@@ -343,7 +384,7 @@ export const GroupManager = ({
                       size={groupFilterSize}
                     >
                       {settings.getGroupUseSize() && (
-                        <option value="_unfull">Space Left</option>
+                        <option value={DEFAULTGROUPFILT.UNFULL}>Space Left</option>
                       )}
                       {filterArray.map(([key, value]) =>
                         value.getType() == "select" ? (

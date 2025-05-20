@@ -3,10 +3,12 @@ import { Setting } from "./settings";
 import {
   Assignable,
   AssignableManagerAction,
+  DEFAULTASSIGNABLEFILT,
+  DEFAULTASSIGNABLESORT,
   filterAssignables,
   sortAssignables,
 } from "./Assignable";
-import { AssignableArrayComponent } from "./AssignableComponent";
+import { AssignableComponent } from "./AssignableComponent";
 import { AssignableForm } from "./AssignableForm";
 
 export const AssignableManager = ({
@@ -68,6 +70,7 @@ export const AssignableManager = ({
 
   return (
     <div className="flex flex-col gap-1">
+      {/**New Assignable Form */}
       <div className={showForm ? "relative p-1" : "flex flex-col items-center"}>
         <button
           className={
@@ -93,7 +96,9 @@ export const AssignableManager = ({
           <span className="rounded-full bg-cyan-500 px-1">
             {assignableArray.length} / {assignableCollection.size}
           </span>
+          {/**Assignable Sort & Reverse */}
           <div className="flex flex-row place-content-end">
+            {/**Assignable Sort */}
             <select
               className={
                 "rounded-sm border " + (!assignableSort && "text-neutral-500")
@@ -104,17 +109,26 @@ export const AssignableManager = ({
               <option className="dark:text-black" value="">
                 --Sort--
               </option>
-              <option className="dark:text-black" value="name">
+              <option
+                className="dark:text-black"
+                value={DEFAULTASSIGNABLESORT.NAME}
+              >
                 Name
               </option>
               {settings.getUseLeader() && (
-                <option className="dark:text-black" value="leader">
+                <option
+                  className="dark:text-black"
+                  value={DEFAULTASSIGNABLESORT.LEADER}
+                >
                   Leader
                 </option>
               )}
               {settings.getUseLeader() &&
                 settings.getGroupSizeSource() != "groupsize" && (
-                  <option className="dark:text-black" value="size">
+                  <option
+                    className="dark:text-black"
+                    value={DEFAULTASSIGNABLESORT.SIZE}
+                  >
                     Size
                   </option>
                 )}
@@ -138,6 +152,7 @@ export const AssignableManager = ({
                   )
                 )}
             </select>
+            {/**Assignable Reverse */}
             <button
               className="ml-1 font-bold text-neutral-500"
               onClick={() => setAssignableReverse(!assignableReverse)}
@@ -146,6 +161,7 @@ export const AssignableManager = ({
             </button>
           </div>
         </div>
+        {/**Assignable Filter */}
         {!!assignableFilterSize && (
           <div className="flex flex-row place-content-end">
             {showAssignableFilter ? (
@@ -161,10 +177,12 @@ export const AssignableManager = ({
                 size={assignableFilterSize}
               >
                 {unassignedCollection.size > 0 && (
-                  <option value="_unassigned">Unassigned</option>
+                  <option value={DEFAULTASSIGNABLEFILT.UNASSIGNED}>
+                    Unassigned
+                  </option>
                 )}
                 {settings.getUseLeader() && (
-                  <option value="_leader">Leader</option>
+                  <option value={DEFAULTASSIGNABLEFILT.LEADER}>Leader</option>
                 )}
                 {filterArray.map(([key, value]) =>
                   value.getType() == "select" ? (
@@ -208,11 +226,22 @@ export const AssignableManager = ({
             </button>
           </div>
         )}
-        <AssignableArrayComponent
-          assignableArray={assignableArray}
-          assignableCollection={assignableCollection}
-          assignableDispatch={assignableDispatch}
-        />
+        {/**Assignable List */}
+        <ul className="mt-1 flex max-h-[70svh] flex-col gap-1 overflow-auto sm:flex-row">
+          {assignableArray.length > 0 ? (
+            assignableArray.map((value) => (
+              <li key={value}>
+                <AssignableComponent
+                  assignableID={value}
+                  assignableCollection={assignableCollection}
+                  assignableDispatch={assignableDispatch}
+                />
+              </li>
+            ))
+          ) : (
+            <li className="text-center">Empty</li>
+          )}
+        </ul>
       </div>
     </div>
   );

@@ -60,12 +60,21 @@ export class Group {
   }
 }
 
+export enum DEFAULTGROUPSORT {
+  ID = "ID",
+  NAME = "Name",
+  SIZE = "Size",
+}
+
 export function sortGroups(array: Array<Group>, sort?: string | undefined) {
   switch (sort) {
-    case "name":
+    case DEFAULTGROUPSORT.ID:
+      array.sort((a, b) => a.getID().localeCompare(b.getID()));
+      break;
+    case DEFAULTGROUPSORT.NAME:
       array.sort((a, b) => a.getName()?.localeCompare(b.getName() || "") || 0);
       break;
-    case "size":
+    case DEFAULTGROUPSORT.SIZE:
       array.sort(
         (a, b) =>
           (b.getSize() || 0) -
@@ -78,6 +87,10 @@ export function sortGroups(array: Array<Group>, sort?: string | undefined) {
   return array;
 }
 
+export enum DEFAULTGROUPFILT {
+  UNFULL = "Space Left",
+}
+
 export function filterGroups(
   array: Array<Group>,
   assignableCollection: Map<string, Assignable>,
@@ -88,7 +101,7 @@ export function filterGroups(
       let newArray = [...array];
       for (const f of filter) {
         switch (f) {
-          case "_unfull":
+          case DEFAULTGROUPFILT.UNFULL:
             newArray = [...newArray].filter(
               (value) =>
                 value.getSize() == undefined ||
