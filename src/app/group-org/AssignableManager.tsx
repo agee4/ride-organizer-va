@@ -70,27 +70,8 @@ export const AssignableManager = ({
 
   return (
     <div className="flex flex-col gap-1">
-      {/**New Assignable Form */}
-      <div className={showForm ? "relative p-1" : "flex flex-col items-center"}>
-        <button
-          className={
-            showForm
-              ? "absolute top-1 right-2"
-              : "w-full rounded-md border bg-cyan-200 dark:bg-cyan-800"
-          }
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? <>&times;</> : "Add Assignable"}
-        </button>
-        {showForm && (
-          <AssignableForm
-            settings={settings}
-            assignableDispatch={assignableDispatch}
-          />
-        )}
-      </div>
-      <div className="relative max-w-xl rounded-md border p-1">
+      {/**Assignable List */}
+      <div className="relative max-w-xl rounded-md border border-cyan-500 bg-cyan-50 p-1 dark:bg-cyan-950">
         <h1 className="text-center">Assignables</h1>
         <div className="flex flex-row place-content-between">
           <span className="rounded-full bg-cyan-500 px-1">
@@ -235,6 +216,7 @@ export const AssignableManager = ({
                   assignableID={value}
                   assignableCollection={assignableCollection}
                   assignableDispatch={assignableDispatch}
+                  settings={settings}
                 />
               </li>
             ))
@@ -243,6 +225,30 @@ export const AssignableManager = ({
           )}
         </ul>
       </div>
+      {/**New Assignable Form */}
+      {showForm ? (
+        <div className="relative p-1">
+          <button
+            className="absolute top-1 right-2"
+            type="button"
+            onClick={() => setShowForm(!showForm)}
+          >
+            {showForm ? <>&times;</> : "Add Assignable"}
+          </button>
+          <AssignableForm
+            settings={settings}
+            assignableDispatch={assignableDispatch}
+          />
+        </div>
+      ) : (
+        <button
+          className="w-full rounded-md border-4 border-double border-cyan-500 bg-cyan-200 dark:bg-cyan-800"
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+        >
+          Add Assignable
+        </button>
+      )}
     </div>
   );
 };

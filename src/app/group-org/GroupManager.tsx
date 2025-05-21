@@ -127,20 +127,10 @@ export const GroupManager = ({
   return (
     <DndProvider backend={HTML5Backend}>
       <AssignableDragLayer assignableCollection={assignableCollection} />
-      <div className="flex flex-col gap-1">
-        {showGroupForm ? (
-          <GroupForm
-            settings={settings}
-            groupDispatch={groupDispatch}
-            unassignedCollection={unassignedCollection}
-            assignableCollection={assignableCollection}
-          />
-        ) : (
-          <div />
-        )}
-        <div className="grid grid-cols-2 gap-1">
-          {/**Unassigned */}
-          {!!assignableCollection.size && (
+      <div className="grid grid-cols-2 gap-1">
+        {/**Unassigned */}
+        {!!assignableCollection.size && (
+          <div>
             <div className="relative rounded-md border p-1">
               <h1 className="text-center">Unassigned</h1>
               <div className="flex flex-row place-content-between">
@@ -295,7 +285,9 @@ export const GroupManager = ({
                 groupDispatch={groupDispatch}
               />
             </div>
-          )}
+          </div>
+        )}
+        <div>
           {/**Group */}
           {groupCollection.size > 0 && (
             <div className="rounded-md border p-1">
@@ -384,7 +376,9 @@ export const GroupManager = ({
                       size={groupFilterSize}
                     >
                       {settings.getGroupUseSize() && (
-                        <option value={DEFAULTGROUPFILT.UNFULL}>Space Left</option>
+                        <option value={DEFAULTGROUPFILT.UNFULL}>
+                          Space Left
+                        </option>
                       )}
                       {filterArray.map(([key, value]) =>
                         value.getType() == "select" ? (
@@ -440,6 +434,17 @@ export const GroupManager = ({
                 ))}
               </ul>
             </div>
+          )}
+          {/**New Group Form */}
+          {showGroupForm ? (
+            <GroupForm
+              settings={settings}
+              groupDispatch={groupDispatch}
+              unassignedCollection={unassignedCollection}
+              assignableCollection={assignableCollection}
+            />
+          ) : (
+            <div />
           )}
         </div>
       </div>

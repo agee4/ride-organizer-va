@@ -138,7 +138,7 @@ export const AssignableForm = ({
 
   return (
     <form
-      className="flex flex-col rounded-md border bg-cyan-200 p-2 dark:bg-cyan-800"
+      className="flex flex-col rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800"
       onSubmit={submitForm}
       ref={assignableFormRef}
     >

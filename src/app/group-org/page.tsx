@@ -21,6 +21,7 @@ import { PresetForm, SettingsForm } from "./SettingComponent";
 import { AssignableManager } from "./AssignableManager";
 import { GroupManager } from "./GroupManager";
 import { LoadFile } from "./LoadFile";
+import { SaveFile } from "./SaveFile";
 
 export default function Page() {
   const [assignableCollection, assignableDispatch] = useMapReducer<
@@ -366,6 +367,7 @@ export default function Page() {
   };
 
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
+  const [showFileForms, setShowFileForms] = useState<boolean>(false);
   const [showGroupManager, setShowGroupManager] = useState<boolean>(false);
 
   const allowShowGroupManager =
@@ -380,16 +382,18 @@ export default function Page() {
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)]">
       <main className="row-start-2 flex flex-col items-center gap-8">
         <h1>GroupU Org ~ Group Organizer</h1>
-        {/**Settings Form */}
-        <div className="relative rounded-md border p-1">
-          <button
-            className={showSettingsForm ? "absolute top-1 right-2" : ""}
-            onClick={() => setShowSettingsForm(!showSettingsForm)}
-          >
-            {showSettingsForm ? <>&times;</> : "Edit Settings"}
-          </button>
-          {showSettingsForm && (
-            <>
+        {/**Settings & File Forms */}
+        <div className="flex flex-col place-content-between gap-1 sm:flex-row">
+          {/**Setting Forms */}
+          {showSettingsForm ? (
+            <div className="relative rounded-md border p-1 text-center">
+              <button
+                className="absolute top-1 right-2"
+                onClick={() => setShowSettingsForm(!showSettingsForm)}
+              >
+                &times;
+              </button>
+              {/**Preset Form */}
               <PresetForm
                 settings={settings}
                 settingsCallback={setSettings}
@@ -397,28 +401,65 @@ export default function Page() {
                 presetsCallback={presetDispatch}
               />
               <hr />
+              {/**Settings Form */}
               <SettingsForm
                 settings={settings}
                 settingsCallback={setSettings}
               />
-            </>
+            </div>
+          ) : (
+            <button
+              className="place-content-center rounded-md border-4 border-double p-1 text-center"
+              onClick={() => setShowSettingsForm(!showSettingsForm)}
+            >
+              Settings
+            </button>
+          )}
+          {/**File Forms */}
+          {showFileForms ? (
+            <div className="relative rounded-md border p-1 text-center">
+              <button
+                className="absolute top-1 right-2"
+                onClick={() => setShowFileForms(!showFileForms)}
+              >
+                &times;
+              </button>
+              {/**Load Form */}
+              <LoadFile
+                assignableCollection={assignableCollection}
+                assignableDispatch={assignableManagerDispatch}
+                groupDispatch={groupManagerDispatch}
+              />
+              <hr />
+              {/**Save Form */}
+              <SaveFile
+                assignableCollection={assignableCollection}
+                groupCollection={groupCollection}
+              />
+            </div>
+          ) : (
+            <button
+              className="place-content-center rounded-md border-4 border-double p-1 text-center"
+              onClick={() => setShowFileForms(!showFileForms)}
+            >
+              Open/Save File
+            </button>
           )}
         </div>
-        {/**Load Form */}
-        <LoadFile
-          assignableCollection={assignableCollection}
-          assignableDispatch={assignableManagerDispatch}
-          groupDispatch={groupManagerDispatch}
-        />
         {/**Assignable & Group Managers */}
         <div className="flex flex-col gap-1">
           {/**Assignable/Group Manager Toggle */}
           {allowShowGroupManager && (
             <button
-              className="rounded-sm border px-1"
+              className={
+                "rounded-sm border px-1 " +
+                (showGroupManager
+                  ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-950"
+                  : "")
+              }
               onClick={() => setShowGroupManager(!showGroupManager)}
             >
-              Manage {!showGroupManager ? "Groups" : "Assignables"}
+              Manage {showGroupManager ? "Assignables" : "Groups"}
             </button>
           )}
           {/**Assignable or Group Manager */}

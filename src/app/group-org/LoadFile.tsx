@@ -27,7 +27,7 @@ export const LoadFile = ({
     if (fileSelectorRef.current) fileSelectorRef.current.value = "";
   };
 
-  const clearPeople = () => {
+  const clearAssignables = () => {
     assignableCollection.forEach((value) =>
       assignableDispatch({
         type: "delete",
@@ -36,7 +36,7 @@ export const LoadFile = ({
     );
   };
   const loadSheet = async () => {
-    clearPeople();
+    clearAssignables();
     const f = selectedFile
       ? selectedFile
       : await fetch("/placeholdersheet.xlsx");
@@ -233,7 +233,8 @@ export const LoadFile = ({
   };
 
   return (
-    <div>
+    <div className="my-1">
+      <h1 className="text-center">Load Data</h1>
       <label className="block">
         <span className="text-neutral-500">Choose a sheet to upload:</span>
         <br />
@@ -257,7 +258,7 @@ export const LoadFile = ({
         >
           Load Data
         </button>
-        <button className="rounded-full border px-2" onClick={clearPeople}>
+        <button className="rounded-full border px-2" onClick={clearAssignables}>
           Clear Data
         </button>
       </div>

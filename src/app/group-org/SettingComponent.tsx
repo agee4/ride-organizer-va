@@ -307,11 +307,7 @@ export const SettingsForm = ({
   );
 
   return (
-    <form
-      className="my-1 flex flex-col"
-      onSubmit={submitForm}
-      ref={settingsFormRef}
-    >
+    <form className="flex flex-col" onSubmit={submitForm} ref={settingsFormRef}>
       <label className="text-center">Settings</label>
       <div className="flex flex-row">
         <div className="flex flex-col gap-1">
@@ -346,7 +342,12 @@ export const SettingsForm = ({
           </label>
           <hr />
           {/**Assignable Fields */}
-          <div className="flex flex-col border p-1">
+          <div
+            className={
+              "flex flex-col p-1 " +
+              (showAssignableFields ? "border" : "border-4 border-double")
+            }
+          >
             {/**Toggle Assignable Field Visibility */}
             <label className="flex flex-row place-content-between gap-1">
               <span>
@@ -399,7 +400,12 @@ export const SettingsForm = ({
                   </div>
                 ))}
                 {/**Add Assignable Field */}
-                <div className="flex flex-col border p-1">
+                <div
+                  className={
+                    "flex flex-col p-1 " +
+                    (showAddInputField ? "border" : "border-4 border-double")
+                  }
+                >
                   <label className="flex flex-row place-content-between">
                     Add Input Field
                     <button
