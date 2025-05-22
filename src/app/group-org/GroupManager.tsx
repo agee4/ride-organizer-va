@@ -133,8 +133,8 @@ export const GroupManager = ({
           <div>
             <div className="relative rounded-md border p-1">
               <h1 className="text-center">Unassigned</h1>
-              <div className="flex flex-row place-content-between">
-                <span className="rounded-full bg-cyan-500 px-1">
+              <div className="flex flex-col place-content-between sm:flex-row">
+                <span className="rounded-full bg-cyan-500 px-1 text-center">
                   {unassignedArray.length} / {unassignedCollection.size}
                 </span>
                 {/**Unassigned Sort & Reverse */}
@@ -292,8 +292,8 @@ export const GroupManager = ({
           {groupCollection.size > 0 && (
             <div className="rounded-md border p-1">
               <h1 className="text-center">Groups</h1>
-              <div className="flex flex-row place-content-between">
-                <span className="rounded-full bg-emerald-500 px-1">
+              <div className="flex flex-col place-content-between sm:flex-row">
+                <span className="rounded-full bg-emerald-500 px-1 text-center">
                   {groupArray.length} / {groupCollection.size}
                 </span>
                 {/**Group Sort & Reverse */}

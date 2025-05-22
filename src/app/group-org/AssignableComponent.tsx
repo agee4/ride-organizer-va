@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import {
   Assignable,
   AssignableManagerAction,
@@ -14,15 +14,19 @@ const AssignableDisplay = ({
   toggleEdit: () => void;
 }) => {
   return (
-    <>
+    <div className="rounded-md border border-cyan-500 bg-cyan-200 p-2 sm:w-[160px] dark:bg-cyan-800">
       <div className="flex flex-row place-content-between gap-1 font-bold">
-        {data.getName()}
+        <div className="truncate sm:max-w-[70dvw]" title={data.getName()}>
+          {data.getName()}
+        </div>
         <button className="rounded-sm border px-1" onClick={toggleEdit}>
           &hellip;
         </button>
       </div>
-      <div className="flex flex-row place-content-between text-xs italic">
-        <span>{data.getID()}</span>
+      <div className="flex flex-row flex-wrap place-content-between text-xs italic">
+        <span className="truncate sm:max-w-[73dvw]" title={data.getID()}>
+          {data.getID()}
+        </span>
         <span>{data.getLeader() && "Leader"}</span>
       </div>
       {data.getAttributes() &&
@@ -52,7 +56,7 @@ const AssignableDisplay = ({
                       ))}
                     </ul>
                   ) : (
-                    <span>{value}</span>
+                    <span className="truncate">{value}</span>
                   )}
                 </>
               )}
@@ -71,7 +75,7 @@ const AssignableDisplay = ({
           defaultValue={data.getNotes()}
         />
       )}
-    </>
+    </div>
   );
 };
 
@@ -110,20 +114,23 @@ const AssignableEdit = ({
   };
 
   return (
-    <>
+    <div className="rounded-md border border-cyan-500 bg-cyan-200 p-2 sm:w-[160px] dark:bg-cyan-800">
       <div className="flex flex-row place-content-between gap-1 font-bold">
-        <div>
-          Editing <span className="italic">{data.getID()}</span>
+        <div className="truncate">
+          Editing{" "}
+          <span className="italic" title={data.getID()}>
+            {data.getID()}
+          </span>
         </div>
         <button className="rounded-sm border px-1" onClick={toggleEdit}>
           &hellip;
         </button>
       </div>
       {settings.getAssignableIDSource() != DEFAULTASSIGNABLEFIELDS.NAME && (
-        <label className="flex flex-row place-content-between">
+        <label className="flex flex-row flex-wrap place-content-between rounded-md bg-cyan-300 dark:bg-cyan-700">
           Name*:
           <input
-            className="rounded-sm border"
+            className="max-w-35 rounded-sm border"
             type="text"
             name={DEFAULTASSIGNABLEFIELDS.NAME}
             value={name}
@@ -139,12 +146,15 @@ const AssignableEdit = ({
         .map(([name, field]) => {
           const value = newAttributes.get(name);
           return (
-            <label key={name} className="flex flex-row place-content-between">
+            <label
+              key={name}
+              className="mt-1 flex flex-row flex-wrap place-content-between rounded-md bg-cyan-300 dark:bg-cyan-700"
+            >
               {name}
               {field.getRequired() ? "*" : ""}:
               {field.getType() == "select" ? (
                 <select
-                  className="rounded-sm border"
+                  className="max-w-35 rounded-sm border"
                   name={name}
                   value={
                     Array.isArray(value)
@@ -181,7 +191,7 @@ const AssignableEdit = ({
                 </select>
               ) : (
                 <input
-                  className="rounded-sm border"
+                  className="max-w-35 rounded-sm border"
                   type={field.getType()}
                   name={name}
                   value={
@@ -207,10 +217,10 @@ const AssignableEdit = ({
           );
         })}
       {!!data.getSize() && (
-        <label className="flex flex-row place-content-between">
+        <label className="mt-1 flex flex-row flex-wrap place-content-between rounded-md bg-cyan-300 dark:bg-cyan-700">
           Size*:
           <input
-            className="rounded-sm border"
+            className="max-w-35 rounded-sm border"
             type="number"
             name={DEFAULTASSIGNABLEFIELDS.SIZE}
             defaultValue={size}
@@ -223,7 +233,7 @@ const AssignableEdit = ({
       )}
       <textarea
         name={DEFAULTASSIGNABLEFIELDS.NOTES}
-        className="m-1 w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+        className="mt-1 w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
       />
@@ -241,7 +251,7 @@ const AssignableEdit = ({
           SAVE
         </button>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -263,18 +273,14 @@ export const AssignableComponent = ({
   const [editMode, setEditMode] = useState<boolean>(false);
   const toggleEditMode = () => setEditMode(!editMode);
 
-  return (
-    <div className="rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800">
-      {editMode ? (
-        <AssignableEdit
-          data={data}
-          toggleEdit={toggleEditMode}
-          assignableDispatch={assignableDispatch}
-          settings={settings}
-        />
-      ) : (
-        <AssignableDisplay data={data} toggleEdit={toggleEditMode} />
-      )}
-    </div>
+  return editMode ? (
+    <AssignableEdit
+      data={data}
+      toggleEdit={toggleEditMode}
+      assignableDispatch={assignableDispatch}
+      settings={settings}
+    />
+  ) : (
+    <AssignableDisplay data={data} toggleEdit={toggleEditMode} />
   );
 };

@@ -103,9 +103,18 @@ export const GroupComponent = ({
     >
       <ul>
         <li className="flex flex-row place-content-between font-bold">
-          {data.getName() ||
-            (leader && assignableCollection.get(leader)?.getName()) ||
-            groupID}
+          <span
+            className="truncate"
+            title={
+              data.getName() ||
+              (leader && assignableCollection.get(leader)?.getName()) ||
+              groupID
+            }
+          >
+            {data.getName() ||
+              (leader && assignableCollection.get(leader)?.getName()) ||
+              groupID}
+          </span>
           <button
             className="rounded-sm border px-1"
             onClick={() => groupDispatch({ type: "delete", groupID: groupID })}
@@ -113,7 +122,9 @@ export const GroupComponent = ({
             &times;
           </button>
         </li>
-        <li className="text-xs italic">{groupID}</li>
+        <li className="truncate text-xs italic" title={groupID}>
+          {groupID}
+        </li>
         {leader && (
           <GroupLeaderComponent
             leaderID={leader}
@@ -181,9 +192,13 @@ const GroupLeaderComponent = ({
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-emerald-200 p-2 dark:bg-emerald-800">
       <div className="flex flex-row place-content-between font-bold">
-        {data.getName()}
+        <span className="truncate" title={data.getName()}>
+          {data.getName()}
+        </span>
       </div>
-      <div className="text-xs italic">{leaderID}</div>
+      <div className="truncate text-xs italic" title={leaderID}>
+        {leaderID}
+      </div>
       {Array.from(data.getAttributes() as Map<string, string>)
         .filter(([key]) => data.getAttributeGroups().get(key) == "contact")
         .map(([key, value]) => (
@@ -292,7 +307,9 @@ const GroupMemberComponent = ({
       onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
     >
       <div className="flex flex-row place-content-between font-bold">
-        {data.getName()}
+        <span className="truncate" title={data.getName()}>
+          {data.getName()}
+        </span>
         <button
           className="rounded-sm border px-1"
           onClick={() => removeMember(memberID)}
@@ -300,7 +317,9 @@ const GroupMemberComponent = ({
           &times;
         </button>
       </div>
-      <div className="text-xs italic">{memberID}</div>
+      <div className="truncate text-xs italic" title={memberID}>
+        {memberID}
+      </div>
       {Array.from(data.getAttributes() as Map<string, string>)
         .filter(([key]) => data.getAttributeGroups().get(key) == "contact")
         .map(([key, value]) => (

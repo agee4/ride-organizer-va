@@ -57,16 +57,20 @@ const UnassignedComponent = ({
   return (
     <div
       className={
-        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800 " +
-        (isDragging && "opacity-50") +
-        (selected && " border-4 border-amber-500")
+        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800" +
+        (isDragging ? " opacity-50" : "") +
+        (selected ? " border-4 border-amber-500" : "")
       }
       ref={dragRef}
       onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
     >
-      <div className="font-bold">{data.getName()}</div>
-      <div className="flex flex-row place-content-between text-xs italic">
-        <span>{assignableID}</span>
+      <div className="max-w-50 truncate font-bold" title={data.getName()}>
+        {data.getName()}
+      </div>
+      <div className="flex flex-row flex-wrap place-content-between text-xs italic">
+        <span className="max-w-50 truncate" title={assignableID}>
+          {assignableID}
+        </span>
         <span>{data.getLeader() && "Leader"}</span>
       </div>
       {data.getAttributes() &&
@@ -96,7 +100,7 @@ const UnassignedComponent = ({
                       ))}
                     </ul>
                   ) : (
-                    <span>{value}</span>
+                    <span className="truncate">{value}</span>
                   )}
                 </>
               )}
@@ -174,20 +178,13 @@ export const UnassignedArrayComponent = ({
           }
         }
       },
-      canDrop: (item) =>
-        item.id.every(
-          (id) => !unassignedArray.includes(id)
-        ),
+      canDrop: (item) => item.id.every((id) => !unassignedArray.includes(id)),
       collect: (monitor) => ({
         isOver: monitor.isOver(),
         canDrop: monitor.canDrop(),
       }),
     }),
-    [
-      unassignedArray,
-      assignableCollection,
-      groupCollection,
-    ]
+    [unassignedArray, assignableCollection, groupCollection]
   );
   const dropRef = useDNDRef(drop);
 

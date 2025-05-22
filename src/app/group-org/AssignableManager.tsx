@@ -71,7 +71,7 @@ export const AssignableManager = ({
   return (
     <div className="flex flex-col gap-1">
       {/**Assignable List */}
-      <div className="relative max-w-xl rounded-md border border-cyan-500 bg-cyan-50 p-1 dark:bg-cyan-950">
+      <div className="w-[80dvw] rounded-md border border-cyan-500 bg-cyan-50 p-1 dark:bg-cyan-950">
         <h1 className="text-center">Assignables</h1>
         <div className="flex flex-row place-content-between">
           <span className="rounded-full bg-cyan-500 px-1">
@@ -208,7 +208,7 @@ export const AssignableManager = ({
           </div>
         )}
         {/**Assignable List */}
-        <ul className="mt-1 flex max-h-[70svh] flex-col gap-1 overflow-auto sm:flex-row">
+        <ul className="mt-1 flex max-h-[70svh] max-w-fit flex-col gap-1 overflow-auto sm:flex-row">
           {assignableArray.length > 0 ? (
             assignableArray.map((value) => (
               <li key={value}>
@@ -227,7 +227,7 @@ export const AssignableManager = ({
       </div>
       {/**New Assignable Form */}
       {showForm ? (
-        <div className="relative p-1">
+        <div className="relative">
           <button
             className="absolute top-1 right-2"
             type="button"

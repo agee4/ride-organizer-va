@@ -91,7 +91,7 @@ export const PresetForm = ({
           </select>
           {preset == "Custom" && (
             <input
-              className="rounded-sm border"
+              className="max-w-[60dvw] rounded-sm border"
               type="text"
               name="newAssignableField"
               value={newPresetName}
@@ -309,7 +309,8 @@ export const SettingsForm = ({
   return (
     <form className="flex flex-col" onSubmit={submitForm} ref={settingsFormRef}>
       <label className="text-center">Settings</label>
-      <div className="flex flex-row">
+      <div className="flex flex-row max-[30rem]:flex-col">
+        {/**Assignable */}
         <div className="flex flex-col gap-1">
           <h1 className="text-center">Assignable</h1>
           {/**Assignable ID Source */}
@@ -418,7 +419,7 @@ export const SettingsForm = ({
                   {showAddInputField && (
                     <>
                       <input
-                        className="rounded-sm border"
+                        className="max-w-[70dvw] rounded-sm border"
                         type="text"
                         name="newAssignableField"
                         value={fieldName}
@@ -601,7 +602,8 @@ export const SettingsForm = ({
             />
           </label>
         </div>
-        <div className="mx-1 border-l-1"></div>
+        <div className="mx-1 border-t-1 border-l-1"></div>
+        {/**Group */}
         <div className="flex flex-col gap-1">
           <h1 className="text-center">Group</h1>
           <label className="flex flex-row place-content-between gap-1">

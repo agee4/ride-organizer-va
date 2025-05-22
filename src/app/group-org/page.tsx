@@ -408,12 +408,14 @@ export default function Page() {
               />
             </div>
           ) : (
-            <button
-              className="place-content-center rounded-md border-4 border-double p-1 text-center"
-              onClick={() => setShowSettingsForm(!showSettingsForm)}
-            >
-              Settings
-            </button>
+            <div className="flex place-content-center sm:block">
+              <button
+                className="rounded-md border-4 border-double p-1 text-center"
+                onClick={() => setShowSettingsForm(!showSettingsForm)}
+              >
+                Settings
+              </button>
+            </div>
           )}
           {/**File Forms */}
           {showFileForms ? (
@@ -438,12 +440,14 @@ export default function Page() {
               />
             </div>
           ) : (
-            <button
-              className="place-content-center rounded-md border-4 border-double p-1 text-center"
-              onClick={() => setShowFileForms(!showFileForms)}
-            >
-              Open/Save File
-            </button>
+            <div className="flex place-content-center sm:block">
+              <button
+                className="rounded-md border-4 border-double p-1 text-center"
+                onClick={() => setShowFileForms(!showFileForms)}
+              >
+                Open/Save File
+              </button>
+            </div>
           )}
         </div>
         {/**Assignable & Group Managers */}

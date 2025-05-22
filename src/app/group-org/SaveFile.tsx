@@ -103,7 +103,7 @@ export const SaveFile = ({
       <h1 className="text-center">Save Data</h1>
       <div className="flex flex-row">
         <input
-          className="rounded-sm border"
+          className="max-w-[66dvw] rounded-sm border"
           type="text"
           value={saveSheetName}
           placeholder="Set Sheet Name"

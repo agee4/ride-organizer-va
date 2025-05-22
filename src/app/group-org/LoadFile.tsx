@@ -239,7 +239,7 @@ export const LoadFile = ({
         <span className="text-neutral-500">Choose a sheet to upload:</span>
         <br />
         <input
-          className="file:rounded-sm file:border file:px-2"
+          className="max-w-[75dvw] file:rounded-sm file:border file:px-2"
           type="file"
           onChange={handleFileChange}
           accept=".xlsx,.xls,.csv,.ods,.gsheet"
