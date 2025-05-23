@@ -9,7 +9,7 @@ import {
 } from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group, GroupManagerAction } from "./Group";
-import { clickOutside } from "./helpers";
+import { useClickOutside } from "./helpers";
 
 export const GroupComponent = ({
   groupID,
@@ -91,7 +91,7 @@ export const GroupComponent = ({
     [data, groupCollection, addGroupMember, size]
   );
   const dropRef = useDNDRef(drop);
-  clickOutside(dropRef, clearSelect);
+  useClickOutside(dropRef, clearSelect);
 
   const removeMember = (memberID: string) => {
     groupDispatch({

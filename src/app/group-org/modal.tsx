@@ -1,5 +1,5 @@
 import { ReactNode, useRef } from "react";
-import { clickOutside } from "./helpers";
+import { useClickOutside } from "./helpers";
 
 export function closeModal() {
   const modal = document.getElementById("modal");
@@ -9,7 +9,7 @@ export function closeModal() {
 export const ModalDisplay = ({ element }: { element: ReactNode }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  clickOutside(modalRef, closeModal);
+  useClickOutside(modalRef, closeModal);
 
   return (
     <dialog

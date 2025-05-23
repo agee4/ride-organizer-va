@@ -30,7 +30,7 @@ export const AssignableManager = ({
     new Array<string>()
   );
   const assignableArray = useMemo(() => {
-    let newAssignableArray = sortAssignables(
+    const newAssignableArray = sortAssignables(
       filterAssignables(
         Array.from(assignableCollection.values()),
         assignableFilter,
@@ -64,7 +64,7 @@ export const AssignableManager = ({
         4
       ),
     ];
-  }, [settings]);
+  }, [settings, unassignedCollection.size]);
 
   const openAssignableForm = () =>
     modalDispatch(

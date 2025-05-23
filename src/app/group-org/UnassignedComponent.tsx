@@ -9,7 +9,7 @@ import {
 } from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group, GroupManagerAction } from "./Group";
-import { clickOutside } from "./helpers";
+import { useClickOutside } from "./helpers";
 
 const UnassignedComponent = ({
   assignableID,
@@ -203,7 +203,7 @@ export const UnassignedArrayComponent = ({
     [unassignedArray, assignableCollection, groupCollection]
   );
   const dropRef = useDNDRef(drop);
-  clickOutside(dropRef, clearSelect);
+  useClickOutside(dropRef, clearSelect);
 
   return (
     <div

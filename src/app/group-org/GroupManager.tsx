@@ -43,7 +43,7 @@ export const GroupManager = ({
     new Array<string>()
   );
   const unassignedArray = useMemo(() => {
-    let newUnassignedArray = sortAssignables(
+    const newUnassignedArray = sortAssignables(
       filterAssignables(
         Array.from(assignableCollection.values()).filter((value) =>
           unassignedCollection.has(value.getID())
@@ -68,7 +68,7 @@ export const GroupManager = ({
     new Array<string>()
   );
   const groupArray = useMemo(() => {
-    let newGroupArray = sortGroups(
+    const newGroupArray = sortGroups(
       filterGroups(
         Array.from(groupCollection.values()),
         assignableCollection,

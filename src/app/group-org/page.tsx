@@ -160,7 +160,13 @@ export default function Page() {
         });
       }
     }
-  }, []);
+  }, [
+    unassignedDispatch,
+    presetCollection,
+    presetDispatch,
+    assignableDispatch,
+    groupDispatch,
+  ]);
 
   /**Save the following to localStorage */
   /**Settings */

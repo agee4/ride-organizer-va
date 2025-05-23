@@ -9,7 +9,7 @@ function arrayReducer<V>() {
   return (itemArray: Array<V>, action: ArrayReducerAction<V>) => {
     switch (action.type) {
       case "create": {
-        return new Array(...itemArray, action.value);
+        return [...itemArray, action.value];
       }
       case "delete": {
         const newCollection = new Array(...itemArray);
@@ -95,7 +95,7 @@ export function mapEquals(first: Map<string, any>, second: Map<string, any>) {
   return true;
 }
 
-export const clickOutside = (
+export const useClickOutside = (
   ref: RefObject<HTMLDivElement | null>,
   callback: () => void
 ) => {
