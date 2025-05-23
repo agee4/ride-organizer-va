@@ -110,7 +110,7 @@ export const GroupForm = ({
 
   return (
     <form
-      className="flex flex-col rounded-md border p-2"
+      className="flex flex-col rounded-md border p-2 bg-white"
       onSubmit={submitForm}
       ref={groupFormRef}
     >
@@ -144,7 +144,7 @@ export const GroupForm = ({
         <label className="flex flex-row flex-wrap place-content-between gap-1">
           ID*:
           <input
-            className="rounded-sm border"
+            className="w-full rounded-sm border"
             type="text"
             name="id"
             value={data.id}

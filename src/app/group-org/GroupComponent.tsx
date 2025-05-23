@@ -9,6 +9,7 @@ import {
 } from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group, GroupManagerAction } from "./Group";
+import { clickOutside } from "./helpers";
 
 export const GroupComponent = ({
   groupID,
@@ -16,12 +17,14 @@ export const GroupComponent = ({
   assignableCollection,
   addGroupMember,
   groupDispatch,
+  selectMode,
 }: {
   groupID: string;
   groupCollection: Map<string, Group>;
   assignableCollection: Map<string, Assignable>;
   addGroupMember: (groupID: string, memberID?: string) => void;
   groupDispatch: (action: GroupManagerAction) => void;
+  selectMode: boolean;
 }) => {
   const data = groupCollection.get(groupID) || new Group({ id: "!ERROR!" });
   const assignableArray = Array.from(data.getAllMembers());
@@ -39,13 +42,14 @@ export const GroupComponent = ({
   const handleSelect = (index: number, shiftKey: boolean, ctrlKey: boolean) => {
     handleSelectHelper(
       index,
-      shiftKey,
-      ctrlKey,
       assignableArray,
       prevSelectedIndex,
       selectedAssignables,
       setSelectedAssignables,
-      setPrevSelectedIndex
+      setPrevSelectedIndex,
+      shiftKey,
+      ctrlKey,
+      selectMode
     );
   };
 
@@ -87,6 +91,7 @@ export const GroupComponent = ({
     [data, groupCollection, addGroupMember, size]
   );
   const dropRef = useDNDRef(drop);
+  clickOutside(dropRef, clearSelect);
 
   const removeMember = (memberID: string) => {
     groupDispatch({

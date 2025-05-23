@@ -9,6 +9,7 @@ import {
 } from "./draganddrop";
 import { Assignable } from "./Assignable";
 import { Group, GroupManagerAction } from "./Group";
+import { clickOutside } from "./helpers";
 
 const UnassignedComponent = ({
   assignableID,
@@ -17,13 +18,20 @@ const UnassignedComponent = ({
   selectedAssignables,
   handleSelect,
   clearSelect,
+  selectMode,
 }: {
   assignableID: string;
   assignableCollection: Map<string, Assignable>;
   index: number;
   selectedAssignables: Array<string>;
-  handleSelect: (index: number, shiftKey: boolean, ctrlKey: boolean) => void;
+  handleSelect: (
+    index: number,
+    shiftKey: boolean,
+    ctrlKey: boolean,
+    selectMode: boolean
+  ) => void;
   clearSelect: () => void;
+  selectMode: boolean;
 }) => {
   const data =
     assignableCollection.get(assignableID) ||
@@ -62,7 +70,7 @@ const UnassignedComponent = ({
         (selected ? " border-4 border-amber-500" : "")
       }
       ref={dragRef}
-      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
+      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey, selectMode)}
     >
       <div className="max-w-50 truncate font-bold" title={data.getName()}>
         {data.getName()}
@@ -85,7 +93,7 @@ const UnassignedComponent = ({
           )
           .map(([key, value]) => (
             <div
-              className="m-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+              className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
               key={key}
             >
               {typeof value == "boolean" ? (
@@ -107,14 +115,14 @@ const UnassignedComponent = ({
             </div>
           ))}
       {data.getSize() != undefined && (
-        <div className="m-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700">
+        <div className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700">
           <span>Size:</span>
           <span>{data.getSize()}</span>
         </div>
       )}
       {data.getNotes() && (
         <textarea
-          className="m-1 w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+          className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
           disabled
           defaultValue={data.getNotes()}
         />
@@ -128,11 +136,13 @@ export const UnassignedArrayComponent = ({
   assignableCollection,
   groupCollection,
   groupDispatch,
+  selectMode,
 }: {
   unassignedArray: Array<string>;
   assignableCollection: Map<string, Assignable>;
   groupCollection: Map<string, Group>;
   groupDispatch: (action: GroupManagerAction) => void;
+  selectMode: boolean;
 }) => {
   const [selectedAssignables, setSelectedAssignables] = useState<Array<string>>(
     new Array<string>()
@@ -142,16 +152,22 @@ export const UnassignedArrayComponent = ({
     setSelectedAssignables(new Array<string>());
     setPrevSelectedIndex(-1);
   };
-  const handleSelect = (index: number, shiftKey: boolean, ctrlKey: boolean) => {
+  const handleSelect = (
+    index: number,
+    shiftKey: boolean,
+    ctrlKey: boolean,
+    select: boolean
+  ) => {
     handleSelectHelper(
       index,
-      shiftKey,
-      ctrlKey,
       unassignedArray,
       prevSelectedIndex,
       selectedAssignables,
       setSelectedAssignables,
-      setPrevSelectedIndex
+      setPrevSelectedIndex,
+      shiftKey,
+      ctrlKey,
+      select
     );
   };
 
@@ -187,6 +203,7 @@ export const UnassignedArrayComponent = ({
     [unassignedArray, assignableCollection, groupCollection]
   );
   const dropRef = useDNDRef(drop);
+  clickOutside(dropRef, clearSelect);
 
   return (
     <div
@@ -196,24 +213,24 @@ export const UnassignedArrayComponent = ({
       }
       ref={dropRef}
     >
-      <ul className="m-1 max-h-[70svh] overflow-auto">
+      <div className="m-1 max-h-[70svh] overflow-auto">
         {unassignedArray.length > 0 ? (
           unassignedArray.map((value, index) => (
-            <li key={value}>
-              <UnassignedComponent
-                assignableID={value}
-                assignableCollection={assignableCollection}
-                index={index}
-                selectedAssignables={selectedAssignables}
-                handleSelect={handleSelect}
-                clearSelect={clearSelect}
-              />
-            </li>
+            <UnassignedComponent
+              assignableID={value}
+              assignableCollection={assignableCollection}
+              index={index}
+              selectedAssignables={selectedAssignables}
+              handleSelect={handleSelect}
+              clearSelect={clearSelect}
+              selectMode={selectMode}
+              key={value}
+            />
           ))
         ) : (
-          <li className="text-center">Empty</li>
+          <div className="text-center">Empty</div>
         )}
-      </ul>
+      </div>
     </div>
   );
 };

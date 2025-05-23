@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Setting } from "./settings";
 import {
   Assignable,
@@ -16,11 +16,13 @@ export const AssignableManager = ({
   assignableCollection,
   unassignedCollection,
   assignableDispatch,
+  modalDispatch,
 }: {
   settings: Setting;
   assignableCollection: Map<string, Assignable>;
   unassignedCollection: Set<string>;
   assignableDispatch: (action: AssignableManagerAction) => void;
+  modalDispatch: (element: ReactNode) => void;
 }) => {
   const [assignableSort, setAssignableSort] = useState<string>("");
   const [assignableReverse, setAssignableReverse] = useState<boolean>(false);
@@ -64,83 +66,96 @@ export const AssignableManager = ({
     ];
   }, [settings]);
 
-  const [showForm, setShowForm] = useState<boolean>(false);
+  const openAssignableForm = () =>
+    modalDispatch(
+      <AssignableForm
+        settings={settings}
+        assignableDispatch={assignableDispatch}
+      />
+    );
+
   const [showAssignableFilter, setShowAssignableFilter] =
     useState<boolean>(false);
 
   return (
     <div className="flex flex-col gap-1">
       {/**Assignable List */}
-      <div className="w-[80dvw] rounded-md border border-cyan-500 bg-cyan-50 p-1 dark:bg-cyan-950">
-        <h1 className="text-center">Assignables</h1>
-        <div className="flex flex-row place-content-between">
-          <span className="rounded-full bg-cyan-500 px-1">
+      <div className="w-[90dvw] rounded-md border border-cyan-500 bg-cyan-50 p-1 dark:bg-cyan-950">
+        <h1 className="relative py-2 text-center">
+          <span className="absolute top-2 left-0 rounded-full bg-cyan-500 px-1">
             {assignableArray.length} / {assignableCollection.size}
           </span>
-          {/**Assignable Sort & Reverse */}
-          <div className="flex flex-row place-content-end">
-            {/**Assignable Sort */}
-            <select
-              className={
-                "rounded-sm border " + (!assignableSort && "text-neutral-500")
-              }
-              value={assignableSort}
-              onChange={(e) => setAssignableSort(e.target.value)}
+          Assignables
+          <button
+            className="absolute top-1 right-0 rounded-md border-4 border-double border-cyan-500 bg-cyan-200 px-2 dark:bg-cyan-800"
+            onClick={openAssignableForm}
+          >
+            +
+          </button>
+        </h1>
+        {/**Assignable Sort & Reverse */}
+        <div className="flex flex-row place-content-end">
+          {/**Assignable Sort */}
+          <select
+            className={
+              "rounded-sm border " + (!assignableSort && "text-neutral-500")
+            }
+            value={assignableSort}
+            onChange={(e) => setAssignableSort(e.target.value)}
+          >
+            <option className="dark:text-black" value="">
+              --Sort--
+            </option>
+            <option
+              className="dark:text-black"
+              value={DEFAULTASSIGNABLESORT.NAME}
             >
-              <option className="dark:text-black" value="">
-                --Sort--
-              </option>
+              Name
+            </option>
+            {settings.getUseLeader() && (
               <option
                 className="dark:text-black"
-                value={DEFAULTASSIGNABLESORT.NAME}
+                value={DEFAULTASSIGNABLESORT.LEADER}
               >
-                Name
+                Leader
               </option>
-              {settings.getUseLeader() && (
+            )}
+            {settings.getUseLeader() &&
+              settings.getGroupSizeSource() != "groupsize" && (
                 <option
                   className="dark:text-black"
-                  value={DEFAULTASSIGNABLESORT.LEADER}
+                  value={DEFAULTASSIGNABLESORT.SIZE}
                 >
-                  Leader
+                  Size
                 </option>
               )}
-              {settings.getUseLeader() &&
-                settings.getGroupSizeSource() != "groupsize" && (
-                  <option
-                    className="dark:text-black"
-                    value={DEFAULTASSIGNABLESORT.SIZE}
-                  >
-                    Size
+            {Array.from(settings.getAssignableFields().entries())
+              .filter(([, value]) =>
+                ["text", "number"].includes(value.getType())
+              )
+              .map(([key, value]) =>
+                value.getType() == "select" ? (
+                  <optgroup className="dark:text-black" key={key} label={key}>
+                    {Array.from(value.getOptions()).map((option) => (
+                      <option className="dark:text-black" key={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : (
+                  <option className="dark:text-black" key={key}>
+                    {key}
                   </option>
-                )}
-              {Array.from(settings.getAssignableFields().entries())
-                .filter(([, value]) =>
-                  ["text", "number"].includes(value.getType())
                 )
-                .map(([key, value]) =>
-                  value.getType() == "select" ? (
-                    <optgroup className="dark:text-black" key={key} label={key}>
-                      {Array.from(value.getOptions()).map((option) => (
-                        <option className="dark:text-black" key={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : (
-                    <option className="dark:text-black" key={key}>
-                      {key}
-                    </option>
-                  )
-                )}
-            </select>
-            {/**Assignable Reverse */}
-            <button
-              className="ml-1 font-bold text-neutral-500"
-              onClick={() => setAssignableReverse(!assignableReverse)}
-            >
-              {assignableReverse ? <span>&uarr;</span> : <span>&darr;</span>}
-            </button>
-          </div>
+              )}
+          </select>
+          {/**Assignable Reverse */}
+          <button
+            className="ml-1 font-bold text-neutral-500"
+            onClick={() => setAssignableReverse(!assignableReverse)}
+          >
+            {assignableReverse ? <span>&uarr;</span> : <span>&darr;</span>}
+          </button>
         </div>
         {/**Assignable Filter */}
         {!!assignableFilterSize && (
@@ -208,47 +223,23 @@ export const AssignableManager = ({
           </div>
         )}
         {/**Assignable List */}
-        <ul className="mt-1 flex max-h-[70svh] max-w-fit flex-col gap-1 overflow-auto sm:flex-row">
-          {assignableArray.length > 0 ? (
-            assignableArray.map((value) => (
-              <li key={value}>
-                <AssignableComponent
-                  assignableID={value}
-                  assignableCollection={assignableCollection}
-                  assignableDispatch={assignableDispatch}
-                  settings={settings}
-                />
-              </li>
-            ))
-          ) : (
-            <li className="text-center">Empty</li>
-          )}
-        </ul>
+        {assignableArray.length > 0 ? (
+          <div className="mt-1 flex max-h-[70svh] max-w-full flex-col gap-1 overflow-auto min-[30rem]:flex-row">
+            {assignableArray.map((value) => (
+              <AssignableComponent
+                assignableID={value}
+                assignableCollection={assignableCollection}
+                assignableDispatch={assignableDispatch}
+                settings={settings}
+                modalDispatch={modalDispatch}
+                key={value}
+              />
+            ))}
+          </div>
+        ) : (
+          <h2 className="text-center">No Assignables</h2>
+        )}
       </div>
-      {/**New Assignable Form */}
-      {showForm ? (
-        <div className="relative">
-          <button
-            className="absolute top-1 right-2"
-            type="button"
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? <>&times;</> : "Add Assignable"}
-          </button>
-          <AssignableForm
-            settings={settings}
-            assignableDispatch={assignableDispatch}
-          />
-        </div>
-      ) : (
-        <button
-          className="w-full rounded-md border-4 border-double border-cyan-500 bg-cyan-200 dark:bg-cyan-800"
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-        >
-          Add Assignable
-        </button>
-      )}
     </div>
   );
 };

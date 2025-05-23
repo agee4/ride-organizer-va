@@ -1,9 +1,7 @@
 import {
   ActionDispatch,
   ChangeEvent,
-  Dispatch,
   FormEvent,
-  SetStateAction,
   useEffect,
   useRef,
   useState,
@@ -19,7 +17,7 @@ export const PresetForm = ({
   presetsCallback,
 }: {
   settings: Setting;
-  settingsCallback: Dispatch<SetStateAction<Setting>>;
+  settingsCallback: (setting: Setting) => void;
   presets: Map<string | undefined, Setting>;
   presetsCallback: ActionDispatch<
     [action: MapReducerAction<string | undefined, Setting>]
@@ -91,7 +89,7 @@ export const PresetForm = ({
           </select>
           {preset == "Custom" && (
             <input
-              className="max-w-[60dvw] rounded-sm border"
+              className="w-full rounded-sm border"
               type="text"
               name="newAssignableField"
               value={newPresetName}
@@ -124,7 +122,7 @@ export const SettingsForm = ({
   settingsCallback,
 }: {
   settings: Setting;
-  settingsCallback: Dispatch<SetStateAction<Setting>>;
+  settingsCallback: (setting: Setting) => void;
 }) => {
   const settingsFormRef = useRef(null);
 
@@ -419,7 +417,7 @@ export const SettingsForm = ({
                   {showAddInputField && (
                     <>
                       <input
-                        className="max-w-[70dvw] rounded-sm border"
+                        className="w-full rounded-sm border"
                         type="text"
                         name="newAssignableField"
                         value={fieldName}

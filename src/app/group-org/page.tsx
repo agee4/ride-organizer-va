@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useMapReducer, useSetReducer } from "./helpers";
 import {
   defaultSettings,
@@ -10,6 +10,7 @@ import {
   Setting,
   SettingJSON,
 } from "./settings";
+import { closeModal as closeModalHelper, ModalDisplay } from "./modal";
 import {
   Assignable,
   AssignableAttrJSON,
@@ -32,6 +33,10 @@ export default function Page() {
   const [groupCollection, groupDispatch] = useMapReducer<string, Group>();
 
   const [settings, setSettings] = useState<Setting>(defaultSettings);
+  const updateSettings = (setting: Setting) => {
+    setSettings(setting);
+    closeModal();
+  };
 
   const [presetCollection, presetDispatch] = useMapReducer<
     string | undefined,
@@ -41,6 +46,17 @@ export default function Page() {
       presetArray.map((setting) => [setting.getName(), setting])
     )
   );
+
+  const [modalElement, setModalElement] = useState<ReactNode>();
+  const openModal = (element: ReactNode) => {
+    setModalElement(element);
+    const modalDisplay = document.getElementById("modal");
+    if (modalDisplay) modalDisplay.style.display = "block";
+  };
+  const closeModal = () => {
+    closeModalHelper();
+    setModalElement(undefined);
+  };
 
   /**Load settings, assignables, unassigned, and groups from localStorage */
   useEffect(() => {
@@ -226,6 +242,7 @@ export default function Page() {
   }, [groupCollection]);
 
   const assignableManagerDispatch = (action: AssignableManagerAction) => {
+    closeModal();
     switch (action.type) {
       case "create":
         assignableDispatch({
@@ -285,6 +302,7 @@ export default function Page() {
   };
 
   const groupManagerDispatch = (action: GroupManagerAction) => {
+    closeModal();
     switch (action.type) {
       case "create":
         groupDispatch({
@@ -365,9 +383,6 @@ export default function Page() {
           }
     }
   };
-
-  const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
-  const [showFileForms, setShowFileForms] = useState<boolean>(false);
   const [showGroupManager, setShowGroupManager] = useState<boolean>(false);
 
   const allowShowGroupManager =
@@ -379,76 +394,65 @@ export default function Page() {
     groupCollection.size > 0;
 
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-4 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-8">
+      <ModalDisplay element={modalElement} />
       <main className="row-start-2 flex flex-col items-center gap-8">
         <h1>GroupU Org ~ Group Organizer</h1>
         {/**Settings & File Forms */}
-        <div className="flex flex-col place-content-between gap-1 sm:flex-row">
-          {/**Setting Forms */}
-          {showSettingsForm ? (
-            <div className="relative rounded-md border p-1 text-center">
-              <button
-                className="absolute top-1 right-2"
-                onClick={() => setShowSettingsForm(!showSettingsForm)}
-              >
-                &times;
-              </button>
-              {/**Preset Form */}
-              <PresetForm
-                settings={settings}
-                settingsCallback={setSettings}
-                presets={presetCollection}
-                presetsCallback={presetDispatch}
-              />
-              <hr />
-              {/**Settings Form */}
-              <SettingsForm
-                settings={settings}
-                settingsCallback={setSettings}
-              />
-            </div>
-          ) : (
-            <div className="flex place-content-center sm:block">
-              <button
-                className="rounded-md border-4 border-double p-1 text-center"
-                onClick={() => setShowSettingsForm(!showSettingsForm)}
-              >
-                Settings
-              </button>
-            </div>
-          )}
+        <div className="flex flex-col place-content-between gap-1 md:flex-row">
+          {/**Setting Form */}
+          <div className="flex place-content-center md:block">
+            <button
+              className="rounded-md border-4 border-double p-1 text-center"
+              onClick={() =>
+                openModal(
+                  <div className="rounded-md border bg-white p-1 text-center dark:bg-black">
+                    {/**Preset Form */}
+                    <PresetForm
+                      settings={settings}
+                      settingsCallback={updateSettings}
+                      presets={presetCollection}
+                      presetsCallback={presetDispatch}
+                    />
+                    <hr />
+                    {/**Settings Form */}
+                    <SettingsForm
+                      settings={settings}
+                      settingsCallback={updateSettings}
+                    />
+                  </div>
+                )
+              }
+            >
+              Settings
+            </button>
+          </div>
           {/**File Forms */}
-          {showFileForms ? (
-            <div className="relative rounded-md border p-1 text-center">
-              <button
-                className="absolute top-1 right-2"
-                onClick={() => setShowFileForms(!showFileForms)}
-              >
-                &times;
-              </button>
-              {/**Load Form */}
-              <LoadFile
-                assignableCollection={assignableCollection}
-                assignableDispatch={assignableManagerDispatch}
-                groupDispatch={groupManagerDispatch}
-              />
-              <hr />
-              {/**Save Form */}
-              <SaveFile
-                assignableCollection={assignableCollection}
-                groupCollection={groupCollection}
-              />
-            </div>
-          ) : (
-            <div className="flex place-content-center sm:block">
-              <button
-                className="rounded-md border-4 border-double p-1 text-center"
-                onClick={() => setShowFileForms(!showFileForms)}
-              >
-                Open/Save File
-              </button>
-            </div>
-          )}
+          <div className="flex place-content-center md:block">
+            <button
+              className="rounded-md border-4 border-double p-1 text-center"
+              onClick={() =>
+                openModal(
+                  <div className="rounded-md border bg-white p-1 text-center dark:bg-black">
+                    {/**Load Form */}
+                    <LoadFile
+                      assignableCollection={assignableCollection}
+                      assignableDispatch={assignableManagerDispatch}
+                      groupDispatch={groupManagerDispatch}
+                    />
+                    <hr />
+                    {/**Save Form */}
+                    <SaveFile
+                      assignableCollection={assignableCollection}
+                      groupCollection={groupCollection}
+                    />
+                  </div>
+                )
+              }
+            >
+              Open/Save File
+            </button>
+          </div>
         </div>
         {/**Assignable & Group Managers */}
         <div className="flex flex-col gap-1">
@@ -473,6 +477,7 @@ export default function Page() {
               assignableCollection={assignableCollection}
               unassignedCollection={unassignedCollection}
               assignableDispatch={assignableManagerDispatch}
+              modalDispatch={openModal}
             />
           ) : (
             <GroupManager
@@ -481,6 +486,7 @@ export default function Page() {
               unassignedCollection={unassignedCollection}
               groupCollection={groupCollection}
               groupDispatch={groupManagerDispatch}
+              modalDispatch={openModal}
             />
           )}
         </div>

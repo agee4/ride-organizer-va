@@ -11,13 +11,14 @@ export interface AssignableDragItem {
 
 export const handleSelectHelper = (
   index: number,
-  shiftKey: boolean,
-  ctrlKey: boolean,
   assignableArray: Array<string>,
   prevSelectedIndex: number,
   selectedAssignables: Array<string>,
   setSelectedAssignables: (value: SetStateAction<string[]>) => void,
-  setPrevSelectedIndex: (value: SetStateAction<number>) => void
+  setPrevSelectedIndex: (value: SetStateAction<number>) => void,
+  shiftKey?: boolean,
+  ctrlKey?: boolean,
+  selectMode?: boolean
 ) => {
   let newSelectedAssignables = new Array<string>();
   const newSelection = assignableArray[index];
@@ -34,7 +35,7 @@ export const handleSelectHelper = (
         ...assignableArray.slice(prevSelectedIndex + 1, index + 1),
       ];
     }
-  } else if (ctrlKey /* || selectMode */) {
+  } else if (ctrlKey || selectMode) {
     if (!selectedAssignables.includes(newSelection))
       newSelectedAssignables = [...selectedAssignables, newSelection];
     else
@@ -91,7 +92,7 @@ export const AssignableDragLayer = ({
       }}
     >
       {item.id.length <= 1 ? (
-        <div className="my-1 max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+        <div className="w-[42%] max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
           <div className="font-bold">{data.getName()}</div>
           <div className="flex flex-row place-content-between text-xs italic">
             <span>{data.getID()}</span>
@@ -154,15 +155,16 @@ export const AssignableDragLayer = ({
           )}
           {data.getNotes() && (
             <textarea
-              className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+              className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
               disabled
               defaultValue={data.getNotes()}
             />
           )}
         </div>
       ) : (
-        <>
-          <div className="w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
+        <div className="w-[42%] max-w-[248px]">
+          {/**Top */}
+          <div className="rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
             <ul>
               <div className="font-bold">{data.getName()}</div>
               <ul className="flex flex-row place-content-between text-xs italic">
@@ -212,27 +214,27 @@ export const AssignableDragLayer = ({
                   ))}
               </ul>
               {data.getSize() != undefined && (
-                <li className="m-1 flex flex-row place-content-between gap-1">
+                <li className="my-1 flex flex-row place-content-between gap-1">
                   <span>Size:</span>
                   <span>{data.getSize()}</span>
                 </li>
               )}
               {data.getNotes() && (
                 <textarea
-                  className="m-1 rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+                  className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
                   disabled
                   defaultValue={data.getNotes()}
                 />
               )}
             </ul>
           </div>
-          <div className="fixed top-10 left-2 -z-10 w-[232px] rounded-md bg-cyan-300 pl-2 dark:bg-cyan-900">
+          <div className="fixed top-10 left-2 -z-10 w-[40%] max-w-[232px] rounded-md bg-cyan-300 pl-2 dark:bg-cyan-900">
             &hellip;
           </div>
-          <div className="fixed top-12 left-60 rounded-full bg-amber-500 px-1 dark:text-black">
+          <div className="fixed top-12 left-[38%] rounded-full bg-amber-500 px-1 dark:text-black">
             {item.id.length}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
