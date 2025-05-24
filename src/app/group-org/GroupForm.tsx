@@ -110,7 +110,7 @@ export const GroupForm = ({
 
   return (
     <form
-      className="flex flex-col rounded-md border p-2 bg-white"
+      className="flex flex-col rounded-md border p-2 bg-white dark:bg-black"
       onSubmit={submitForm}
       ref={groupFormRef}
     >

@@ -194,7 +194,7 @@ export const AssignableComponent = ({
     new Assignable({ id: assignableID, name: "!ERROR!" });
 
   return (
-    <div className="w-full rounded-md border border-cyan-500 bg-cyan-200 p-2 min-[30rem]:w-[160px] dark:bg-cyan-800">
+    <div className="w-full h-full rounded-md border border-cyan-500 bg-cyan-200 p-2 min-[30rem]:w-[160px] dark:bg-cyan-800">
       <div className="flex flex-row place-content-between gap-1 font-bold">
         <div className="py-1 truncate sm:max-w-[70dvw]" title={data.getName()}>
           {data.getName()}

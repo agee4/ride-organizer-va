@@ -81,13 +81,13 @@ export const AssignableManager = ({
     <div className="flex flex-col gap-1">
       {/**Assignable List */}
       <div className="w-[90dvw] rounded-md border border-cyan-500 bg-cyan-50 p-1 dark:bg-cyan-950">
-        <h1 className="relative py-2 text-center">
-          <span className="absolute top-2 left-0 rounded-full bg-cyan-500 px-1">
+        <h1 className="relative pt-1 pb-2 text-center">
+          <span className="absolute top-1 left-0 rounded-full bg-cyan-500 px-1">
             {assignableArray.length} / {assignableCollection.size}
           </span>
           Assignables
           <button
-            className="absolute top-1 right-0 rounded-md border-4 border-double border-cyan-500 bg-cyan-200 px-2 dark:bg-cyan-800"
+            className="absolute top-0 right-0 rounded-md border-4 border-double border-cyan-500 bg-cyan-200 px-2 dark:bg-cyan-800"
             onClick={openAssignableForm}
           >
             +

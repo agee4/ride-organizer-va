@@ -1,3 +1,5 @@
+"use client";
+
 import { RefObject, useEffect, useReducer } from "react";
 
 type ArrayReducerAction<V> =

@@ -93,9 +93,9 @@ export const AssignableDragLayer = ({
     >
       {item.id.length <= 1 ? (
         <div className="w-[42%] max-w-[248px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
-          <div className="font-bold">{data.getName()}</div>
+          <div className="truncate font-bold">{data.getName()}</div>
           <div className="flex flex-row place-content-between text-xs italic">
-            <span>{data.getID()}</span>
+            <span className="truncate">{data.getID()}</span>
             <span>{data.getLeader() && "Leader"}</span>
           </div>
           {Array.from(data.getAttributes() as Map<string, string>)
@@ -165,12 +165,12 @@ export const AssignableDragLayer = ({
         <div className="w-[42%] max-w-[248px]">
           {/**Top */}
           <div className="rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
-            <ul>
-              <div className="font-bold">{data.getName()}</div>
-              <ul className="flex flex-row place-content-between text-xs italic">
-                <li>{data.getID()}</li>
-                <li>{data.getLeader() && "Leader"}</li>
-              </ul>
+            <div>
+              <div className="truncate font-bold">{data.getName()}</div>
+              <div className="flex flex-row place-content-between text-xs italic">
+                <span className="truncate">{data.getID()}</span>
+                <span>{data.getLeader() && "Leader"}</span>
+              </div>
               <ul className="m-1">
                 {Array.from(data.getAttributes() as Map<string, string>)
                   .filter(
@@ -226,7 +226,7 @@ export const AssignableDragLayer = ({
                   defaultValue={data.getNotes()}
                 />
               )}
-            </ul>
+            </div>
           </div>
           <div className="fixed top-10 left-2 -z-10 w-[40%] max-w-[232px] rounded-md bg-cyan-300 pl-2 dark:bg-cyan-900">
             &hellip;

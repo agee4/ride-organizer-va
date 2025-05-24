@@ -61,72 +61,93 @@ const UnassignedComponent = ({
   dragPreview(getEmptyImage());
 
   const selected = selectedAssignables.includes(assignableID);
+  const [showAttributes, setShowAttributes] = useState<boolean>(false);
 
   return (
     <div
       className={
-        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800" +
+        "flex max-w-[496px] flex-col-reverse overflow-hidden rounded-md bg-cyan-200 select-none min-[21rem]:flex-row dark:bg-cyan-800" +
         (isDragging ? " opacity-50" : "") +
         (selected ? " border-4 border-amber-500" : "")
       }
-      ref={dragRef}
-      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey, selectMode)}
     >
-      <div className="max-w-50 truncate font-bold" title={data.getName()}>
-        {data.getName()}
+      <div
+        className={
+          "grid h-4 place-content-center min-[21rem]:h-auto min-[21rem]:w-8" +
+          (selected ? " bg-amber-500" : " bg-cyan-300 dark:bg-cyan-700")
+        }
+        ref={dragRef}
+        onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey, selectMode)}
+      >
+        {selected ? <span>&#9745;</span> : <span>&#9744;</span>}
       </div>
-      <div className="flex flex-row flex-wrap place-content-between text-xs italic">
-        <span className="max-w-50 truncate" title={assignableID}>
-          {assignableID}
-        </span>
-        <span>{data.getLeader() && "Leader"}</span>
-      </div>
-      {data.getAttributes() &&
-        Array.from(
-          data.getAttributes() as Map<
-            string,
-            string | number | boolean | Array<string>
-          >
-        )
-          .filter(([, value]) =>
-            Array.isArray(value) ? value.length > 0 : value
-          )
-          .map(([key, value]) => (
-            <div
-              className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
-              key={key}
-            >
-              {typeof value == "boolean" ? (
-                <span>{key}</span>
-              ) : (
-                <>
-                  <span>{key}:</span>
-                  {Array.isArray(value) ? (
-                    <ul>
-                      {value.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="truncate">{value}</span>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
-      {data.getSize() != undefined && (
-        <div className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700">
-          <span>Size:</span>
-          <span>{data.getSize()}</span>
+      <div
+        className="w-full max-w-[90%] p-2"
+        onClick={() => setShowAttributes(!showAttributes)}
+      >
+        <div
+          className="w-fit max-w-[80%] truncate font-bold"
+          title={data.getName()}
+        >
+          {data.getName()}
         </div>
-      )}
-      {data.getNotes() && (
-        <textarea
-          className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
-          disabled
-          defaultValue={data.getNotes()}
-        />
-      )}
+        <div className="flex w-fit max-w-[80%] flex-row flex-wrap place-content-between text-xs italic">
+          <span className="truncate" title={assignableID}>
+            {assignableID}
+          </span>
+          <span>{data.getLeader() && "Leader"}</span>
+        </div>
+        {showAttributes && (
+          <>
+            {data.getAttributes() &&
+              Array.from(
+                data.getAttributes() as Map<
+                  string,
+                  string | number | boolean | Array<string>
+                >
+              )
+                .filter(([, value]) =>
+                  Array.isArray(value) ? value.length > 0 : value
+                )
+                .map(([key, value]) => (
+                  <div
+                    className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                    key={key}
+                  >
+                    {typeof value == "boolean" ? (
+                      <span>{key}</span>
+                    ) : (
+                      <>
+                        <span>{key}:</span>
+                        {Array.isArray(value) ? (
+                          <ul>
+                            {value.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="truncate">{value}</span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+            {data.getSize() != undefined && (
+              <div className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700">
+                <span>Size:</span>
+                <span>{data.getSize()}</span>
+              </div>
+            )}
+            {data.getNotes() && (
+              <textarea
+                className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
+                disabled
+                defaultValue={data.getNotes()}
+              />
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -206,14 +227,14 @@ export const UnassignedArrayComponent = ({
   useClickOutside(dropRef, clearSelect);
 
   return (
-    <div
-      className={
-        "size-f rounded-md " +
-        (isOver && canDrop ? "bg-amber-500" : "bg-neutral-500")
-      }
-      ref={dropRef}
-    >
-      <div className="m-1 max-h-[70svh] overflow-auto">
+    <div className="m-1 max-h-[70svh] overflow-auto">
+      <div
+        className={
+          "size-f flex flex-col gap-1 rounded-md p-1" +
+          (isOver && canDrop ? " bg-amber-500" : " bg-neutral-500")
+        }
+        ref={dropRef}
+      >
         {unassignedArray.length > 0 ? (
           unassignedArray.map((value, index) => (
             <UnassignedComponent

@@ -1,7 +1,10 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMapReducer, useSetReducer } from "./helpers";
+import {
+  useModal,
+} from "./modal";
 import {
   defaultSettings,
   Field,
@@ -10,7 +13,6 @@ import {
   Setting,
   SettingJSON,
 } from "./settings";
-import { closeModal as closeModalHelper, ModalDisplay } from "./modal";
 import {
   Assignable,
   AssignableAttrJSON,
@@ -47,16 +49,7 @@ export default function Page() {
     )
   );
 
-  const [modalElement, setModalElement] = useState<ReactNode>();
-  const openModal = (element: ReactNode) => {
-    setModalElement(element);
-    const modalDisplay = document.getElementById("modal");
-    if (modalDisplay) modalDisplay.style.display = "block";
-  };
-  const closeModal = () => {
-    closeModalHelper();
-    setModalElement(undefined);
-  };
+  const { Modal, setModal, closeModal } = useModal();
 
   /**Load settings, assignables, unassigned, and groups from localStorage */
   useEffect(() => {
@@ -401,7 +394,8 @@ export default function Page() {
 
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-4 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-8">
-      <ModalDisplay element={modalElement} />
+      {/* <ModalDisplay element={modalElement} modalRef={modalRef} /> */}
+      {Modal}
       <main className="row-start-2 flex flex-col items-center gap-8">
         <h1>GroupU Org ~ Group Organizer</h1>
         {/**Settings & File Forms */}
@@ -411,7 +405,7 @@ export default function Page() {
             <button
               className="rounded-md border-4 border-double p-1 text-center"
               onClick={() =>
-                openModal(
+                setModal(
                   <div className="rounded-md border bg-white p-1 text-center dark:bg-black">
                     {/**Preset Form */}
                     <PresetForm
@@ -438,8 +432,17 @@ export default function Page() {
             <button
               className="rounded-md border-4 border-double p-1 text-center"
               onClick={() =>
-                openModal(
+                setModal(
                   <div className="rounded-md border bg-white p-1 text-center dark:bg-black">
+                    <div>
+                      <span className="text-red-500">
+                        WARNING: ONLY WORKS FOR THE{" "}
+                      </span>
+                      <span className="text-blue-500">
+                        COLLEGE RIDES PRESET
+                      </span>
+                      <span className="text-red-500">. USE WITH CAUTION.</span>
+                    </div>
                     {/**Load Form */}
                     <LoadFile
                       assignableCollection={assignableCollection}
@@ -469,7 +472,7 @@ export default function Page() {
                 "rounded-sm border px-1 " +
                 (showGroupManager
                   ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-950"
-                  : "")
+                  : "border-emerald-500 bg-emerald-50 dark:bg-emerald-950")
               }
               onClick={() => setShowGroupManager(!showGroupManager)}
             >
@@ -483,7 +486,7 @@ export default function Page() {
               assignableCollection={assignableCollection}
               unassignedCollection={unassignedCollection}
               assignableDispatch={assignableManagerDispatch}
-              modalDispatch={openModal}
+              modalDispatch={setModal}
             />
           ) : (
             <GroupManager
@@ -492,7 +495,7 @@ export default function Page() {
               unassignedCollection={unassignedCollection}
               groupCollection={groupCollection}
               groupDispatch={groupManagerDispatch}
-              modalDispatch={openModal}
+              modalDispatch={setModal}
             />
           )}
         </div>

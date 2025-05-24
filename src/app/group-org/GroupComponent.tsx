@@ -103,7 +103,7 @@ export const GroupComponent = ({
 
   return (
     <div
-      className="my-1 max-w-[496px] rounded-md bg-neutral-400 p-2 dark:bg-neutral-600"
+      className="max-w-[496px] rounded-md bg-emerald-400 p-2 dark:bg-emerald-600"
       ref={dropRef}
     >
       <ul>
@@ -193,65 +193,67 @@ const GroupLeaderComponent = ({
   const data =
     assignableCollection.get(leaderID) ||
     new Assignable({ id: leaderID, name: "!ERROR!" });
+  const [showAttributes, setShowAttributes] = useState<boolean>(false);
 
   return (
     <div className="my-1 max-w-[496px] rounded-md bg-emerald-200 p-2 dark:bg-emerald-800">
-      <div className="flex flex-row place-content-between font-bold">
-        <span className="truncate" title={data.getName()}>
-          {data.getName()}
-        </span>
+      <div onClick={() => setShowAttributes(!showAttributes)}>
+        <div className="flex flex-row place-content-between font-bold">
+          <span className="truncate" title={data.getName()}>
+            {data.getName()}
+          </span>
+        </div>
+        <div className="truncate text-xs italic" title={leaderID}>
+          {leaderID}
+        </div>
       </div>
-      <div className="truncate text-xs italic" title={leaderID}>
-        {leaderID}
-      </div>
-      {Array.from(data.getAttributes() as Map<string, string>)
-        .filter(([key]) => data.getAttributeGroups().get(key) == "contact")
-        .map(([key, value]) => (
-          <div
-            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
-            key={key}
-          >
-            <span>{key}:</span>
-            <span>{value}</span>
-          </div>
-        ))}
-      {Array.from(
-        data.getAttributes() as Map<
-          string,
-          string | number | boolean | string[]
-        >
-      )
-        .filter(([key]) =>
-          ["availability", "location"].includes(
-            data.getAttributeGroups().get(key) || ""
-          )
-        )
-        .filter(([, value]) =>
-          Array.isArray(value) ? value.length > 0 : value
-        )
-        .map(([key, value]) => (
-          <div
-            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
-            key={key}
-          >
-            {typeof value == "boolean" ? (
-              <span>{key}</span>
-            ) : (
-              <>
+      {showAttributes && (
+        <>
+          {Array.from(data.getAttributes() as Map<string, string>)
+            .filter(([key]) => data.getAttributeGroups().get(key) == "Contact")
+            .map(([key, value]) => (
+              <div
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
+                key={key}
+              >
                 <span>{key}:</span>
-                {Array.isArray(value) ? (
-                  <ul>
-                    {value.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+                <span>{value}</span>
+              </div>
+            ))}
+          {Array.from(data.getAttributes())
+            .filter(([key]) =>
+              ["Availability", "Location"].includes(
+                data.getAttributeGroups().get(key) || ""
+              )
+            )
+            .filter(([, value]) =>
+              Array.isArray(value) ? value.length > 0 : value
+            )
+            .map(([key, value]) => (
+              <div
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
+                key={key}
+              >
+                {typeof value == "boolean" ? (
+                  <span>{key}</span>
                 ) : (
-                  <span>{value}</span>
+                  <>
+                    <span>{key}:</span>
+                    {Array.isArray(value) ? (
+                      <ul>
+                        {value.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>{value}</span>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </div>
-        ))}
+              </div>
+            ))}
+        </>
+      )}
     </div>
   );
 };
@@ -300,79 +302,92 @@ const GroupMemberComponent = ({
   dragPreview(getEmptyImage());
 
   const selected = selectedAssignables.includes(memberID);
+  const [showAttributes, setShowAttributes] = useState<boolean>(false);
 
   return (
     <div
       className={
-        "my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800" +
+        "my-1 flex max-w-[496px] flex-col-reverse overflow-hidden rounded-md bg-cyan-200 select-none min-[21rem]:flex-row dark:bg-cyan-800" +
         (isDragging ? " opacity-50" : "") +
         (selected ? " border-4 border-amber-500" : "")
       }
-      ref={dragRef}
-      onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
     >
-      <div className="flex flex-row place-content-between font-bold">
-        <span className="truncate" title={data.getName()}>
-          {data.getName()}
-        </span>
-        <button
-          className="rounded-sm border px-1"
-          onClick={() => removeMember(memberID)}
-        >
-          &times;
-        </button>
+      <div
+        className={
+          "grid h-4 place-content-center min-[21rem]:h-auto min-[21rem]:w-8" +
+          (selected ? " bg-amber-500" : " bg-cyan-300 dark:bg-cyan-700")
+        }
+        ref={dragRef}
+        onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
+      >
+        {selected ? <span>&#9745;</span> : <span>&#9744;</span>}
       </div>
-      <div className="truncate text-xs italic" title={memberID}>
-        {memberID}
+      <div
+        className="w-full max-w-[90%] p-2"
+        onClick={() => setShowAttributes(!showAttributes)}
+      >
+        <div className="flex flex-row place-content-between font-bold">
+          <span className="truncate" title={data.getName()}>
+            {data.getName()}
+          </span>
+          <button
+            className="rounded-sm border px-1"
+            onClick={() => removeMember(memberID)}
+          >
+            &times;
+          </button>
+        </div>
+        <div className="truncate text-xs italic" title={memberID}>
+          {memberID}
+        </div>
       </div>
-      {Array.from(data.getAttributes() as Map<string, string>)
-        .filter(([key]) => data.getAttributeGroups().get(key) == "contact")
-        .map(([key, value]) => (
-          <div
-            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
-            key={key}
-          >
-            <span>{key}:</span>
-            <span>{value}</span>
-          </div>
-        ))}
-      {Array.from(
-        data.getAttributes() as Map<
-          string,
-          string | number | boolean | string[]
-        >
-      )
-        .filter(([key]) =>
-          ["availability", "location"].includes(
-            data.getAttributeGroups().get(key) || ""
-          )
-        )
-        .filter(([, value]) =>
-          Array.isArray(value) ? value.length > 0 : value
-        )
-        .map(([key, value]) => (
-          <div
-            className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
-            key={key}
-          >
-            {typeof value == "boolean" ? (
-              <span>{key}</span>
-            ) : (
-              <>
+      {showAttributes && (
+        <>
+          {Array.from(data.getAttributes() as Map<string, string>)
+            .filter(([key]) => data.getAttributeGroups().get(key) == "Contact")
+            .map(([key, value]) => (
+              <div
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                key={key}
+              >
                 <span>{key}:</span>
-                {Array.isArray(value) ? (
-                  <ul>
-                    {value.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+                <span>{value}</span>
+              </div>
+            ))}
+          {Array.from(data.getAttributes())
+            .filter(([key]) =>
+              ["Availability", "Location"].includes(
+                data.getAttributeGroups().get(key) || ""
+              )
+            )
+            .filter(([, value]) =>
+              Array.isArray(value) ? value.length > 0 : value
+            )
+            .map(([key, value]) => (
+              <div
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                key={key}
+              >
+                {typeof value == "boolean" ? (
+                  <span>{key}</span>
                 ) : (
-                  <span>{value}</span>
+                  <>
+                    <span>{key}:</span>
+                    {Array.isArray(value) ? (
+                      <ul>
+                        {value.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>{value}</span>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </div>
-        ))}
+              </div>
+            ))}
+        </>
+      )}
     </div>
   );
 };

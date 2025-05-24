@@ -153,7 +153,7 @@ export const GroupManager = ({
         }
         onClick={toggleSelect}
       >
-        Select
+        Multi-Select {selectMode ? "On" : "Off"}
       </button>
       <div className="grid grid-cols-2 gap-1">
         {/**Unassigned */}
@@ -321,13 +321,13 @@ export const GroupManager = ({
           <div className="rounded-md border p-1">
             <h1
               className={
-                "text-center" + (showGroupForm ? " relative py-2" : "")
+                "text-center" + (showGroupForm ? " relative pt-1 pb-2" : "")
               }
             >
               Groups
               {showGroupForm && (
                 <button
-                  className="absolute top-1 right-0 rounded-md border-4 border-double border-emerald-500 bg-emerald-200 px-2 dark:bg-emerald-800"
+                  className="absolute top-0 right-0 rounded-md border-4 border-double border-emerald-500 bg-emerald-200 px-2 dark:bg-emerald-800"
                   onClick={openGroupForm}
                 >
                   +
@@ -457,7 +457,7 @@ export const GroupManager = ({
                 </button>
               </div>
             )}
-            <div className="max-h-[70svh] overflow-auto">
+            <div className="m-1 flex max-h-[70svh] flex-col gap-1 overflow-auto">
               {groupArray.map((value) => (
                 <GroupComponent
                   groupID={value}
