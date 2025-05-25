@@ -9,6 +9,7 @@ import {
 import { MapReducerAction, useMapReducer, useSetReducer } from "./helpers";
 import { defaultSettings, Field, Setting, SIZESOURCE } from "./settings";
 import { DEFAULTASSIGNABLEFIELDS } from "./Assignable";
+import { useModal } from "./modal";
 
 export const PresetForm = ({
   settings,
@@ -124,7 +125,7 @@ export const SettingsForm = ({
   settings: Setting;
   settingsCallback: (setting: Setting) => void;
 }) => {
-  const settingsFormRef = useRef(null);
+  const settingsFormRef = useRef<HTMLFormElement>(null);
 
   const [assignableIDSource, setAssignableIDSource] = useState<string>(
     settings.getAssignableIDSource()
@@ -182,55 +183,10 @@ export const SettingsForm = ({
       setGroupSizeSource(SIZESOURCE.LEADER);
     setAutoGroups(e.target.checked);
   };
-
-  const [fieldName, setFieldName] = useState<string>("");
-  const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
-  const updateFieldGroup = (fieldGroup: string) => {
-    setFieldGroup(fieldGroup);
-    updateFieldType("text");
-  };
-  const [fieldType, setFieldType] = useState<string>("text");
-  const updateFieldType = (newFieldType: string) => {
-    if (fieldType == "select") {
-      setSelectOptions({ type: "replace", value: new Set<string>() });
-      setMultipleSelect(false);
-    }
-    if (["checkbox"].includes(newFieldType)) setRequiredField(false);
-    setFieldType(newFieldType);
-  };
-  const [requiredField, setRequiredField] = useState<boolean>(false);
   const [assignableFields, assignableFieldsDispatch] = useMapReducer<
     string,
     Field
   >(settings.getAssignableFields());
-  const createField = () => {
-    const cleanedFieldName = fieldName.trim().toLocaleLowerCase();
-    if (
-      !(cleanedFieldName in DEFAULTASSIGNABLEFIELDS) &&
-      !["", ...assignableFields.keys()].includes(cleanedFieldName)
-    ) {
-      assignableFieldsDispatch({
-        type: "create",
-        key: fieldName,
-        value: new Field({
-          name: fieldName,
-          type: fieldType,
-          group: fieldGroup,
-          required: requiredField,
-          options: fieldType == "select" ? selectOptions : undefined,
-          multiple: fieldType == "select" ? multipleSelect : undefined,
-        }),
-      });
-      setFieldName("");
-      setFieldGroup("miscellaneous");
-      setFieldType("text");
-      setRequiredField(false);
-      setOptionName("");
-      setSelectOptions({ type: "replace", value: new Set<string>() });
-      setMultipleSelect(false);
-      setShowAddInputField(false);
-    }
-  };
   const deleteField = (field: string) => {
     assignableFieldsDispatch({
       type: "delete",
@@ -240,15 +196,12 @@ export const SettingsForm = ({
     if (field == groupSizeSource) setGroupSizeSource("groupsize");
   };
 
-  const [selectOptions, setSelectOptions] = useSetReducer<string>();
-  const [optionName, setOptionName] = useState<string>("");
-  const [multipleSelect, setMultipleSelect] = useState<boolean>(false);
-  const createOption = () => {
-    const cleanedOptionName = optionName.trim().toLocaleLowerCase();
-    if (!["", "id", "name", ...selectOptions].includes(cleanedOptionName)) {
-      setSelectOptions({ type: "create", value: optionName });
-      setOptionName("");
-    }
+  const createField = (field: Field) => {
+    assignableFieldsDispatch({
+      type: "create",
+      key: field.getName(),
+      value: field,
+    });
   };
 
   const submitForm = (event: FormEvent) => {
@@ -285,10 +238,6 @@ export const SettingsForm = ({
     setAutoGroups(settings.getAutoGroups());
   }, [settings, assignableFieldsDispatch]);
 
-  const [showAddInputField, setShowAddInputField] = useState<boolean>(false);
-  const [showAssignableFields, setShowAssignableFields] =
-    useState<boolean>(false);
-
   const settingsUnaltered = settings.equals(
     new Setting({
       assignableIDSource: assignableIDSource,
@@ -304,413 +253,483 @@ export const SettingsForm = ({
     })
   );
 
-  return (
-    <form className="flex flex-col" onSubmit={submitForm} ref={settingsFormRef}>
-      <label className="text-center">Settings</label>
-      <div className="flex flex-row max-[30rem]:flex-col">
-        {/**Assignable */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-center">Assignable</h1>
-          {/**Assignable ID Source */}
-          <label className="flex flex-row place-content-between gap-1">
-            ID Source:
-            <select
-              className="rounded-sm border"
-              name="idsource"
-              value={assignableIDSource}
-              onChange={(e) => setAssignableIDSource(e.target.value)}
-            >
-              <option className="text-black" value="id">
-                ID Field
-              </option>
-              <option className="text-black" value="name">
-                Name
-              </option>
-              {[...assignableFields.entries()]
-                .filter(
-                  ([, value]) =>
-                    value.getRequired() &&
-                    !["checkbox", "select"].includes(value.getType())
-                )
-                .map(([key]) => (
-                  <option className="text-black" key={key} value={key}>
-                    {key}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <hr />
-          {/**Assignable Fields */}
-          <div
-            className={
-              "flex flex-col p-1 " +
-              (showAssignableFields ? "border" : "border-4 border-double")
-            }
-          >
-            {/**Toggle Assignable Field Visibility */}
-            <label className="flex flex-row place-content-between gap-1">
-              <span>
-                Fields{" "}
-                <span className="rounded-full bg-cyan-500 px-1">
-                  {assignableFields.size}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowAssignableFields(!showAssignableFields)}
-              >
-                {showAssignableFields ? <>&uarr;</> : <>&darr;</>}
-              </button>
-            </label>
-            {/**View & Edit Assignable Fields */}
-            {showAssignableFields && (
-              <>
-                <hr />
-                {/**View & Remove Assignable Fields */}
-                {[...assignableFields.entries()].map(([key, value]) => (
-                  <div key={key}>
-                    <label className="flex flex-row place-content-between gap-1">
-                      {value.getPlaceholderName()}
-                      <button
-                        className="rounded-sm border px-1"
-                        onClick={() => deleteField(key)}
-                      >
-                        &times;
-                      </button>
-                    </label>
-                    {value.getType() == "select" && (
-                      <ul>
-                        {Array.from(value.getOptions()).map((option) => (
-                          <li
-                            key={option}
-                            className={
-                              "list-inside " +
-                              (value.getMultiple()
-                                ? "list-[square]"
-                                : "list-[circle]")
-                            }
-                          >
-                            {option}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <hr />
-                  </div>
-                ))}
-                {/**Add Assignable Field */}
-                <div
-                  className={
-                    "flex flex-col p-1 " +
-                    (showAddInputField ? "border" : "border-4 border-double")
-                  }
-                >
-                  <label className="flex flex-row place-content-between">
-                    Add Input Field
-                    <button
-                      type="button"
-                      onClick={() => setShowAddInputField(!showAddInputField)}
-                    >
-                      {showAddInputField ? <>&uarr;</> : <>&darr;</>}
-                    </button>
-                  </label>
-                  {showAddInputField && (
-                    <>
-                      <input
-                        className="w-full rounded-sm border"
-                        type="text"
-                        name="newAssignableField"
-                        value={fieldName}
-                        placeholder="Field Name*"
-                        onChange={(e) => setFieldName(e.target.value)}
-                      />
-                      <label className="flex flex-row place-content-between">
-                        Field Group:
-                        <select
-                          className="rounded-sm border"
-                          name="fieldgroup"
-                          value={fieldGroup}
-                          onChange={(e) => updateFieldGroup(e.target.value)}
-                        >
-                          <option
-                            className="dark:text-black"
-                            value="miscellaneous"
-                          >
-                            ---
-                          </option>
-                          <option className="dark:text-black" value="contact">
-                            Contact
-                          </option>
-                          <option
-                            className="dark:text-black"
-                            value="availability"
-                          >
-                            Availability
-                          </option>
-                          <option className="dark:text-black" value="location">
-                            Location
-                          </option>
-                          <option className="dark:text-black" value="affinity">
-                            Affinity
-                          </option>
-                        </select>
-                      </label>
+  const FieldComponent = () => {
+    const [fieldComponentCollection, fCDispatch] = useMapReducer<string, Field>(
+      assignableFields
+    );
+    const deleteFieldHelper = (field: string) => {
+      fCDispatch({
+        type: "delete",
+        key: field,
+      });
+      deleteField(field);
+    };
+    const createFieldHelper = (field: Field) => {
+      fCDispatch({
+        type: "create",
+        key: field.getName(),
+        value: field,
+      });
+      createField(field);
+    };
 
-                      <label className="flex flex-row place-content-between">
-                        Field Type:
-                        <select
-                          className="rounded-sm border"
-                          name="fieldtype"
-                          value={fieldType}
-                          onChange={(e) => updateFieldType(e.target.value)}
-                        >
-                          {fieldGroup == "contact" && (
-                            <>
-                              <option className="dark:text-black" value="email">
-                                Email
-                              </option>
-                              <option className="dark:text-black" value="tel">
-                                Phone
-                              </option>
-                            </>
-                          )}
-                          <option className="dark:text-black" value="text">
-                            Text
-                          </option>
-                          {[
-                            "miscellaneous",
-                            "availability",
-                            "location",
-                            "affinity",
-                          ].includes(fieldGroup) && (
-                            <>
-                              <option
-                                className="dark:text-black"
-                                value="number"
-                              >
-                                Number
-                              </option>
-                              <option
-                                className="dark:text-black"
-                                value="checkbox"
-                              >
-                                Checkbox
-                              </option>
-                              <option
-                                className="dark:text-black"
-                                value="select"
-                              >
-                                Select
-                              </option>
-                            </>
-                          )}
-                        </select>
-                      </label>
-                      {fieldType == "select" && (
-                        <div className="flex flex-col border">
-                          <div>Select Options</div>
-                          <hr />
-                          <ul>
-                            {[...selectOptions].map((value) => (
-                              <li
-                                className="flex flex-row place-content-between"
-                                key={value}
-                              >
-                                {value}
-                                <button
-                                  className="rounded-sm border px-1"
-                                  onClick={() =>
-                                    setSelectOptions({
-                                      type: "delete",
-                                      value: value,
-                                    })
-                                  }
-                                >
-                                  &times;
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                          <input
-                            className="rounded-sm border"
-                            type="text"
-                            name="newSelectOption"
-                            value={optionName}
-                            placeholder="Option Name*"
-                            onChange={(e) => setOptionName(e.target.value)}
-                          />
-                          <button
-                            className="rounded-sm border px-1"
-                            type="button"
-                            onClick={createOption}
-                          >
-                            Add Option
-                          </button>
-                          <label className="flex flex-row place-content-between">
-                            Multiple
-                            <input
-                              type="checkbox"
-                              checked={multipleSelect}
-                              onChange={(e) =>
-                                setMultipleSelect(e.target.checked)
-                              }
-                            />
-                          </label>
-                        </div>
-                      )}
-                      {!["checkbox", "select"].includes(fieldType) && (
-                        <label className="flex flex-row place-content-between">
-                          Required
-                          <input
-                            type="checkbox"
-                            checked={requiredField}
-                            onChange={(e) => setRequiredField(e.target.checked)}
-                          />
-                        </label>
-                      )}
-                      <button
-                        className="rounded-sm border px-1"
-                        type="button"
-                        onClick={createField}
-                      >
-                        Add Field
-                      </button>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-          <hr />
-          <label className="flex flex-row place-content-between">
-            Notes
+    const CreateFieldComponent = () => {
+      const [fieldName, setFieldName] = useState<string>("");
+      const [fieldGroup, setFieldGroup] = useState<string>("miscellaneous");
+      const updateFieldGroup = (fieldGroup: string) => {
+        setFieldGroup(fieldGroup);
+        updateFieldType("text");
+      };
+      const [fieldType, setFieldType] = useState<string>("text");
+      const updateFieldType = (newFieldType: string) => {
+        if (fieldType == "select") {
+          setSelectOptions({ type: "replace", value: new Set<string>() });
+          setMultipleSelect(false);
+        }
+        if (["checkbox"].includes(newFieldType)) setRequiredField(false);
+        setFieldType(newFieldType);
+      };
+      const [requiredField, setRequiredField] = useState<boolean>(false);
+
+      const [selectOptions, setSelectOptions] = useSetReducer<string>();
+      const [optionName, setOptionName] = useState<string>("");
+      const [multipleSelect, setMultipleSelect] = useState<boolean>(false);
+      const createOption = () => {
+        const cleanedOptionName = optionName.trim().toLocaleLowerCase();
+        if (!["", "id", "name", ...selectOptions].includes(cleanedOptionName)) {
+          setSelectOptions({ type: "create", value: optionName });
+          setOptionName("");
+        }
+      };
+
+      const submitForm = (event: FormEvent) => {
+        event.preventDefault();
+        const cleanedFieldName = fieldName.trim().toLocaleLowerCase();
+        if (
+          !(cleanedFieldName in DEFAULTASSIGNABLEFIELDS) &&
+          !["", ...assignableFields.keys()].includes(cleanedFieldName)
+        ) {
+          createFieldHelper(
+            new Field({
+              name: fieldName,
+              type: fieldType,
+              group: fieldGroup,
+              required: requiredField,
+              options: fieldType == "select" ? selectOptions : undefined,
+              multiple: fieldType == "select" ? multipleSelect : undefined,
+            })
+          );
+
+          setFieldName("");
+          setFieldGroup("miscellaneous");
+          setFieldType("text");
+          setRequiredField(false);
+          setOptionName("");
+          setSelectOptions({ type: "replace", value: new Set<string>() });
+          setMultipleSelect(false);
+          createFieldModal.closeModal();
+        }
+      };
+
+      return (
+        <form
+          className="flex flex-col gap-1 rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800"
+          onSubmit={submitForm}
+        >
+          <label className="text-center">New Field</label>
+          <label className="flex flex-row flex-wrap place-content-between gap-1">
+            Name*:
             <input
-              type="checkbox"
-              checked={assignableNotes}
-              onChange={(e) => setAssignableNotes(e.target.checked)}
+              className="w-full rounded-sm border"
+              type="text"
+              name="newAssignableField"
+              value={fieldName}
+              placeholder="Name*"
+              required
+              minLength={1}
+              onChange={(e) => setFieldName(e.target.value)}
             />
           </label>
-          <hr />
           <label className="flex flex-row place-content-between">
-            Leaders
-            <input
-              type="checkbox"
-              checked={useLeader}
-              onChange={updateUseLeader}
-            />
-          </label>
-        </div>
-        <div className="mx-1 border-t-1 border-l-1"></div>
-        {/**Group */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-center">Group</h1>
-          <label className="flex flex-row place-content-between gap-1">
-            ID Source:
+            Group:
             <select
               className="rounded-sm border"
-              name="groupidsource"
-              value={groupIDSource}
-              onChange={updateGroupIDSource}
+              name="fieldgroup"
+              value={fieldGroup}
+              onChange={(e) => updateFieldGroup(e.target.value)}
             >
-              <option className="text-black" value="id">
-                ID Field
+              <option className="dark:text-black" value="miscellaneous">
+                ---
               </option>
-              {groupCustomName && (
-                <option className="text-black" value="name">
-                  Name
-                </option>
-              )}
-              {useLeader && (
-                <option className="text-black" value="leader">
-                  Leader
-                </option>
-              )}
+              <option className="dark:text-black" value="contact">
+                Contact
+              </option>
+              <option className="dark:text-black" value="availability">
+                Availability
+              </option>
+              <option className="dark:text-black" value="location">
+                Location
+              </option>
+              <option className="dark:text-black" value="affinity">
+                Affinity
+              </option>
             </select>
           </label>
-          <hr />
+
           <label className="flex flex-row place-content-between">
-            Name
-            <input
-              type="checkbox"
-              checked={groupCustomName}
-              onChange={updateGroupCustomName}
-            />
-          </label>
-          <hr />
-          <label className="flex flex-row place-content-between">
-            Size
-            <input
-              type="checkbox"
-              checked={groupUseSize}
-              onChange={updateGroupUseSize}
-            />
-          </label>
-          {/**Group Size Source */}
-          {groupUseSize && (
+            Type:
             <select
               className="rounded-sm border"
-              name="sizesource"
-              value={groupSizeSource}
-              onChange={(e) => setGroupSizeSource(e.target.value)}
+              name="fieldtype"
+              value={fieldType}
+              onChange={(e) => updateFieldType(e.target.value)}
             >
-              {!autoGroups && (
-                <option className="dark:text-black" value={SIZESOURCE.GROUP}>
-                  Size Field
-                </option>
-              )}
-              {useLeader && (
+              {fieldGroup == "contact" && (
                 <>
-                  <option className="text-black" value={SIZESOURCE.LEADER}>
-                    Leader Size
+                  <option className="dark:text-black" value="email">
+                    Email
                   </option>
-                  {[...assignableFields.entries()]
-                    .filter(
-                      ([, value]) =>
-                        value.getType() == "number" &&
-                        value.getGroup() == "miscellaneous"
-                    )
-                    .map(([key]) => (
-                      <option className="text-black" key={key} value={key}>
-                        {key}
-                      </option>
-                    ))}
+                  <option className="dark:text-black" value="tel">
+                    Phone
+                  </option>
+                </>
+              )}
+              <option className="dark:text-black" value="text">
+                Text
+              </option>
+              {[
+                "miscellaneous",
+                "availability",
+                "location",
+                "affinity",
+              ].includes(fieldGroup) && (
+                <>
+                  <option className="dark:text-black" value="number">
+                    Number
+                  </option>
+                  <option className="dark:text-black" value="checkbox">
+                    Checkbox
+                  </option>
+                  <option className="dark:text-black" value="select">
+                    Select
+                  </option>
                 </>
               )}
             </select>
-          )}
-          <hr />
-          <label className="flex flex-row place-content-between">
-            Notes
-            <input
-              type="checkbox"
-              checked={groupNotes}
-              onChange={(e) => setGroupNotes(e.target.checked)}
-            />
           </label>
-          {useLeader && groupIDSource == "leader" && (
-            <>
+          {fieldType == "select" && (
+            <div className="flex flex-col border">
+              <div>Select Options</div>
               <hr />
+              <ul>
+                {[...selectOptions].map((value) => (
+                  <li
+                    className="flex flex-row place-content-between"
+                    key={value}
+                  >
+                    {value}
+                    <button
+                      className="rounded-sm border px-1"
+                      onClick={() =>
+                        setSelectOptions({
+                          type: "delete",
+                          value: value,
+                        })
+                      }
+                    >
+                      &times;
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <input
+                className="rounded-sm border"
+                type="text"
+                name="newSelectOption"
+                value={optionName}
+                placeholder="Option Name*"
+                onChange={(e) => setOptionName(e.target.value)}
+              />
+              <button
+                className="rounded-sm border px-1"
+                type="button"
+                onClick={createOption}
+              >
+                Add Option
+              </button>
               <label className="flex flex-row place-content-between">
-                Auto Groups
+                Multiple
                 <input
                   type="checkbox"
-                  checked={autoGroups}
-                  onChange={updateAutoGroup}
+                  checked={multipleSelect}
+                  onChange={(e) => setMultipleSelect(e.target.checked)}
                 />
               </label>
-            </>
+            </div>
           )}
+          {!["checkbox", "select"].includes(fieldType) && (
+            <label className="flex flex-row place-content-between">
+              Required
+              <input
+                type="checkbox"
+                checked={requiredField}
+                onChange={(e) => setRequiredField(e.target.checked)}
+              />
+            </label>
+          )}
+          <button className="rounded-sm border px-1" type="submit">
+            Create
+          </button>
+        </form>
+      );
+    };
+    const createFieldModal = useModal(<CreateFieldComponent />);
+
+    return (
+      <>
+        {createFieldModal.Modal}
+        <div className="flex flex-col gap-1 border bg-white p-1 dark:bg-black">
+          <label className="flex flex-col place-content-between gap-1">
+            Fields
+            <span className="rounded-full bg-cyan-500 px-1">
+              {fieldComponentCollection.size}
+            </span>
+          </label>
+          <hr />
+          {/**View & Remove Assignable Fields */}
+          {[...fieldComponentCollection.entries()].map(([key, value]) => (
+            <div key={key}>
+              <label className="flex flex-row place-content-between gap-1">
+                {value.getPlaceholderName()}
+                <button
+                  className="rounded-sm border px-1"
+                  onClick={() => deleteFieldHelper(key)}
+                >
+                  &times;
+                </button>
+              </label>
+              {value.getType() == "select" && (
+                <ul>
+                  {Array.from(value.getOptions()).map((option) => (
+                    <li
+                      key={option}
+                      className={
+                        "list-inside " +
+                        (value.getMultiple()
+                          ? "list-[square]"
+                          : "list-[circle]")
+                      }
+                    >
+                      {option}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <hr />
+            </div>
+          ))}
+          {/**Add Assignable Field */}
+          <div className="flex flex-col rounded-sm border-4 border-double border-cyan-500 bg-cyan-200 p-1 dark:bg-cyan-800">
+            <button
+              type="button"
+              onClick={() =>
+                createFieldModal.setModal(<CreateFieldComponent />)
+              }
+            >
+              Create Input Field
+            </button>
+          </div>
         </div>
-      </div>
-      <button
-        className={
-          "rounded-full border" + (settingsUnaltered ? " text-neutral-500" : "")
-        }
-        type="submit"
-        disabled={settingsUnaltered}
+      </>
+    );
+  };
+  const fieldModal = useModal(<FieldComponent />);
+
+  return (
+    <>
+      {fieldModal.Modal}
+      <form
+        className="flex flex-col"
+        onSubmit={submitForm}
+        ref={settingsFormRef}
       >
-        Save Settings
-      </button>
-    </form>
+        <label className="text-center">Settings</label>
+        <div className="flex flex-row max-[30rem]:flex-col">
+          {/**Assignable */}
+          <div className="flex flex-col gap-1">
+            <h1 className="text-center">Assignable</h1>
+            {/**Assignable ID Source */}
+            <label className="flex flex-row place-content-between gap-1">
+              ID Source:
+              <select
+                className="rounded-sm border"
+                name="idsource"
+                value={assignableIDSource}
+                onChange={(e) => setAssignableIDSource(e.target.value)}
+              >
+                <option className="text-black" value="id">
+                  ID Field
+                </option>
+                <option className="text-black" value="name">
+                  Name
+                </option>
+                {[...assignableFields.entries()]
+                  .filter(
+                    ([, value]) =>
+                      value.getRequired() &&
+                      !["checkbox", "select"].includes(value.getType())
+                  )
+                  .map(([key]) => (
+                    <option className="text-black" key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <hr />
+            {/**Assignable Fields */}
+            <button
+              className="flex flex-row place-content-between gap-1 border-4 border-double bg-cyan-50 p-1 dark:bg-cyan-950"
+              type="button"
+              onClick={() => fieldModal.setModal(<FieldComponent />)}
+            >
+              Fields
+              <span className="rounded-full bg-cyan-500 px-1">
+                {assignableFields.size}
+              </span>
+            </button>
+            <hr />
+            <label className="flex flex-row place-content-between">
+              Notes
+              <input
+                type="checkbox"
+                checked={assignableNotes}
+                onChange={(e) => setAssignableNotes(e.target.checked)}
+              />
+            </label>
+            <hr />
+            <label className="flex flex-row place-content-between">
+              Leaders
+              <input
+                type="checkbox"
+                checked={useLeader}
+                onChange={updateUseLeader}
+              />
+            </label>
+          </div>
+          <div className="mx-1 border-t-1 border-l-1"></div>
+          {/**Group */}
+          <div className="flex flex-col gap-1">
+            <h1 className="text-center">Group</h1>
+            <label className="flex flex-row place-content-between gap-1">
+              ID Source:
+              <select
+                className="rounded-sm border"
+                name="groupidsource"
+                value={groupIDSource}
+                onChange={updateGroupIDSource}
+              >
+                <option className="text-black" value="id">
+                  ID Field
+                </option>
+                {groupCustomName && (
+                  <option className="text-black" value="name">
+                    Name
+                  </option>
+                )}
+                {useLeader && (
+                  <option className="text-black" value="leader">
+                    Leader
+                  </option>
+                )}
+              </select>
+            </label>
+            <hr />
+            <label className="flex flex-row place-content-between">
+              Name
+              <input
+                type="checkbox"
+                checked={groupCustomName}
+                onChange={updateGroupCustomName}
+              />
+            </label>
+            <hr />
+            <label className="flex flex-row place-content-between">
+              Size
+              <input
+                type="checkbox"
+                checked={groupUseSize}
+                onChange={updateGroupUseSize}
+              />
+            </label>
+            {/**Group Size Source */}
+            {groupUseSize && (
+              <select
+                className="rounded-sm border"
+                name="sizesource"
+                value={groupSizeSource}
+                onChange={(e) => setGroupSizeSource(e.target.value)}
+              >
+                {!autoGroups && (
+                  <option className="dark:text-black" value={SIZESOURCE.GROUP}>
+                    Size Field
+                  </option>
+                )}
+                {useLeader && (
+                  <>
+                    <option className="text-black" value={SIZESOURCE.LEADER}>
+                      Leader Size
+                    </option>
+                    {[...assignableFields.entries()]
+                      .filter(
+                        ([, value]) =>
+                          value.getType() == "number" &&
+                          value.getGroup() == "miscellaneous"
+                      )
+                      .map(([key]) => (
+                        <option className="text-black" key={key} value={key}>
+                          {key}
+                        </option>
+                      ))}
+                  </>
+                )}
+              </select>
+            )}
+            <hr />
+            <label className="flex flex-row place-content-between">
+              Notes
+              <input
+                type="checkbox"
+                checked={groupNotes}
+                onChange={(e) => setGroupNotes(e.target.checked)}
+              />
+            </label>
+            {useLeader && groupIDSource == "leader" && (
+              <>
+                <hr />
+                <label className="flex flex-row place-content-between">
+                  Auto Groups
+                  <input
+                    type="checkbox"
+                    checked={autoGroups}
+                    onChange={updateAutoGroup}
+                  />
+                </label>
+              </>
+            )}
+          </div>
+        </div>
+        <button
+          className={
+            "rounded-full border" +
+            (settingsUnaltered ? " text-neutral-500" : "")
+          }
+          type="submit"
+          disabled={settingsUnaltered}
+        >
+          Save Settings
+        </button>
+      </form>
+    </>
   );
 };

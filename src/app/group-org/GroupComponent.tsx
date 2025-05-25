@@ -323,71 +323,75 @@ const GroupMemberComponent = ({
         {selected ? <span>&#9745;</span> : <span>&#9744;</span>}
       </div>
       <div
-        className="w-full max-w-[90%] p-2"
-        onClick={() => setShowAttributes(!showAttributes)}
-      >
-        <div className="flex flex-row place-content-between font-bold">
-          <span className="truncate" title={data.getName()}>
-            {data.getName()}
-          </span>
-          <button
-            className="rounded-sm border px-1"
-            onClick={() => removeMember(memberID)}
-          >
-            &times;
-          </button>
+          className="w-full max-w-[90%] p-2">
+        <div
+          onClick={() => setShowAttributes(!showAttributes)}
+        >
+          <div className="flex flex-row place-content-between font-bold">
+            <span className="truncate" title={data.getName()}>
+              {data.getName()}
+            </span>
+            <button
+              className="rounded-sm border px-1"
+              onClick={() => removeMember(memberID)}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="truncate text-xs italic" title={memberID}>
+            {memberID}
+          </div>
         </div>
-        <div className="truncate text-xs italic" title={memberID}>
-          {memberID}
-        </div>
-      </div>
-      {showAttributes && (
-        <>
-          {Array.from(data.getAttributes() as Map<string, string>)
-            .filter(([key]) => data.getAttributeGroups().get(key) == "Contact")
-            .map(([key, value]) => (
-              <div
-                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
-                key={key}
-              >
-                <span>{key}:</span>
-                <span>{value}</span>
-              </div>
-            ))}
-          {Array.from(data.getAttributes())
-            .filter(([key]) =>
-              ["Availability", "Location"].includes(
-                data.getAttributeGroups().get(key) || ""
+        {showAttributes && (
+          <>
+            {Array.from(data.getAttributes() as Map<string, string>)
+              .filter(
+                ([key]) => data.getAttributeGroups().get(key) == "Contact"
               )
-            )
-            .filter(([, value]) =>
-              Array.isArray(value) ? value.length > 0 : value
-            )
-            .map(([key, value]) => (
-              <div
-                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
-                key={key}
-              >
-                {typeof value == "boolean" ? (
-                  <span>{key}</span>
-                ) : (
-                  <>
-                    <span>{key}:</span>
-                    {Array.isArray(value) ? (
-                      <ul>
-                        {value.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span>{value}</span>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-        </>
-      )}
+              .map(([key, value]) => (
+                <div
+                  className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                  key={key}
+                >
+                  <span>{key}:</span>
+                  <span>{value}</span>
+                </div>
+              ))}
+            {Array.from(data.getAttributes())
+              .filter(([key]) =>
+                ["Availability", "Location"].includes(
+                  data.getAttributeGroups().get(key) || ""
+                )
+              )
+              .filter(([, value]) =>
+                Array.isArray(value) ? value.length > 0 : value
+              )
+              .map(([key, value]) => (
+                <div
+                  className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                  key={key}
+                >
+                  {typeof value == "boolean" ? (
+                    <span>{key}</span>
+                  ) : (
+                    <>
+                      <span>{key}:</span>
+                      {Array.isArray(value) ? (
+                        <ul>
+                          {value.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>{value}</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+          </>
+        )}
+      </div>
     </div>
   );
 };

@@ -6,8 +6,8 @@ import { useModal } from "../group-org/modal";
 
 export default function NavBar() {
   const mobileNavRef = useRef<HTMLDivElement>(null);
-
   const { Modal, setModal } = useModal();
+
   return (
     <>
       <header className="sticky top-0 z-1 flex items-stretch justify-between gap-8 bg-neutral-100 pr-5 text-neutral-700 shadow-md dark:bg-neutral-900 dark:text-neutral-300">
