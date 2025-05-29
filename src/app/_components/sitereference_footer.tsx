@@ -10,7 +10,7 @@ export default function SiteRef() {
         <Link href="/reference">References</Link>
         <Link href="/contact">Contact</Link>
       </menu>
-      <p className="text-center text-neutral-500 sm:text-end">
+      <p className="text-center sm:text-end">
         <b>This site was designed by Aaron Gee</b>
         <br />
         Copypaste 2025. idk what rights are reserved

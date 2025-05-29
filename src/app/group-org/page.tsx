@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useMapReducer, useSetReducer } from "./helpers";
-import {
-  useModal,
-} from "./modal";
+import { useModal } from "./modal";
 import {
   defaultSettings,
   Field,
@@ -393,10 +391,9 @@ export default function Page() {
     groupCollection.size > 0;
 
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-4 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-8">
-      {/* <ModalDisplay element={modalElement} modalRef={modalRef} /> */}
+    <main className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-4 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-8">
       {Modal}
-      <main className="row-start-2 flex flex-col items-center gap-8">
+      <div className="row-start-2 flex flex-col items-center gap-8">
         <h1>GroupU Org ~ Group Organizer</h1>
         {/**Settings & File Forms */}
         <div className="flex flex-col place-content-between gap-1 md:flex-row">
@@ -499,7 +496,7 @@ export default function Page() {
             />
           )}
         </div>
-      </main>
-    </div>
+      </div>{" "}
+    </main>
   );
 }

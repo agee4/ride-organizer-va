@@ -110,7 +110,7 @@ export const GroupForm = ({
 
   return (
     <form
-      className="flex flex-col rounded-md border p-2 bg-white dark:bg-black"
+      className="flex flex-col rounded-md border bg-white p-2 dark:bg-black"
       onSubmit={submitForm}
       ref={groupFormRef}
     >
@@ -192,13 +192,16 @@ export const GroupForm = ({
           </label>
         )}
       {settings.getGroupNotes() && (
-        <textarea
-          name="notes"
-          className="rounded-sm border"
-          placeholder="Notes"
-          value={data.notes}
-          onChange={updateData}
-        />
+        <label className="flex flex-row flex-wrap place-content-between">
+          Notes
+          <textarea
+            name="notes"
+            className="rounded-sm border"
+            placeholder="Notes"
+            value={data.notes}
+            onChange={updateData}
+          />
+        </label>
       )}
       <button className="rounded-full border" type="submit">
         Create

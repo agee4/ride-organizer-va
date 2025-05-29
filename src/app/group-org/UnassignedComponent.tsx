@@ -70,23 +70,21 @@ const UnassignedComponent = ({
         (isDragging ? " opacity-50" : "") +
         (selected ? " border-4 border-amber-500" : "")
       }
+      ref={selected ? dragRef : undefined}
     >
       <div
-        className={
-          "grid h-4 place-content-center min-[21rem]:h-auto min-[21rem]:w-8" +
-          (selected ? " bg-amber-500" : " bg-cyan-300 dark:bg-cyan-700")
-        }
+        className="grid h-4 place-content-center bg-cyan-300 min-[21rem]:h-auto min-[21rem]:w-8 dark:bg-cyan-700"
+        onClick={() => setShowAttributes(!showAttributes)}
+      >
+        &hellip;
+      </div>
+      <div
+        className="w-full max-w-full p-2"
         ref={dragRef}
         onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey, selectMode)}
       >
-        {selected ? <span>&#9745;</span> : <span>&#9744;</span>}
-      </div>
-      <div
-        className="w-full max-w-[90%] p-2"
-        onClick={() => setShowAttributes(!showAttributes)}
-      >
         <div
-          className="w-fit max-w-[80%] truncate font-bold"
+          className="w-fit max-w-full truncate font-bold"
           title={data.getName()}
         >
           {data.getName()}
@@ -139,11 +137,9 @@ const UnassignedComponent = ({
               </div>
             )}
             {data.getNotes() && (
-              <textarea
-                className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
-                disabled
-                defaultValue={data.getNotes()}
-              />
+              <div className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700">
+                {data.getNotes()}
+              </div>
             )}
           </>
         )}

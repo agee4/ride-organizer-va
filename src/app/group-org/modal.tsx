@@ -55,7 +55,6 @@ const ModalDisplay = ({
       ref={modalRef}
     >
       <button
-        id="modal-close"
         onClick={closeModal}
         className="absolute top-4 right-8 cursor-pointer text-4xl font-bold text-black hover:text-gray-300 dark:text-white"
       >
@@ -64,7 +63,6 @@ const ModalDisplay = ({
       <div className="mx-auto flex max-h-[80%] place-content-center overflow-auto">
         <div ref={modalElementRef}>{element}</div>
       </div>
-      <div id="modal-caption"></div>
     </div>
   );
 };

@@ -106,8 +106,8 @@ export const GroupComponent = ({
       className="max-w-[496px] rounded-md bg-emerald-400 p-2 dark:bg-emerald-600"
       ref={dropRef}
     >
-      <ul>
-        <li className="flex flex-row place-content-between font-bold">
+      <div>
+        <div className="flex flex-row place-content-between font-bold">
           <span
             className="truncate"
             title={
@@ -126,19 +126,19 @@ export const GroupComponent = ({
           >
             &times;
           </button>
-        </li>
-        <li className="truncate text-xs italic" title={groupID}>
+        </div>
+        <div className="truncate text-xs italic" title={groupID}>
           {groupID}
-        </li>
+        </div>
         {leader && (
           <GroupLeaderComponent
             leaderID={leader}
             assignableCollection={assignableCollection}
           />
         )}
-        <ul className="text-center">
+        <div className="text-center">
           {data.getSize() != undefined && (
-            <li>Size: {size - data.getAllMembers().size}</li>
+            <div>Size: {size - data.getAllMembers().size}</div>
           )}
           {assignableArray.map((value, index) => (
             <GroupMemberComponent
@@ -154,7 +154,7 @@ export const GroupComponent = ({
           ))}
           {(data.getSize() == undefined ||
             size > data.getAllMembers().size) && (
-            <li>
+            <div>
               <button
                 className={
                   "w-full rounded-sm border " +
@@ -168,17 +168,15 @@ export const GroupComponent = ({
               >
                 +
               </button>
-            </li>
+            </div>
           )}
-        </ul>
+        </div>
         {data.getNotes() && (
-          <textarea
-            className="rounded-sm border bg-cyan-300 dark:bg-cyan-700"
-            disabled
-            defaultValue={data.getNotes()}
-          />
+          <div className="w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700">
+            {data.getNotes()}
+          </div>
         )}
-      </ul>
+      </div>
     </div>
   );
 };
@@ -313,30 +311,18 @@ const GroupMemberComponent = ({
       }
     >
       <div
-        className={
-          "grid h-4 place-content-center min-[21rem]:h-auto min-[21rem]:w-8" +
-          (selected ? " bg-amber-500" : " bg-cyan-300 dark:bg-cyan-700")
-        }
-        ref={dragRef}
-        onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
+        className="grid h-4 place-content-center bg-cyan-300 min-[21rem]:h-auto min-[21rem]:w-8 dark:bg-cyan-700"
+        onClick={() => setShowAttributes(!showAttributes)}
       >
-        {selected ? <span>&#9745;</span> : <span>&#9744;</span>}
+        &hellip;
       </div>
-      <div
-          className="w-full max-w-[90%] p-2">
+      <div className="w-full max-w-[90%] p-2">
         <div
-          onClick={() => setShowAttributes(!showAttributes)}
+          ref={dragRef}
+          onClick={(e) => handleSelect(index, e.shiftKey, e.ctrlKey)}
         >
-          <div className="flex flex-row place-content-between font-bold">
-            <span className="truncate" title={data.getName()}>
-              {data.getName()}
-            </span>
-            <button
-              className="rounded-sm border px-1"
-              onClick={() => removeMember(memberID)}
-            >
-              &times;
-            </button>
+          <div className="truncate font-bold" title={data.getName()}>
+            {data.getName()}
           </div>
           <div className="truncate text-xs italic" title={memberID}>
             {memberID}
@@ -391,6 +377,12 @@ const GroupMemberComponent = ({
               ))}
           </>
         )}
+      </div>
+      <div
+        className="grid h-4 place-content-center bg-red-500 min-[21rem]:h-auto min-[21rem]:w-8"
+        onClick={() => removeMember(memberID)}
+      >
+        &times;
       </div>
     </div>
   );

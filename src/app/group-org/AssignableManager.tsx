@@ -82,7 +82,7 @@ export const AssignableManager = ({
       {/**Assignable List */}
       <div className="w-[90dvw] rounded-md border border-cyan-500 bg-cyan-50 p-1 dark:bg-cyan-950">
         <h1 className="relative pt-1 pb-2 text-center">
-          <span className="absolute top-1 left-0 rounded-full bg-cyan-500 px-1">
+          <span className="absolute top-1 left-0 rounded-full bg-cyan-200 px-1 dark:bg-cyan-800">
             {assignableArray.length} / {assignableCollection.size}
           </span>
           Assignables
@@ -97,9 +97,8 @@ export const AssignableManager = ({
         <div className="flex flex-row place-content-end">
           {/**Assignable Sort */}
           <select
-            className={
-              "rounded-sm border " + (!assignableSort && "text-neutral-500")
-            }
+            aria-label="Assignable Sort"
+            className="rounded-sm border"
             value={assignableSort}
             onChange={(e) => setAssignableSort(e.target.value)}
           >
@@ -151,7 +150,7 @@ export const AssignableManager = ({
           </select>
           {/**Assignable Reverse */}
           <button
-            className="ml-1 font-bold text-neutral-500"
+            className="ml-1 rounded-md border px-1 font-bold"
             onClick={() => setAssignableReverse(!assignableReverse)}
           >
             {assignableReverse ? <span>&uarr;</span> : <span>&darr;</span>}
@@ -162,6 +161,7 @@ export const AssignableManager = ({
           <div className="flex flex-row place-content-end">
             {showAssignableFilter ? (
               <select
+                aria-label="Assignable Filter"
                 className="rounded-sm border"
                 value={assignableFilter}
                 onChange={(e) =>
@@ -198,11 +198,7 @@ export const AssignableManager = ({
               </select>
             ) : (
               <p
-                className={
-                  "rounded-sm border " +
-                  (assignableFilter.length < 1 &&
-                    " border-neutral-500 text-neutral-500")
-                }
+                className="rounded-sm border"
                 onClick={() => setShowAssignableFilter(!showAssignableFilter)}
               >
                 {assignableFilter.length < 1
@@ -211,7 +207,7 @@ export const AssignableManager = ({
               </p>
             )}
             <button
-              className="ml-1 font-bold text-neutral-500"
+              className="ml-1 rounded-md border px-1 font-bold"
               onClick={() => setShowAssignableFilter(!showAssignableFilter)}
             >
               {showAssignableFilter ? (

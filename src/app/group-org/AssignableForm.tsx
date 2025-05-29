@@ -327,13 +327,16 @@ export const AssignableForm = ({
         </label>
       )}
       {settings.getAssignableNotes() && (
-        <textarea
-          name={DEFAULTASSIGNABLEFIELDS.NOTES}
-          className="rounded-sm border"
-          placeholder="Notes"
-          value={data.get(DEFAULTASSIGNABLEFIELDS.NOTES)}
-          onChange={updateNotes}
-        />
+        <label className="flex flex-row flex-wrap place-content-between">
+          Notes
+          <textarea
+            name={DEFAULTASSIGNABLEFIELDS.NOTES}
+            className="rounded-sm border"
+            placeholder="Notes"
+            value={data.get(DEFAULTASSIGNABLEFIELDS.NOTES)}
+            onChange={updateNotes}
+          />
+        </label>
       )}
       <button className="rounded-full border" type="submit">
         Create
