@@ -1,12 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useModal } from "../group-org/modal";
 
 export default function NavBar() {
   const mobileNavRef = useRef<HTMLDivElement>(null);
-  const { Modal, setModal } = useModal();
+  const { Modal, setModal } = useModal(undefined, () =>
+    setPreventScroll(false)
+  );
+  const [preventScroll, setPreventScroll] = useState<boolean>(false);
+  useEffect(() => {
+    if (preventScroll) {
+      document.body.classList.add("overflow-hidden");
+      document.body.classList.remove("overflow-auto");
+    } else {
+      document.body.classList.add("overflow-auto");
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => {
+      document.body.classList.add("overflow-auto");
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [preventScroll]);
 
   const ModalNav = () => (
     <menu
@@ -38,7 +54,10 @@ export default function NavBar() {
       </menu>
       <button
         className="block text-2xl sm:hidden"
-        onClick={() => setModal(<ModalNav />)}
+        onClick={() => {
+          setPreventScroll(true);
+          setModal(<ModalNav />);
+        }}
       >
         ≡
       </button>

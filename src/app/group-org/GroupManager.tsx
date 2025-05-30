@@ -89,7 +89,11 @@ export const GroupManager = ({
   const [filterArray, unassignedFilterSize, groupFilterSize] = useMemo(() => {
     const filterArray = Array.from(
       settings.getAssignableFields().entries()
-    ).filter(([, field]) => ["select", "checkbox"].includes(field.getType()));
+    ).filter(
+      ([, field]) =>
+        ["select", "checkbox"].includes(field.getType()) &&
+        !field.getName().toLocaleLowerCase().includes("backup")
+    );
     const filterArraySize =
       filterArray.length +
       filterArray
@@ -260,8 +264,7 @@ export const GroupManager = ({
                       attr &&
                       value.isDisjointFrom(
                         Array.isArray(attr) ? new Set(attr) : new Set([attr])
-                      ) &&
-                      !name.toLocaleLowerCase().includes("backup")
+                      )
                     ) {
                       eligible = false;
                       break;

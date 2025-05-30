@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, RefObject, useRef, useState } from "react";
+import { ReactNode, RefObject, /* useEffect, */ useRef, useState } from "react";
 import { useClickOutside } from "./helpers";
 
 /**Custom Hook intended for use in conjunction with ModalDisplay
@@ -14,22 +14,54 @@ import { useClickOutside } from "./helpers";
  * closeModal is a auxiliary function that hides and clears Modal
  * Intended to be used in elements displayed in Modal to close upon certain actions
  */
-export function useModal(initialValue: ReactNode = null) {
+export function useModal(
+  initialValue: ReactNode = null,
+  closeModalHelper?: () => void
+) {
   const [modalElement, setModalElementHelper] =
     useState<ReactNode>(initialValue);
   const modalRef = useRef<HTMLDivElement>(null);
+  /* const [preventScroll, setPreventScroll] = useState<boolean>(false);
+  useEffect(() => {
+    if (preventScroll) {
+      document.body.classList.add("overflow-hidden");
+      document.body.classList.remove("overflow-auto");
+    } else {
+      document.body.classList.add("overflow-auto");
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => {
+      document.body.classList.add("overflow-auto");
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [preventScroll]); */
 
   function setModal(element: ReactNode) {
     setModalElementHelper(element);
-    if (modalRef.current) modalRef.current.style.display = "block";
+    /* setPreventScroll(true); */
+    if (modalRef.current) {
+      modalRef.current.classList.add("block");
+      modalRef.current.classList.remove("hidden");
+    }
   }
 
   function closeModal() {
+    if (closeModalHelper) closeModalHelper();
+    /* setPreventScroll(false); */
     setModalElementHelper(undefined);
-    if (modalRef.current) modalRef.current.style.display = "none";
+    if (modalRef.current) {
+      modalRef.current.classList.add("hidden");
+      modalRef.current.classList.remove("block");
+    }
   }
 
-  const Modal = <ModalDisplay element={modalElement} modalRef={modalRef} />;
+  const Modal = (
+    <ModalDisplay
+      element={modalElement}
+      modalRef={modalRef}
+      closeModal={closeModal}
+    />
+  );
 
   return { Modal, setModal, closeModal };
 }
@@ -37,15 +69,20 @@ export function useModal(initialValue: ReactNode = null) {
 const ModalDisplay = ({
   element,
   modalRef,
+  closeModal,
 }: {
   element: ReactNode;
   modalRef: RefObject<HTMLDivElement | null>;
+  closeModal: () => void;
 }) => {
   const modalElementRef = useRef<HTMLDivElement>(null);
 
-  const closeModal = () => {
-    if (modalRef.current) modalRef.current.style.display = "none";
-  };
+  /* const closeModal = () => {
+    if (modalRef.current) {
+      modalRef.current.classList.add("hidden");
+      modalRef.current.classList.remove("block");
+    }
+  }; */
 
   useClickOutside(modalElementRef, closeModal);
 

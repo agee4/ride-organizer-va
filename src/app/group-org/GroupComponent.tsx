@@ -103,7 +103,7 @@ export const GroupComponent = ({
 
   return (
     <div
-      className="max-w-[496px] rounded-md bg-emerald-400 p-2 dark:bg-emerald-600"
+      className="max-w-[496px] rounded-md bg-emerald-200 p-2 dark:bg-emerald-800"
       ref={dropRef}
     >
       <div>
@@ -194,7 +194,7 @@ const GroupLeaderComponent = ({
   const [showAttributes, setShowAttributes] = useState<boolean>(false);
 
   return (
-    <div className="my-1 max-w-[496px] rounded-md bg-emerald-200 p-2 dark:bg-emerald-800">
+    <div className="my-1 max-w-[496px] rounded-md bg-cyan-200 p-2 dark:bg-cyan-800">
       <div onClick={() => setShowAttributes(!showAttributes)}>
         <div className="flex flex-row place-content-between font-bold">
           <span className="truncate" title={data.getName()}>
@@ -211,7 +211,7 @@ const GroupLeaderComponent = ({
             .filter(([key]) => data.getAttributeGroups().get(key) == "Contact")
             .map(([key, value]) => (
               <div
-                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
                 key={key}
               >
                 <span>{key}:</span>
@@ -229,7 +229,7 @@ const GroupLeaderComponent = ({
             )
             .map(([key, value]) => (
               <div
-                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-emerald-300 p-1 dark:bg-emerald-700"
+                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
                 key={key}
               >
                 {typeof value == "boolean" ? (

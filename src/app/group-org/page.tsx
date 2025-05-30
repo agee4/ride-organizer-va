@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useMapReducer, useSetReducer } from "./helpers";
 import { useModal } from "./modal";
 import {
@@ -47,7 +47,32 @@ export default function Page() {
     )
   );
 
-  const { Modal, setModal, closeModal } = useModal();
+  const [preventScroll, setPreventScroll] = useState<boolean>(false);
+  useEffect(() => {
+    if (preventScroll) {
+      document.body.classList.add("overflow-hidden");
+      document.body.classList.remove("overflow-auto");
+    } else {
+      document.body.classList.add("overflow-auto");
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => {
+      document.body.classList.add("overflow-auto");
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [preventScroll]);
+  const closeModalHelper = () => {
+    setPreventScroll(false);
+  };
+  const {
+    Modal,
+    setModal: setModalHelper,
+    closeModal,
+  } = useModal(undefined, closeModalHelper);
+  const setModal = (element: ReactNode) => {
+    setPreventScroll(true);
+    setModalHelper(element);
+  };
 
   /**Load settings, assignables, unassigned, and groups from localStorage */
   useEffect(() => {
@@ -391,7 +416,10 @@ export default function Page() {
     groupCollection.size > 0;
 
   return (
-    <main className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-4 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-8">
+    <main
+      role="main"
+      className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-4 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-8"
+    >
       {Modal}
       <div className="row-start-2 flex flex-col items-center gap-8">
         <h1>GroupU Org ~ Group Organizer</h1>
