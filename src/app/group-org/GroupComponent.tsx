@@ -103,7 +103,7 @@ export const GroupComponent = ({
 
   return (
     <div
-      className="max-w-[496px] rounded-md bg-emerald-200 p-2 dark:bg-emerald-800"
+      className="h-full max-w-[496px] rounded-md bg-emerald-200 p-2 dark:bg-emerald-800 md:w-[160px]"
       ref={dropRef}
     >
       <div>
@@ -136,9 +136,11 @@ export const GroupComponent = ({
             assignableCollection={assignableCollection}
           />
         )}
-        <div className="text-center">
+        <div>
           {data.getSize() != undefined && (
-            <div>Size: {size - data.getAllMembers().size}</div>
+            <div className="text-center">
+              Size: {size - data.getAllMembers().size}
+            </div>
           )}
           {assignableArray.map((value, index) => (
             <GroupMemberComponent
@@ -211,11 +213,11 @@ const GroupLeaderComponent = ({
             .filter(([key]) => data.getAttributeGroups().get(key) == "Contact")
             .map(([key, value]) => (
               <div
-                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
                 key={key}
               >
                 <span>{key}:</span>
-                <span>{value}</span>
+                <span className="truncate">{value}</span>
               </div>
             ))}
           {Array.from(data.getAttributes())
@@ -229,7 +231,7 @@ const GroupLeaderComponent = ({
             )
             .map(([key, value]) => (
               <div
-                className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
                 key={key}
               >
                 {typeof value == "boolean" ? (
@@ -244,7 +246,7 @@ const GroupLeaderComponent = ({
                         ))}
                       </ul>
                     ) : (
-                      <span>{value}</span>
+                      <span className="truncate">{value}</span>
                     )}
                   </>
                 )}
@@ -336,11 +338,11 @@ const GroupMemberComponent = ({
               )
               .map(([key, value]) => (
                 <div
-                  className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                  className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
                   key={key}
                 >
                   <span>{key}:</span>
-                  <span>{value}</span>
+                  <span className="truncate">{value}</span>
                 </div>
               ))}
             {Array.from(data.getAttributes())
@@ -354,7 +356,7 @@ const GroupMemberComponent = ({
               )
               .map(([key, value]) => (
                 <div
-                  className="m-1 flex flex-row place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
+                  className="my-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 p-1 dark:bg-cyan-700"
                   key={key}
                 >
                   {typeof value == "boolean" ? (
@@ -369,7 +371,7 @@ const GroupMemberComponent = ({
                           ))}
                         </ul>
                       ) : (
-                        <span>{value}</span>
+                        <span className="truncate">{value}</span>
                       )}
                     </>
                   )}

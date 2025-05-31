@@ -66,11 +66,10 @@ const UnassignedComponent = ({
   return (
     <div
       className={
-        "flex max-w-[496px] flex-col-reverse overflow-hidden rounded-md bg-cyan-200 select-none min-[21rem]:flex-row dark:bg-cyan-800" +
+        "flex flex-col-reverse overflow-hidden rounded-md bg-cyan-200 select-none min-[21rem]:flex-row dark:bg-cyan-800" +
         (isDragging ? " opacity-50" : "") +
         (selected ? " border-4 border-amber-500" : "")
       }
-      ref={selected ? dragRef : undefined}
     >
       <div
         className="grid h-4 place-content-center bg-cyan-300 min-[21rem]:h-auto min-[21rem]:w-8 dark:bg-cyan-700"
@@ -223,7 +222,7 @@ export const UnassignedArrayComponent = ({
   useClickOutside(dropRef, clearSelect);
 
   return (
-    <div className="m-1 max-h-[70svh] overflow-auto">
+    <div className="my-1 max-h-[70svh] overflow-auto">
       <div
         className={
           "size-f flex flex-col gap-1 rounded-md p-1" +

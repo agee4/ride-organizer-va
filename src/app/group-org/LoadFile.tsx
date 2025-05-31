@@ -1,7 +1,8 @@
 import { ChangeEvent, useRef, useState } from "react";
-import { read, utils } from "xlsx";
+import { read, } from "xlsx";
 import { Assignable, AssignableManagerAction } from "./Assignable";
-import { Group, GroupManagerAction } from "./Group";
+import { GroupManagerAction } from "./Group";
+import { loadCollegeRides } from "./CollegeRidesFileFunctions";
 
 export const LoadFile = ({
   assignableCollection,
@@ -43,193 +44,7 @@ export const LoadFile = ({
     const ab = await f.arrayBuffer();
     const wb = read(ab);
 
-    const leaderSizeTemp = new Map<string, number>();
-
-    /**Loading Assignables */
-    for (const wsn of wb.SheetNames) {
-      const ws = wb.Sheets[wsn];
-      const data: any[] = utils.sheet_to_json(ws);
-      if (wsn.toLocaleLowerCase().trim().includes("passenger")) {
-        for (const x of data) {
-          const attributes = new Map<
-            string,
-            string | boolean | number | string[]
-          >();
-          const attributeGroups = new Map<string, string>();
-          if (x["Email Address"]) {
-            attributes.set("Email", x["Email Address"]);
-            attributeGroups.set("Email", "Contact");
-          }
-          if (x["Phone Number"]) {
-            attributes.set("Phone", x["Phone Number"]);
-            attributeGroups.set("Phone", "Contact");
-          }
-          if (x.Rides) {
-            const cleanedRidesArray = (x.Rides.split(",") as Array<string>).map(
-              (value) => value.toLocaleLowerCase().trim()
-            );
-            attributes.set(
-              "Main Rides",
-              cleanedRidesArray.map((value) =>
-                value.includes("friday")
-                  ? "Friday"
-                  : value.includes("first")
-                    ? "Sunday First"
-                    : value.includes("second")
-                      ? "Sunday Second"
-                      : value.includes("third")
-                        ? "Sunday Third"
-                        : "ERROR"
-              )
-            );
-            attributeGroups.set("Main Rides", "Availability");
-          }
-          if (x.Address) {
-            attributes.set("Address", x.Address);
-            attributeGroups.set("Address", "Location");
-          }
-          if (x.College) {
-            attributes.set("Campus", x.College);
-            attributeGroups.set("Campus", "Location");
-          }
-          if (x.Year) {
-            attributes.set("Year", x.Year);
-            attributeGroups.set("Year", "Affinity");
-          }
-          if (x["Backup Rides"]) {
-            const cleanedRidesArray = (
-              x["Backup Rides"].split(",") as Array<string>
-            ).map((value) => value.toLocaleLowerCase().trim());
-            attributes.set(
-              "Backup Rides",
-              cleanedRidesArray.map((value) =>
-                value.includes("friday")
-                  ? "Friday"
-                  : value.includes("first")
-                    ? "Sunday First"
-                    : value.includes("second")
-                      ? "Sunday Second"
-                      : value.includes("third")
-                        ? "Sunday Third"
-                        : "ERROR"
-              )
-            );
-            attributeGroups.set("Backup Rides", "Availability");
-          }
-
-          assignableDispatch({
-            type: "create",
-            assignable: new Assignable({
-              id: x["Email Address"] ? x["Email Address"] : "",
-              name: x.Name ? x.Name : "",
-              attributes: attributes,
-              attributeGroups: attributeGroups,
-              notes: x.Notes,
-            }),
-          });
-        }
-      } else if (wsn.toLocaleLowerCase().trim().includes("driver")) {
-        for (const x of data) {
-          const attributes = new Map<
-            string,
-            string | boolean | number | string[]
-          >();
-          const attributeGroups = new Map<string, string>();
-          if (x["Email Address"]) {
-            attributes.set("Email", x["Email Address"]);
-            attributeGroups.set("Email", "Contact");
-          }
-          if (x["Phone Number"]) {
-            attributes.set("Phone", x["Phone Number"]);
-            attributeGroups.set("Phone", "Contact");
-          }
-          if (x.Rides) {
-            const cleanedRidesArray = (x.Rides.split(",") as Array<string>).map(
-              (value) => value.toLocaleLowerCase().trim()
-            );
-            attributes.set(
-              "Main Rides",
-              cleanedRidesArray.map((value) =>
-                value.includes("friday")
-                  ? "Friday"
-                  : value.includes("first")
-                    ? "Sunday First"
-                    : value.includes("second")
-                      ? "Sunday Second"
-                      : value.includes("third")
-                        ? "Sunday Third"
-                        : value
-              )
-            );
-            attributeGroups.set("Main Rides", "Availability");
-          }
-          if (x.Address) {
-            attributes.set("Address", x.Address);
-            attributeGroups.set("Address", "Location");
-          }
-          if (x.College) {
-            attributes.set("Campus", x.College);
-            attributeGroups.set("Campus", "Location");
-          }
-          if (x.Year) {
-            attributes.set("Year", x.Year);
-            attributeGroups.set("Year", "Affinity");
-          }
-
-          const newDriver = new Assignable({
-            id: x["Email Address"] ? x["Email Address"] : "",
-            name: x.Name ? x.Name : "",
-            attributes: attributes,
-            attributeGroups: attributeGroups,
-            leader: true,
-            size: x.Seats ? x.Seats : 0,
-            notes: x.Notes,
-          });
-
-          leaderSizeTemp.set(newDriver.getID(), x.Seats || 0);
-          assignableDispatch({
-            type: "create",
-            assignable: newDriver,
-          });
-        }
-      }
-    }
-
-    /**Loading Groups */
-    for (const wsn of wb.SheetNames) {
-      if (wsn.toLocaleLowerCase().trim().includes("ride")) {
-        const ws = wb.Sheets[wsn];
-        const data: any[] = utils.sheet_to_json(ws);
-        for (const x of data) {
-          const rdriver = x.Driver.slice(
-            x.Driver.indexOf("(") + 1,
-            x.Driver.indexOf(")")
-          );
-          const rpassengers = new Set<string>();
-          for (const k in x) {
-            if (k.toLocaleLowerCase().trim().includes("passenger"))
-              if (x[k])
-                for (const rpassengerstring of x[k].split(",")) {
-                  rpassengers.add(
-                    rpassengerstring.slice(
-                      rpassengerstring.indexOf("(") + 1,
-                      rpassengerstring.indexOf(")")
-                    )
-                  );
-                }
-          }
-          groupDispatch({
-            type: "create",
-            group: new Group({
-              id: rdriver,
-              members: rpassengers,
-              leader: rdriver,
-              size: leaderSizeTemp.get(rdriver),
-            }),
-          });
-        }
-      }
-    }
+    loadCollegeRides(wb, assignableDispatch, groupDispatch);
   };
 
   return (
@@ -247,11 +62,11 @@ export const LoadFile = ({
         />
         {selectedFile && (
           <button className="rounded-full border px-2" onClick={clearFile}>
-            Clear
+            Clear File
           </button>
         )}
       </label>
-      <div className="flex flex-row">
+      <div className="flex flex-row gap-1">
         <button
           className="rounded-full border px-2 disabled:text-neutral-500"
           onClick={loadSheet}

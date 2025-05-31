@@ -489,11 +489,20 @@ export const SettingsForm = ({
       <>
         {createFieldModal.Modal}
         <div className="flex flex-col gap-1 border bg-white p-1 dark:bg-black">
-          <label className="flex flex-col place-content-between gap-1">
-            Fields
-            <span className="rounded-full bg-cyan-500 px-1">
+          <label className="relative py-1 text-center">
+            <span className="absolute top-1 left-0 rounded-full bg-cyan-500 px-1">
               {fieldComponentCollection.size}
             </span>
+            Fields
+            <button
+              className="absolute top-0 right-0 rounded-md border-4 border-double border-cyan-500 bg-cyan-200 px-2 dark:bg-cyan-800"
+              type="button"
+              onClick={() =>
+                createFieldModal.setModal(<CreateFieldComponent />)
+              }
+            >
+              +
+            </button>
           </label>
           <hr />
           {/**View & Remove Assignable Fields */}
@@ -529,7 +538,7 @@ export const SettingsForm = ({
             </div>
           ))}
           {/**Add Assignable Field */}
-          <div className="flex flex-col rounded-sm border-4 border-double border-cyan-500 bg-cyan-200 p-1 dark:bg-cyan-800">
+          {/* <div className="flex flex-col rounded-sm border-4 border-double border-cyan-500 bg-cyan-200 p-1 dark:bg-cyan-800">
             <button
               type="button"
               onClick={() =>
@@ -538,7 +547,7 @@ export const SettingsForm = ({
             >
               Create Input Field
             </button>
-          </div>
+          </div> */}
         </div>
       </>
     );

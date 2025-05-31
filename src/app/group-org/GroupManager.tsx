@@ -666,7 +666,7 @@ export const GroupManager = ({
                 </button>
               </div>
             )}
-            <div className="my-1 flex max-h-[70svh] flex-col gap-1 overflow-auto">
+            <div className="my-1 flex max-h-[70svh] flex-col gap-1 overflow-auto md:flex-row">
               {groupArray.map((value) => (
                 <GroupComponent
                   groupID={value}

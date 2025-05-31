@@ -1,7 +1,7 @@
 "use client";
 
-import { ReactNode, RefObject, /* useEffect, */ useRef, useState } from "react";
-import { useClickOutside } from "./helpers";
+import { ReactNode, RefObject, useEffect, useRef, useState } from "react";
+import { useClickOutside, useOnKeyPress } from "./helpers";
 
 /**Custom Hook intended for use in conjunction with ModalDisplay
  * Returns { Modal, setModal, closeModal }
@@ -16,29 +16,37 @@ import { useClickOutside } from "./helpers";
  */
 export function useModal(
   initialValue: ReactNode = null,
-  closeModalHelper?: () => void
+  base: boolean = false
 ) {
   const [modalElement, setModalElementHelper] =
     useState<ReactNode>(initialValue);
   const modalRef = useRef<HTMLDivElement>(null);
-  /* const [preventScroll, setPreventScroll] = useState<boolean>(false);
+  const [preventScroll, setPreventScroll] = useState<boolean>(false);
   useEffect(() => {
-    if (preventScroll) {
-      document.body.classList.add("overflow-hidden");
-      document.body.classList.remove("overflow-auto");
-    } else {
-      document.body.classList.add("overflow-auto");
-      document.body.classList.remove("overflow-hidden");
+    if (base) {
+      if (preventScroll) {
+        if (
+          !document.body.classList.replace("overflow-auto", "overflow-hidden")
+        )
+          document.body.classList.add("overflow-hidden");
+      } else {
+        if (
+          !document.body.classList.replace("overflow-hidden", "overflow-auto")
+        )
+          document.body.classList.add("overflow-auto");
+      }
+      return () => {
+        if (
+          !document.body.classList.replace("overflow-hidden", "overflow-auto")
+        )
+          document.body.classList.add("overflow-auto");
+      };
     }
-    return () => {
-      document.body.classList.add("overflow-auto");
-      document.body.classList.remove("overflow-hidden");
-    };
-  }, [preventScroll]); */
+  }, [base, preventScroll]);
 
   function setModal(element: ReactNode) {
     setModalElementHelper(element);
-    /* setPreventScroll(true); */
+    setPreventScroll(true);
     if (modalRef.current) {
       modalRef.current.classList.add("block");
       modalRef.current.classList.remove("hidden");
@@ -46,8 +54,7 @@ export function useModal(
   }
 
   function closeModal() {
-    if (closeModalHelper) closeModalHelper();
-    /* setPreventScroll(false); */
+    setPreventScroll(false);
     setModalElementHelper(undefined);
     if (modalRef.current) {
       modalRef.current.classList.add("hidden");
@@ -77,13 +84,7 @@ const ModalDisplay = ({
 }) => {
   const modalElementRef = useRef<HTMLDivElement>(null);
 
-  /* const closeModal = () => {
-    if (modalRef.current) {
-      modalRef.current.classList.add("hidden");
-      modalRef.current.classList.remove("block");
-    }
-  }; */
-
+  useOnKeyPress("Escape", closeModal);
   useClickOutside(modalElementRef, closeModal);
 
   return (

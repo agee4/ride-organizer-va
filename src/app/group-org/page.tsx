@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMapReducer, useSetReducer } from "./helpers";
 import { useModal } from "./modal";
 import {
@@ -47,32 +47,7 @@ export default function Page() {
     )
   );
 
-  const [preventScroll, setPreventScroll] = useState<boolean>(false);
-  useEffect(() => {
-    if (preventScroll) {
-      document.body.classList.add("overflow-hidden");
-      document.body.classList.remove("overflow-auto");
-    } else {
-      document.body.classList.add("overflow-auto");
-      document.body.classList.remove("overflow-hidden");
-    }
-    return () => {
-      document.body.classList.add("overflow-auto");
-      document.body.classList.remove("overflow-hidden");
-    };
-  }, [preventScroll]);
-  const closeModalHelper = () => {
-    setPreventScroll(false);
-  };
-  const {
-    Modal,
-    setModal: setModalHelper,
-    closeModal,
-  } = useModal(undefined, closeModalHelper);
-  const setModal = (element: ReactNode) => {
-    setPreventScroll(true);
-    setModalHelper(element);
-  };
+  const { Modal, setModal, closeModal } = useModal(undefined, true);
 
   /**Load settings, assignables, unassigned, and groups from localStorage */
   useEffect(() => {
@@ -422,7 +397,9 @@ export default function Page() {
     >
       {Modal}
       <div className="row-start-2 flex flex-col items-center gap-8">
-        <h1>GroupU Org ~ Group Organizer</h1>
+        <h1 className="font-[family-name:var(--font-geist-mono)]">
+          GroupU Org ~ Group Organizer
+        </h1>
         {/**Settings & File Forms */}
         <div className="flex flex-col place-content-between gap-1 md:flex-row">
           {/**Setting Form */}
@@ -458,8 +435,8 @@ export default function Page() {
               className="rounded-md border-4 border-double p-1 text-center"
               onClick={() =>
                 setModal(
-                  <div className="rounded-md border bg-white p-1 text-center dark:bg-black">
-                    <div>
+                  <div className="rounded-md border bg-white p-1 dark:bg-black">
+                    <div className="text-center">
                       <span className="text-red-500">
                         WARNING: ONLY WORKS FOR THE{" "}
                       </span>
@@ -524,7 +501,7 @@ export default function Page() {
             />
           )}
         </div>
-      </div>{" "}
+      </div>
     </main>
   );
 }
