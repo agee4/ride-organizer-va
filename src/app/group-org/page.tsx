@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useMapReducer, useSetReducer } from "./helpers";
-import { useModal } from "./modal";
+import { useMapReducer, useSetReducer } from "../_functions/helpers";
+import { useModal } from "../_components/modal";
 import {
   defaultSettings,
   Field,
@@ -10,19 +10,19 @@ import {
   presetArray,
   Setting,
   SettingJSON,
-} from "./settings";
+} from "../_classes/settings";
 import {
   Assignable,
   AssignableAttrJSON,
   AssignableJSON,
   AssignableManagerAction,
-} from "./Assignable";
-import { Group, GroupJSON, GroupManagerAction } from "./Group";
-import { PresetForm, SettingsForm } from "./SettingComponent";
-import { AssignableManager } from "./AssignableManager";
-import { GroupManager } from "./GroupManager";
-import { LoadFile } from "./LoadFile";
-import { SaveFile } from "./SaveFile";
+} from "../_classes/Assignable";
+import { Group, GroupJSON, GroupManagerAction } from "../_classes/Group";
+import { PresetForm, SettingsForm } from "../_components/_group_org/SettingComponent";
+import { AssignableManager } from "../_components/_group_org/_assignable_manager/AssignableManager";
+import { GroupManager } from "../_components/_group_org/_group_manager/GroupManager";
+import { LoadFile } from "../_components/_group_org/LoadFile";
+import { SaveFile } from "../_components/_group_org/SaveFile";
 
 export default function Page() {
   const [assignableCollection, assignableDispatch] = useMapReducer<

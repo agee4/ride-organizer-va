@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { useModal } from "../group-org/modal";
+import { useModal } from "./modal";
 
 export default function NavBar() {
   const mobileNavRef = useRef<HTMLDivElement>(null);

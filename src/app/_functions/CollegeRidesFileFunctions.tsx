@@ -1,6 +1,6 @@
 import { utils, WorkBook } from "xlsx";
-import { Assignable, AssignableManagerAction } from "./Assignable";
-import { Group, GroupManagerAction } from "./Group";
+import { Assignable, AssignableManagerAction } from "../_classes/Assignable";
+import { Group, GroupManagerAction } from "../_classes/Group";
 
 export const loadCollegeRides = (
   wb: WorkBook,

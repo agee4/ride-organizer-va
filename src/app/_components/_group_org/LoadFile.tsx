@@ -1,8 +1,8 @@
 import { ChangeEvent, useRef, useState } from "react";
 import { read, } from "xlsx";
-import { Assignable, AssignableManagerAction } from "./Assignable";
-import { GroupManagerAction } from "./Group";
-import { loadCollegeRides } from "./CollegeRidesFileFunctions";
+import { Assignable, AssignableManagerAction } from "../../_classes/Assignable";
+import { GroupManagerAction } from "../../_classes/Group";
+import { loadCollegeRides } from "../../_functions/CollegeRidesFileFunctions";
 
 export const LoadFile = ({
   assignableCollection,

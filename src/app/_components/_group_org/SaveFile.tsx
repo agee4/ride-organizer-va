@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { utils, writeFile } from "xlsx";
-import { Assignable } from "./Assignable";
-import { Group } from "./Group";
-import { saveCollegeRides } from "./CollegeRidesFileFunctions";
+import { Assignable } from "../../_classes/Assignable";
+import { Group } from "../../_classes/Group";
+import { saveCollegeRides } from "../../_functions/CollegeRidesFileFunctions";
 
 export const SaveFile = ({
   assignableCollection,

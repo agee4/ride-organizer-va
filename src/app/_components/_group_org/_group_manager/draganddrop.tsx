@@ -1,5 +1,5 @@
 import { ConnectDragSource, ConnectDropTarget, useDragLayer } from "react-dnd";
-import { Assignable } from "./Assignable";
+import { Assignable } from "../../../_classes/Assignable";
 import { SetStateAction, useRef } from "react";
 
 export enum DNDType {

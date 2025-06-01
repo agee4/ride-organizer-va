@@ -1,5 +1,5 @@
 import { ReactNode, useMemo, useState } from "react";
-import { Setting } from "./settings";
+import { Setting } from "../../../_classes/settings";
 import {
   Assignable,
   AssignableManagerAction,
@@ -7,7 +7,7 @@ import {
   DEFAULTASSIGNABLESORT,
   filterAssignables,
   sortAssignables,
-} from "./Assignable";
+} from "../../../_classes/Assignable";
 import { AssignableComponent } from "./AssignableComponent";
 import { AssignableForm } from "./AssignableForm";
 

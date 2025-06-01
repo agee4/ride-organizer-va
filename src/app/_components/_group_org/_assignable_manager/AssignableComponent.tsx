@@ -3,8 +3,8 @@ import {
   Assignable,
   AssignableManagerAction,
   DEFAULTASSIGNABLEFIELDS,
-} from "./Assignable";
-import { Setting } from "./settings";
+} from "../../../_classes/Assignable";
+import { Setting } from "../../../_classes/settings";
 
 const AssignableEdit = ({
   data,

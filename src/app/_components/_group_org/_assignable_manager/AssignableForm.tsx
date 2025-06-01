@@ -1,11 +1,11 @@
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
-import { Field, Setting } from "./settings";
-import { useMapReducer } from "./helpers";
+import { Field, Setting } from "../../../_classes/settings";
+import { useMapReducer } from "../../../_functions/helpers";
 import {
   Assignable,
   AssignableManagerAction,
   DEFAULTASSIGNABLEFIELDS,
-} from "./Assignable";
+} from "../../../_classes/Assignable";
 
 export const AssignableForm = ({
   settings,

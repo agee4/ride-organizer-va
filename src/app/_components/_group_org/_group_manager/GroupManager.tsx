@@ -2,14 +2,14 @@ import { ReactNode, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { AssignableDragLayer } from "./draganddrop";
-import { Setting } from "./settings";
+import { Setting } from "../../../_classes/settings";
 import {
   Assignable,
   DEFAULTASSIGNABLEFILT,
   DEFAULTASSIGNABLESORT,
   filterAssignables,
   sortAssignables,
-} from "./Assignable";
+} from "../../../_classes/Assignable";
 import {
   DEFAULTGROUPFILT,
   DEFAULTGROUPSORT,
@@ -17,7 +17,7 @@ import {
   Group,
   GroupManagerAction,
   sortGroups,
-} from "./Group";
+} from "../../../_classes/Group";
 import { UnassignedArrayComponent } from "./UnassignedComponent";
 import { GroupComponent } from "./GroupComponent";
 import { GroupForm } from "./GroupForm";

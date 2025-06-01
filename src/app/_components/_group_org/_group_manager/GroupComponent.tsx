@@ -7,9 +7,9 @@ import {
   handleSelectHelper,
   useDNDRef,
 } from "./draganddrop";
-import { Assignable } from "./Assignable";
-import { Group, GroupManagerAction } from "./Group";
-import { useClickOutside } from "./helpers";
+import { Assignable } from "../../../_classes/Assignable";
+import { Group, GroupManagerAction } from "../../../_classes/Group";
+import { useClickOutside } from "../../../_functions/helpers";
 
 export const GroupComponent = ({
   groupID,

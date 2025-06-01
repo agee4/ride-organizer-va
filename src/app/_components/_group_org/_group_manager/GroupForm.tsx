@@ -1,7 +1,7 @@
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
-import { Setting } from "./settings";
-import { Assignable } from "./Assignable";
-import { Group, GroupManagerAction } from "./Group";
+import { Setting } from "../../../_classes/settings";
+import { Assignable } from "../../../_classes/Assignable";
+import { Group, GroupManagerAction } from "../../../_classes/Group";
 
 export const GroupForm = ({
   settings,

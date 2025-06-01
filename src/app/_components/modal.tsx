@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, RefObject, useEffect, useRef, useState } from "react";
-import { useClickOutside, useOnKeyPress } from "./helpers";
+import { useClickOutside, useOnKeyPress } from "../_functions/helpers";
 
 /**Custom Hook intended for use in conjunction with ModalDisplay
  * Returns { Modal, setModal, closeModal }

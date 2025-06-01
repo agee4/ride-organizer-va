@@ -6,10 +6,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { MapReducerAction, useMapReducer, useSetReducer } from "./helpers";
-import { defaultSettings, Field, Setting, SIZESOURCE } from "./settings";
-import { DEFAULTASSIGNABLEFIELDS } from "./Assignable";
-import { useModal } from "./modal";
+import { MapReducerAction, useMapReducer, useSetReducer } from "../../_functions/helpers";
+import { defaultSettings, Field, Setting, SIZESOURCE } from "../../_classes/settings";
+import { DEFAULTASSIGNABLEFIELDS } from "../../_classes/Assignable";
+import { useModal } from "../modal";
 
 export const PresetForm = ({
   settings,

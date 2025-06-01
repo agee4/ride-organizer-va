@@ -1,4 +1,4 @@
-import { mapEquals } from "./helpers";
+import { mapEquals } from "../_functions/helpers";
 
 export class Assignable {
   private _id: string;
