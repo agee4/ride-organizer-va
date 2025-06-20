@@ -308,42 +308,44 @@ export const GroupManager = ({
             <button className="rounded-full border px-2" onClick={quickAssign}>
               Quick Assign
             </button>
-            <div className="flex flex-row place-content-end">
-              <button
-                className="rounded-full border px-2"
-                onClick={smartAssign}
-              >
-                Smart Assign
-              </button>
-              <select
-                aria-label="Smart Assign Select"
-                className="rounded-sm border"
-                value={smartAssignArray}
-                onChange={(e) =>
-                  setSmartAssignArray(
-                    [...e.target.selectedOptions].map((o) => o.value)
-                  )
-                }
-                multiple
-                size={unassignedFilterSize}
-              >
-                {filterArray.map(([key, value]) =>
-                  value.getType() == "select" ? (
-                    <optgroup key={key} label={key}>
-                      {Array.from(value.getOptions()).map((option) => (
-                        <option value={key + "|" + option} key={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : (
-                    <option value={key} key={key}>
-                      {key}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
+            {filterArray.length > 0 && (
+              <div className="flex flex-row place-content-end">
+                <button
+                  className="rounded-full border px-2"
+                  onClick={smartAssign}
+                >
+                  Smart Assign
+                </button>
+                <select
+                  aria-label="Smart Assign Select"
+                  className="rounded-sm border"
+                  value={smartAssignArray}
+                  onChange={(e) =>
+                    setSmartAssignArray(
+                      [...e.target.selectedOptions].map((o) => o.value)
+                    )
+                  }
+                  multiple
+                  size={unassignedFilterSize}
+                >
+                  {filterArray.map(([key, value]) =>
+                    value.getType() == "select" ? (
+                      <optgroup key={key} label={key}>
+                        {Array.from(value.getOptions()).map((option) => (
+                          <option value={key + "|" + option} key={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : (
+                      <option value={key} key={key}>
+                        {key}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -360,7 +362,7 @@ export const GroupManager = ({
           className="rounded-md border-4 border-double p-1"
           onClick={openAutoAssignForm}
         >
-          Auto-Assign
+          ✧ Auto-Assign
         </button>
         <button
           className={
@@ -376,7 +378,7 @@ export const GroupManager = ({
         {/**Unassigned */}
         {!!assignableCollection.size && (
           <div>
-            <div className="relative rounded-md border p-1">
+            <div className="rounded-md border p-1">
               <h1 className="text-center">Unassigned</h1>
               <div className="flex flex-col place-content-between sm:flex-row">
                 <span className="rounded-full bg-cyan-200 px-1 text-center dark:bg-cyan-800">
@@ -675,6 +677,7 @@ export const GroupManager = ({
                   addGroupMember={addGroupMember}
                   groupDispatch={groupDispatch}
                   selectMode={selectMode}
+                  unassignedCollection={unassignedCollection}
                   key={value}
                 />
               ))}

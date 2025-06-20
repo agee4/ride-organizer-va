@@ -2,12 +2,20 @@ import {
   ActionDispatch,
   ChangeEvent,
   FormEvent,
-  useEffect,
   useRef,
   useState,
 } from "react";
-import { MapReducerAction, useMapReducer, useSetReducer } from "../../_functions/helpers";
-import { defaultSettings, Field, Setting, SIZESOURCE } from "../../_classes/settings";
+import {
+  MapReducerAction,
+  useMapReducer,
+  useSetReducer,
+} from "../../_functions/helpers";
+import {
+  defaultSettings,
+  Field,
+  Setting,
+  SIZESOURCE,
+} from "../../_classes/settings";
 import { DEFAULTASSIGNABLEFIELDS } from "../../_classes/Assignable";
 import { useModal } from "../modal";
 
@@ -49,15 +57,11 @@ export const PresetForm = ({
         key: newPresetName,
         value: newSetting,
       });
-      settingsCallback(newSetting);
-      setNewPresetName("");
       setPreset(newPresetName);
+      setNewPresetName("");
+      settingsCallback(newSetting);
     } else settingsCallback(presets.get(preset) || defaultSettings);
   };
-
-  useEffect(() => {
-    setPreset(settings.getName() || "Custom");
-  }, [settings]);
 
   const invalidNewPresetName =
     preset == "Custom" &&
@@ -221,22 +225,6 @@ export const SettingsForm = ({
       })
     );
   };
-
-  useEffect(() => {
-    setAssignableIDSource(settings.getAssignableIDSource());
-    assignableFieldsDispatch({
-      type: "replace",
-      value: settings.getAssignableFields(),
-    });
-    setAssignableNotes(settings.getAssignableNotes());
-    setUseLeader(settings.getUseLeader());
-    setGroupIDSource(settings.getGroupIDSource());
-    setGroupCustomName(settings.getGroupCustomName());
-    setGroupUseSize(settings.getGroupUseSize());
-    setGroupSizeSource(settings.getGroupSizeSource());
-    setGroupNotes(settings.getGroupNotes());
-    setAutoGroups(settings.getAutoGroups());
-  }, [settings, assignableFieldsDispatch]);
 
   const settingsUnaltered = settings.equals(
     new Setting({
@@ -483,7 +471,7 @@ export const SettingsForm = ({
         </form>
       );
     };
-    const createFieldModal = useModal(<CreateFieldComponent />);
+    const createFieldModal = useModal();
 
     return (
       <>
@@ -552,7 +540,7 @@ export const SettingsForm = ({
       </>
     );
   };
-  const fieldModal = useModal(<FieldComponent />);
+  const fieldModal = useModal();
 
   return (
     <>

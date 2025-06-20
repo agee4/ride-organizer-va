@@ -18,11 +18,13 @@ import {
   AssignableManagerAction,
 } from "../_classes/Assignable";
 import { Group, GroupJSON, GroupManagerAction } from "../_classes/Group";
-import { PresetForm, SettingsForm } from "../_components/_group_org/SettingComponent";
+import {
+  PresetForm,
+  SettingsForm,
+} from "../_components/_group_org/SettingComponent";
 import { AssignableManager } from "../_components/_group_org/_assignable_manager/AssignableManager";
 import { GroupManager } from "../_components/_group_org/_group_manager/GroupManager";
-import { LoadFile } from "../_components/_group_org/LoadFile";
-import { SaveFile } from "../_components/_group_org/SaveFile";
+import { LoadFile, SaveFile } from "../_components/_group_org/FileComponents";
 
 export default function Page() {
   const [assignableCollection, assignableDispatch] = useMapReducer<
@@ -47,53 +49,49 @@ export default function Page() {
     )
   );
 
-  const { Modal, setModal, closeModal } = useModal(undefined, true);
+  const { Modal, setModal, closeModal } = useModal(null, true);
 
   /**Load settings, assignables, unassigned, and groups from localStorage */
   useEffect(() => {
     const storedSettingString = localStorage.getItem("settings");
     if (storedSettingString) {
       const storedSettingJSON: SettingJSON = JSON.parse(storedSettingString);
-      const preset = presetCollection.get(storedSettingJSON["name"]);
-      if (preset) setSettings(preset);
-      else {
-        const newSettingFields = new Map<string, Field>();
-        if (storedSettingJSON["assignableFields"])
-          for (const FieldJSONString of storedSettingJSON["assignableFields"]) {
-            const storedField: FieldJSON = JSON.parse(FieldJSONString);
-            newSettingFields.set(
-              storedField["name"],
-              new Field({
-                name: storedField["name"],
-                type: storedField["type"],
-                group: storedField["group"],
-                required: storedField["required"],
-                options: new Set<string>(storedField["options"]),
-                multiple: storedField["multiple"],
-              })
-            );
-          }
-        const newSetting = new Setting({
-          name: storedSettingJSON["name"],
-          assignableIDSource: storedSettingJSON["assignableIDSource"],
-          assignableFields: newSettingFields,
-          assignableNotes: storedSettingJSON["assignableNotes"],
-          useLeader: storedSettingJSON["useLeader"],
-          groupIDSource: storedSettingJSON["groupIDSource"],
-          groupCustomName: storedSettingJSON["groupCustomName"],
-          groupUseSize: storedSettingJSON["groupUseSize"],
-          groupSizeSource: storedSettingJSON["groupSizeSource"],
-          groupNotes: storedSettingJSON["groupNotes"],
-          autoGroups: storedSettingJSON["autoGroups"],
+      const newSettingFields = new Map<string, Field>();
+      if (storedSettingJSON["assignableFields"])
+        for (const FieldJSONString of storedSettingJSON["assignableFields"]) {
+          const storedField: FieldJSON = JSON.parse(FieldJSONString);
+          newSettingFields.set(
+            storedField["name"],
+            new Field({
+              name: storedField["name"],
+              type: storedField["type"],
+              group: storedField["group"],
+              required: storedField["required"],
+              options: new Set<string>(storedField["options"]),
+              multiple: storedField["multiple"],
+            })
+          );
+        }
+      const newSetting = new Setting({
+        name: storedSettingJSON["name"],
+        assignableIDSource: storedSettingJSON["assignableIDSource"],
+        assignableFields: newSettingFields,
+        assignableNotes: storedSettingJSON["assignableNotes"],
+        useLeader: storedSettingJSON["useLeader"],
+        groupIDSource: storedSettingJSON["groupIDSource"],
+        groupCustomName: storedSettingJSON["groupCustomName"],
+        groupUseSize: storedSettingJSON["groupUseSize"],
+        groupSizeSource: storedSettingJSON["groupSizeSource"],
+        groupNotes: storedSettingJSON["groupNotes"],
+        autoGroups: storedSettingJSON["autoGroups"],
+      });
+      setSettings(newSetting);
+      if (storedSettingJSON["name"])
+        presetDispatch({
+          type: "create",
+          key: storedSettingJSON["name"],
+          value: newSetting,
         });
-        setSettings(newSetting);
-        if (storedSettingJSON["name"])
-          presetDispatch({
-            type: "create",
-            key: storedSettingJSON["name"],
-            value: newSetting,
-          });
-      }
     }
     const storedAssignableString = localStorage.getItem("assignable");
     if (storedAssignableString) {
@@ -151,13 +149,7 @@ export default function Page() {
         });
       }
     }
-  }, [
-    unassignedDispatch,
-    presetCollection,
-    presetDispatch,
-    assignableDispatch,
-    groupDispatch,
-  ]);
+  }, [unassignedDispatch, presetDispatch, assignableDispatch, groupDispatch]);
 
   /**Save the following to localStorage */
   /**Settings */
@@ -242,26 +234,27 @@ export default function Page() {
     closeModal();
     switch (action.type) {
       case "create":
+        if (!assignableCollection.has(action.assignable.getID()))
+          if (settings.getAutoGroups() && action.assignable.getLeader()) {
+            groupManagerDispatch({
+              type: "create",
+              group: new Group({
+                id: action.assignable.getID(),
+                leader: action.assignable.getID(),
+                size: action.assignable.getSize(),
+              }),
+            });
+          } else {
+            unassignedDispatch({
+              type: "create",
+              value: action.assignable.getID(),
+            });
+          }
         assignableDispatch({
           type: "create",
           key: action.assignable.getID(),
           value: action.assignable,
         });
-        if (settings.getAutoGroups() && action.assignable.getLeader()) {
-          groupManagerDispatch({
-            type: "create",
-            group: new Group({
-              id: action.assignable.getID(),
-              leader: action.assignable.getID(),
-              size: action.assignable.getSize(),
-            }),
-          });
-        } else {
-          unassignedDispatch({
-            type: "create",
-            value: action.assignable.getID(),
-          });
-        }
         break;
       case "delete":
         assignableDispatch({
@@ -426,7 +419,7 @@ export default function Page() {
                 )
               }
             >
-              Settings
+              ⚙ Settings
             </button>
           </div>
           {/**File Forms */}
@@ -461,7 +454,7 @@ export default function Page() {
                 )
               }
             >
-              Open/Save File
+              🗎 Open/Save File
             </button>
           </div>
         </div>
@@ -469,17 +462,35 @@ export default function Page() {
         <div className="flex flex-col gap-1">
           {/**Assignable/Group Manager Toggle */}
           {allowShowGroupManager && (
-            <button
-              className={
-                "rounded-sm border px-1 " +
-                (showGroupManager
-                  ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-950"
-                  : "border-emerald-500 bg-emerald-50 dark:bg-emerald-950")
-              }
-              onClick={() => setShowGroupManager(!showGroupManager)}
-            >
-              Manage {showGroupManager ? "Assignables" : "Groups"}
-            </button>
+            <>
+              <button
+                className={
+                  "rounded-sm border px-1 md:hidden " +
+                  (showGroupManager
+                    ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-950"
+                    : "border-emerald-500 bg-emerald-50 dark:bg-emerald-950")
+                }
+                onClick={() => setShowGroupManager(!showGroupManager)}
+              >
+                Manage {showGroupManager ? "Assignables" : "Groups"}
+              </button>
+              <div className="hidden grid-cols-2 md:grid">
+                <button
+                  className="rounded-sm border border-cyan-500 bg-cyan-100 px-1 disabled:bg-cyan-50/50 disabled:text-cyan-200 dark:bg-cyan-900"
+                  disabled={!showGroupManager}
+                  onClick={() => setShowGroupManager(false)}
+                >
+                  Manage Assignables
+                </button>
+                <button
+                  className="rounded-sm border border-emerald-500 bg-emerald-100 px-1 disabled:bg-emerald-50/50 disabled:text-emerald-200 dark:bg-emerald-900"
+                  disabled={showGroupManager}
+                  onClick={() => setShowGroupManager(true)}
+                >
+                  Manage Groups
+                </button>
+              </div>
+            </>
           )}
           {/**Assignable or Group Manager */}
           {!showGroupManager ? (

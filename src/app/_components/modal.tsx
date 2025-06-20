@@ -1,10 +1,23 @@
 "use client";
 
-import { ReactNode, RefObject, useEffect, useRef, useState } from "react";
+import {
+  ReactElement,
+  ReactNode,
+  RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useClickOutside, useOnKeyPress } from "../_functions/helpers";
 
+interface useModal {
+  Modal: ReactNode;
+  setModal: (element: ReactNode) => void;
+  closeModal: () => void;
+}
+
 /**Custom Hook intended for use in conjunction with ModalDisplay
- * Returns { Modal, setModal, closeModal }
  *
  * Modal is a ModalDisplay component connected to setModal & closeModal
  *
@@ -13,18 +26,23 @@ import { useClickOutside, useOnKeyPress } from "../_functions/helpers";
  *
  * closeModal is a auxiliary function that hides and clears Modal
  * Intended to be used in elements displayed in Modal to close upon certain actions
+ *
+ * @param {ReactNode} initialValue Initial component to be displayed
+ * @param {boolean} base Whether this modal prevents the main page content from scrolling
+ *
+ * @returns {useModal} Modal, setModal, closeModal
  */
 export function useModal(
   initialValue: ReactNode = null,
   base: boolean = false
-) {
+): useModal {
   const [modalElement, setModalElementHelper] =
     useState<ReactNode>(initialValue);
   const modalRef = useRef<HTMLDivElement>(null);
-  const [preventScroll, setPreventScroll] = useState<boolean>(false);
+  
   useEffect(() => {
     if (base) {
-      if (preventScroll) {
+      if (modalElement) {
         if (
           !document.body.classList.replace("overflow-auto", "overflow-hidden")
         )
@@ -42,32 +60,37 @@ export function useModal(
           document.body.classList.add("overflow-auto");
       };
     }
-  }, [base, preventScroll]);
+  }, [base, modalElement]);
+
+  useEffect(() => {
+    if (modalRef.current) {
+      if (modalElement) {
+        modalRef.current.classList.add("block")
+        modalRef.current.classList.remove("hidden")
+      } else {
+        modalRef.current.classList.add("hidden")
+        modalRef.current.classList.remove("block")
+      }
+    }
+  }, [modalElement]);
 
   function setModal(element: ReactNode) {
     setModalElementHelper(element);
-    setPreventScroll(true);
-    if (modalRef.current) {
-      modalRef.current.classList.add("block");
-      modalRef.current.classList.remove("hidden");
-    }
   }
 
   function closeModal() {
-    setPreventScroll(false);
-    setModalElementHelper(undefined);
-    if (modalRef.current) {
-      modalRef.current.classList.add("hidden");
-      modalRef.current.classList.remove("block");
-    }
+    setModalElementHelper(null);
   }
 
-  const Modal = (
-    <ModalDisplay
-      element={modalElement}
-      modalRef={modalRef}
-      closeModal={closeModal}
-    />
+  const Modal = useMemo(
+    () => (
+      <ModalDisplay
+        element={modalElement}
+        modalRef={modalRef}
+        closeModal={closeModal}
+      />
+    ),
+    [modalElement, modalRef, closeModal]
   );
 
   return { Modal, setModal, closeModal };
