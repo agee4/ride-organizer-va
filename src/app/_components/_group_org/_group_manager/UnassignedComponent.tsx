@@ -225,7 +225,7 @@ export const UnassignedArrayComponent = ({
     <div className="my-1 max-h-[70svh] overflow-auto">
       <div
         className={
-          "size-f flex flex-col gap-1 rounded-md p-1" +
+          "flex flex-col gap-1 rounded-md p-1" +
           (isOver && canDrop ? " bg-amber-500" : " bg-neutral-500")
         }
         ref={dropRef}

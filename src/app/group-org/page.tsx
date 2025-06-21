@@ -250,6 +250,19 @@ export default function Page() {
               value: action.assignable.getID(),
             });
           }
+        else if (settings.getAutoGroups() && action.assignable.getLeader()) {
+          groupManagerDispatch({
+            type: "create",
+            group: new Group({
+              id: action.assignable.getID(),
+              members: groupCollection
+                .get(action.assignable.getID())
+                ?.getAllMembers(),
+              leader: action.assignable.getID(),
+              size: action.assignable.getSize(),
+            }),
+          });
+        }
         assignableDispatch({
           type: "create",
           key: action.assignable.getID(),
@@ -463,6 +476,7 @@ export default function Page() {
           {/**Assignable/Group Manager Toggle */}
           {allowShowGroupManager && (
             <>
+              {/**Mobile */}
               <button
                 className={
                   "rounded-sm border px-1 md:hidden " +
@@ -474,16 +488,17 @@ export default function Page() {
               >
                 Manage {showGroupManager ? "Assignables" : "Groups"}
               </button>
+              {/**Desktop */}
               <div className="hidden grid-cols-2 md:grid">
                 <button
-                  className="rounded-sm border border-cyan-500 bg-cyan-100 px-1 disabled:bg-cyan-50/50 disabled:text-cyan-200 dark:bg-cyan-900"
+                  className="rounded-sm border border-cyan-500 bg-cyan-100 px-1 disabled:bg-cyan-50/50 disabled:text-cyan-200 dark:bg-cyan-900 disabled:dark:bg-cyan-950/50 disabled:dark:text-cyan-800"
                   disabled={!showGroupManager}
                   onClick={() => setShowGroupManager(false)}
                 >
                   Manage Assignables
                 </button>
                 <button
-                  className="rounded-sm border border-emerald-500 bg-emerald-100 px-1 disabled:bg-emerald-50/50 disabled:text-emerald-200 dark:bg-emerald-900"
+                  className="rounded-sm border border-emerald-500 bg-emerald-100 px-1 disabled:bg-emerald-50/50 disabled:text-emerald-200 dark:bg-emerald-900 disabled:dark:bg-emerald-950/50 disabled:dark:text-emerald-800"
                   disabled={showGroupManager}
                   onClick={() => setShowGroupManager(true)}
                 >

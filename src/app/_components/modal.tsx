@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  ReactElement,
   ReactNode,
   RefObject,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -39,7 +39,7 @@ export function useModal(
   const [modalElement, setModalElementHelper] =
     useState<ReactNode>(initialValue);
   const modalRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     if (base) {
       if (modalElement) {
@@ -65,22 +65,24 @@ export function useModal(
   useEffect(() => {
     if (modalRef.current) {
       if (modalElement) {
-        modalRef.current.classList.add("block")
-        modalRef.current.classList.remove("hidden")
+        modalRef.current.classList.add("block");
+        modalRef.current.classList.remove("hidden");
       } else {
-        modalRef.current.classList.add("hidden")
-        modalRef.current.classList.remove("block")
+        modalRef.current.classList.add("hidden");
+        modalRef.current.classList.remove("block");
       }
     }
   }, [modalElement]);
 
-  function setModal(element: ReactNode) {
-    setModalElementHelper(element);
-  }
+  const setModal = useCallback(
+    (element: ReactNode) => setModalElementHelper(element),
+    [setModalElementHelper]
+  );
 
-  function closeModal() {
-    setModalElementHelper(null);
-  }
+  const closeModal = useCallback(
+    () => setModalElementHelper(null),
+    [setModalElementHelper]
+  );
 
   const Modal = useMemo(
     () => (

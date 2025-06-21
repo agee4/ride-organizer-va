@@ -78,7 +78,8 @@ export const GroupComponent = ({
          * or because the amount of DAs do not
          * overfill the size cap of the group
          */
-        (data.getSize() == undefined ||
+        (/* true || */
+          data.getSize() == undefined ||
           size >= data.getAllMembers().size + item.id.length) &&
         /**ensure every DA meets the following: */
         item.id.every(
@@ -266,7 +267,7 @@ export const GroupComponent = ({
         </button>
         {/**Unassigned List */}
         <div className="my-1 max-h-[70svh] overflow-auto">
-          <div className="size-f flex flex-col gap-1 rounded-md p-1">
+          <div className="flex flex-col gap-1 rounded-md">
             {unassignedArray.length > 0 ? (
               unassignedArray.map((value, index) => (
                 <UnassignedMemberComponent
