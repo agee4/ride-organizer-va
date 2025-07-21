@@ -77,6 +77,15 @@ export const AssignableManager = ({
   const [showAssignableFilter, setShowAssignableFilter] =
     useState<boolean>(false);
 
+  const clearAssignables = () => {
+    assignableCollection.forEach((value) =>
+      assignableDispatch({
+        type: "delete",
+        assignableID: value.getID(),
+      })
+    );
+  };
+
   return (
     <div className="flex flex-col gap-1">
       {/**Assignable List */}
@@ -86,6 +95,12 @@ export const AssignableManager = ({
             {assignableArray.length} / {assignableCollection.size}
           </span>
           Assignables
+          {assignableCollection.size > 0 && <button
+            className="absolute top-0 right-9 rounded-md border-4 border-double border-cyan-500 bg-cyan-200 px-2 dark:bg-cyan-800"
+            onClick={clearAssignables}
+          >
+            &times;
+          </button>}
           <button
             className="absolute top-0 right-0 rounded-md border-4 border-double border-cyan-500 bg-cyan-200 px-2 dark:bg-cyan-800"
             onClick={openAssignableForm}

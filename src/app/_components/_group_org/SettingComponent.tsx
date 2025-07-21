@@ -326,7 +326,7 @@ export const SettingsForm = ({
         >
           <label className="text-center">New Field</label>
           <label className="flex flex-row flex-wrap place-content-between gap-1">
-            Name*:
+            Name*
             <input
               className="w-full rounded-sm border"
               type="text"
@@ -339,7 +339,7 @@ export const SettingsForm = ({
             />
           </label>
           <label className="flex flex-row place-content-between">
-            Group:
+            Group
             <select
               className="rounded-sm border"
               name="fieldgroup"
@@ -365,7 +365,7 @@ export const SettingsForm = ({
           </label>
 
           <label className="flex flex-row place-content-between">
-            Type:
+            Type
             <select
               className="rounded-sm border"
               name="fieldtype"
@@ -476,7 +476,7 @@ export const SettingsForm = ({
     return (
       <>
         {createFieldModal.Modal}
-        <div className="flex flex-col gap-1 border bg-white p-1 dark:bg-black">
+        <div className="flex flex-col gap-1 border bg-cyan-50 p-1 dark:bg-cyan-950">
           <label className="relative py-1 text-center">
             <span className="absolute top-1 left-0 rounded-full bg-cyan-500 px-1">
               {fieldComponentCollection.size}
@@ -557,7 +557,7 @@ export const SettingsForm = ({
             <h1 className="text-center">Assignable</h1>
             {/**Assignable ID Source */}
             <label className="flex flex-row place-content-between gap-1">
-              ID Source:
+              ID Source
               <select
                 className="rounded-sm border"
                 name="idsource"
@@ -586,7 +586,7 @@ export const SettingsForm = ({
             <hr />
             {/**Assignable Fields */}
             <button
-              className="flex flex-row place-content-between gap-1 border-4 border-double bg-cyan-50 p-1 dark:bg-cyan-950"
+              className="flex flex-row place-content-between gap-1 border-4 border-double bg-cyan-50 p-1 hover:bg-cyan-500 focus:bg-cyan-500 dark:bg-cyan-950"
               type="button"
               onClick={() => fieldModal.setModal(<FieldComponent />)}
             >
@@ -619,7 +619,7 @@ export const SettingsForm = ({
           <div className="flex flex-col gap-1">
             <h1 className="text-center">Group</h1>
             <label className="flex flex-row place-content-between gap-1">
-              ID Source:
+              ID Source
               <select
                 className="rounded-sm border"
                 name="groupidsource"

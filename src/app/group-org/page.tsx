@@ -442,23 +442,23 @@ export default function Page() {
               onClick={() =>
                 setModal(
                   <div className="rounded-md border bg-white p-1 dark:bg-black">
+                    {/**Load Form */}
+                    <LoadFile
+                      assignableDispatch={assignableManagerDispatch}
+                      groupDispatch={groupManagerDispatch}
+                      settings={settings}
+                    />
+                    <hr />
+                    {/**Save Form */}
                     <div className="text-center">
                       <span className="text-red-500">
-                        WARNING: ONLY WORKS FOR THE{" "}
+                        WARNING: CURRENTLY ONLY WORKS FOR THE{" "}
                       </span>
                       <span className="text-blue-500">
                         COLLEGE RIDES PRESET
                       </span>
                       <span className="text-red-500">. USE WITH CAUTION.</span>
                     </div>
-                    {/**Load Form */}
-                    <LoadFile
-                      assignableCollection={assignableCollection}
-                      assignableDispatch={assignableManagerDispatch}
-                      groupDispatch={groupManagerDispatch}
-                    />
-                    <hr />
-                    {/**Save Form */}
                     <SaveFile
                       assignableCollection={assignableCollection}
                       groupCollection={groupCollection}

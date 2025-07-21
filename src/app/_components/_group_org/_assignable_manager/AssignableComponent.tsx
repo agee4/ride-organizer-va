@@ -49,9 +49,9 @@ const AssignableEdit = ({
       </div>
       {settings.getAssignableIDSource() != DEFAULTASSIGNABLEFIELDS.NAME && (
         <label className="flex flex-row flex-wrap place-content-between rounded-md bg-cyan-300 dark:bg-cyan-700">
-          Name*:
+          Name*
           <input
-            className="max-w-35 rounded-sm border"
+            className="rounded-sm border"
             type="text"
             name={DEFAULTASSIGNABLEFIELDS.NAME}
             value={name}
@@ -69,13 +69,13 @@ const AssignableEdit = ({
           return (
             <label
               key={name}
-              className="mt-1 flex flex-row flex-wrap place-content-between rounded-md bg-cyan-300 dark:bg-cyan-700"
+              className="mt-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 dark:bg-cyan-700"
             >
               {name}
-              {field.getRequired() ? "*" : ""}:
+              {field.getRequired() ? "*" : ""}
               {field.getType() == "select" ? (
                 <select
-                  className="max-w-35 rounded-sm border"
+                  className="rounded-sm border"
                   name={name}
                   value={
                     Array.isArray(value)
@@ -112,7 +112,7 @@ const AssignableEdit = ({
                 </select>
               ) : (
                 <input
-                  className="max-w-35 rounded-sm border"
+                  className="rounded-sm border"
                   type={field.getType()}
                   name={name}
                   value={
@@ -138,10 +138,10 @@ const AssignableEdit = ({
           );
         })}
       {!!data.getSize() && (
-        <label className="mt-1 flex flex-row flex-wrap place-content-between rounded-md bg-cyan-300 dark:bg-cyan-700">
-          Size*:
+        <label className="mt-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 dark:bg-cyan-700">
+          Size*
           <input
-            className="max-w-35 rounded-sm border"
+            className="rounded-sm border"
             type="number"
             name={DEFAULTASSIGNABLEFIELDS.SIZE}
             defaultValue={size}
@@ -152,12 +152,18 @@ const AssignableEdit = ({
           />
         </label>
       )}
-      <textarea
-        name={DEFAULTASSIGNABLEFIELDS.NOTES}
-        className="mt-1 w-full rounded-sm border bg-cyan-300 dark:bg-cyan-700"
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-      />
+      {settings.getAssignableNotes() && (
+        <label className="mt-1 flex flex-row flex-wrap place-content-between gap-1 rounded-md bg-cyan-300 dark:bg-cyan-700">
+          Notes
+          <textarea
+            name={DEFAULTASSIGNABLEFIELDS.NOTES}
+            className="rounded-sm border"
+            placeholder="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </label>
+      )}
       <div className="flex flex-row place-content-evenly sm:flex-col-reverse">
         <button
           className="m-1 rounded-full border px-2 text-lg font-bold"

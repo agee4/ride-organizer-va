@@ -138,15 +138,13 @@ export const AssignableForm = ({
 
   return (
     <form
-      className="flex max-w-[480px] flex-col overflow-auto rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800"
+      className="flex flex-col overflow-auto rounded-md border border-cyan-500 bg-cyan-200 p-2 dark:bg-cyan-800"
       onSubmit={submitForm}
       ref={assignableFormRef}
     >
       <label className="text-center">New Assignable</label>
       <label className="flex flex-row flex-wrap place-content-between gap-1">
-        {"Name*" +
-          (settings.getAssignableIDSource() == "name" ? " (ID)" : "") +
-          ":"}
+        {"Name*" + (settings.getAssignableIDSource() == "name" ? " (ID)" : "")}
         <input
           className="rounded-sm border"
           type="text"
@@ -163,7 +161,7 @@ export const AssignableForm = ({
       </label>
       {settings.getAssignableIDSource() == "id" && (
         <label className="flex flex-row flex-wrap place-content-between gap-1">
-          ID*:
+          ID*
           <input
             className="rounded-sm border"
             type="text"
@@ -182,7 +180,7 @@ export const AssignableForm = ({
             className="flex flex-row flex-wrap place-content-between gap-1"
             key={field.getName()}
           >
-            {field.getName() + (field.getRequired() ? "*" : "") + ":"}
+            {field.getName() + (field.getRequired() ? "*" : "")}
             <select
               className="rounded-sm border"
               name={field.getName()}
@@ -261,10 +259,9 @@ export const AssignableForm = ({
               (field.getRequired() ? "*" : "") +
               (field.getName() == settings.getAssignableIDSource()
                 ? " (ID)"
-                : field.getName() == settings.getAssignableIDSource()
+                : field.getName() == settings.getGroupSizeSource()
                   ? " (Size)"
-                  : "") +
-              ":"}
+                  : "")}
             <input
               className="rounded-sm border"
               type={field.getType()}
@@ -312,7 +309,7 @@ export const AssignableForm = ({
       )}
       {isLeader && settings.getGroupSizeSource() == "leadersize" && (
         <label className="flex flex-row flex-wrap place-content-between">
-          Size*:
+          Size*
           <input
             className="rounded-sm border"
             type="number"

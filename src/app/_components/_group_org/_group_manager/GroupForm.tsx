@@ -110,16 +110,14 @@ export const GroupForm = ({
 
   return (
     <form
-      className="flex flex-col rounded-md border bg-white p-2 dark:bg-black"
+      className="flex flex-col overflow-auto rounded-md border border-emerald-500 bg-emerald-200 p-2 dark:bg-emerald-800"
       onSubmit={submitForm}
       ref={groupFormRef}
     >
       <label className="text-center">New Group</label>
       {settings.getUseLeader() && (
         <label className="flex flex-row flex-wrap place-content-between">
-          {"Leader" +
-            (settings.getGroupIDSource() == "leader" ? "* (ID)" : "") +
-            ":"}
+          {"Leader" + (settings.getGroupIDSource() == "leader" ? "* (ID)" : "")}
           <select
             className={"rounded-sm border " + (!leader && "text-neutral-500")}
             name="groupleader"
@@ -142,9 +140,9 @@ export const GroupForm = ({
       )}
       {settings.getGroupIDSource() == "id" && (
         <label className="flex flex-row flex-wrap place-content-between gap-1">
-          ID*:
+          ID*
           <input
-            className="w-full rounded-sm border"
+            className="rounded-sm border"
             type="text"
             name="id"
             value={data.id}
@@ -158,8 +156,7 @@ export const GroupForm = ({
       {settings.getGroupCustomName() && (
         <label className="flex flex-row flex-wrap place-content-between gap-1">
           {"Name*" +
-            (settings.getAssignableIDSource() == "name" ? " (ID)" : "") +
-            ":"}
+            (settings.getAssignableIDSource() == "name" ? " (ID)" : "")}
           <input
             className="rounded-sm border"
             type="text"
@@ -177,7 +174,7 @@ export const GroupForm = ({
       {settings.getGroupUseSize() &&
         settings.getGroupSizeSource() == "groupsize" && (
           <label className="flex flex-row flex-wrap place-content-between">
-            Size:
+            Size
             <input
               className="rounded-sm border"
               type="number"
